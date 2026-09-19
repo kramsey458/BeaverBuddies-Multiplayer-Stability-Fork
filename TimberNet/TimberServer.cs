@@ -171,7 +171,9 @@ namespace TimberNet
             if (!trackers.TryGetValue(source, out RttTracker? tracker)) return;
             tracker.OnReply(sequence, RttTracker.NowMs);
             // The reply left the guest about half a round trip ago, which is a fraction of a tick.
-            if (tick != null) guestTicksBehind[source] = Math.Max(0, TickCount - tick.Value);
+            // A guest that has not ticked yet is loading, not behind. Without this a rehost compared the old
+            // session's tick count with the joining guest's zero and made the host wait for it (1.0.6).
+            if (tick != null && tick.Value > 0) guestTicksBehind[source] = Math.Max(0, TickCount - tick.Value);
         }
 
         /// <summary>

@@ -65,6 +65,7 @@ namespace BeaverBuddies.DesyncDetecter
         public void Reset()
         {
             WaterDiagnostics.Reset();
+            WalkerDiagnostics.Reset();
             currentTick = -1;
             lastDesyncTrace = null;
             traces.Clear();

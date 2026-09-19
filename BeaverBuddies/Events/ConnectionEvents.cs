@@ -142,6 +142,7 @@ namespace BeaverBuddies.Events
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             replayService.SetTargetSpeed(0);
             BeaverBuddies.DesyncDetecter.WaterDiagnostics.WriteOnDesync();
+            BeaverBuddies.DesyncDetecter.WalkerDiagnostics.WriteOnDesync();
             ReportingService reportingService = context.GetSingleton<ReportingService>();
             RehostingService rehostingService = context.GetSingleton<RehostingService>();
             GameSaveRepository repository = context.GetSingleton<GameSaveRepository>();

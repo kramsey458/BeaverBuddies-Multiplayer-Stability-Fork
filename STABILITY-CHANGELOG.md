@@ -5,6 +5,54 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.8 (pre-release)
+
+A pre-release for testing, on top of 1.0.7. Every player should install this build.
+
+### A desync at high speed: a beaver's zipline state came from the animation
+
+Seen twice in one evening at a true speed 7 (large colony speed limit removed), with and without
+other mods' route map changes. Comparing the two players' verbose logs tick by tick showed the
+same thing both times: entity order and random state identical, then the **move hash** (where
+every walking character is) differing, and two to six ticks later a beaver arriving at a building
+on one computer and not the other, which is when the random state differs and the desync is
+reported. Both times it began a few ticks after a hitch on the guest, while it was catching up.
+
+One input to walking speed is not simulation state. In a flooded tile a beaver's speed is
+multiplied by its water penalty modifiers, and the zipline's is `IsOnZipline ? 0.5 : 1`.
+`ZiplineVisitor.IsOnZipline` is switched by an event from the per-frame movement animation, when
+the animated model crosses onto or off a zipline corner. Which frame that is, and so whether it
+falls before or after that beaver's own tick, depends on frame rate and on how many ticks a frame
+carried. At low speed there are many frames per tick and both computers switch at nearly the same
+point; at a true speed 7, and above all on a guest catching up with several ticks per frame, they
+can differ by a tick.
+
+- In a multiplayer session the modifier now asks `ZiplinePathTracker` instead, which holds the same
+  fact as simulation state: it follows the path corners the walker actually moved along, from the
+  tick, and it is saved with the game. The values are the game's own. The animation, harness and
+  swimming visuals still follow the animated model. Single player is untouched.
+- **This is the one frame-timed input to walking speed found by reading the game's code. It has
+  not been confirmed as the cause of those two desyncs**: the logs could not say which beaver
+  differed. That is what the next item is for.
+
+### Walker diagnostics, written with the water diagnostics on a desync
+
+While debug mode is on, every walking character's position, path (next corner, corner count, last
+corner, corner speed), speed inputs (base speed, bonus multiplier) and both zipline flags are kept
+for the last 192 ticks, and written to `BeaverBuddiesDiagnostics/walkers-*.tsv` on both computers
+when a desync is reported. Floats are written as exact bits. 192 ticks because the host is ten to
+twenty ticks ahead of a guest by the time a desync is reported, and the first difference is
+several ticks before that; the water snapshots of the two computers did not overlap at all.
+`RuntimeChecks/compare_walker_traces.py <host> <guest>` prints the first tick and character that
+differ and which columns differ. Nothing is recorded with debug mode off.
+
+### The host no longer waits for a guest that is still loading
+
+On a rehost the host kept the old session's tick count, compared it with the joining guest's tick
+zero and logged `Host pacing: waiting for a guest that is 150 ticks behind`. It cleared by itself
+and cost nothing, because the game was loading. A guest that has not ticked yet is no longer
+counted as behind.
+
 ## 1.0.7 (pre-release)
 
 A pre-release for testing, on top of 1.0.6. Every player should install this build.
