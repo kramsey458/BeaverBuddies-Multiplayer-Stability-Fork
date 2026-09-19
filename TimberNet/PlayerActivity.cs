@@ -42,7 +42,7 @@ namespace TimberNet
             ["selection"] = Selection, ["editing"] = Editing
         };
 
-        static string CleanName(string? name)
+        internal static string CleanName(string? name)
         {
             var clean = new string((name ?? "").Where(c => !char.IsControl(c) && c != '<' && c != '>').Take(32).ToArray()).Trim();
             return clean.Length == 0 ? "Player" : clean;
@@ -121,6 +121,10 @@ namespace TimberNet
         // Latest frame per key. Frames are built when they are written, so a timestamp inside one is accurate.
         readonly Dictionary<string, Func<JObject>> pending = new Dictionary<string, Func<JObject>>();
         const int MaxPending = PlayerActivity.MaxPlayers + 8;
+        // Frames that must all arrive, in the order posted (chat). Only a connection that has stalled for a very
+        // long time reaches the limit.
+        readonly Queue<JObject> ordered = new Queue<JObject>();
+        const int MaxOrdered = 4096;
         bool running, closed;
 
         public ISocketStream Stream => stream;
@@ -146,9 +150,25 @@ namespace TimberNet
             System.Threading.Tasks.Task.Run(Pump);
         }
 
+        /// <summary>
+        /// Queues a frame that must not be replaced or skipped. Unlike <see cref="PostFrame"/>, every ordered frame is
+        /// written, oldest first, and they never overtake each other.
+        /// </summary>
+        public void PostOrdered(JObject frame)
+        {
+            lock (gate)
+            {
+                if (closed || ordered.Count >= MaxOrdered) return;
+                ordered.Enqueue(frame);
+                if (running) return;
+                running = true;
+            }
+            System.Threading.Tasks.Task.Run(Pump);
+        }
+
         public void Close()
         {
-            lock (gate) { closed = true; pending.Clear(); }
+            lock (gate) { closed = true; pending.Clear(); ordered.Clear(); }
         }
 
         void Pump()
@@ -158,8 +178,10 @@ namespace TimberNet
                 Func<JObject>[] batch;
                 lock (gate)
                 {
-                    if (closed || pending.Count == 0) { running = false; return; }
-                    batch = pending.Values.ToArray();
+                    if (closed || (pending.Count == 0 && ordered.Count == 0)) { running = false; return; }
+                    // Ordered frames first, exactly as posted, then the newest of each latest-wins key.
+                    batch = ordered.Select(frame => (Func<JObject>)(() => frame)).Concat(pending.Values).ToArray();
+                    ordered.Clear();
                     pending.Clear();
                 }
                 foreach (var frame in batch)

@@ -1,0 +1,10 @@
+{
+  "KeyBindingSpec": {
+    "Id": "BeaverBuddies.KeyBind.FocusChat",
+    "GroupId": "KeyBindingGroup.BeaverBuddies",
+    "LocKey": "BeaverBuddies.KeyBindings.FocusChat",
+    "Order": 2,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  }
+}

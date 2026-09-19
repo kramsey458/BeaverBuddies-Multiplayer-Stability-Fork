@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using Timberborn.CoreUI;
 using Timberborn.Localization;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,24 +14,29 @@ namespace BeaverBuddies.Panel
     /// </summary>
     internal sealed class ConnectionPanelView
     {
-        static readonly Color Ink = new Color(.95f, .91f, .82f);
-        static readonly Color Muted = new Color(.72f, .68f, .60f);
-        static readonly Color Rule = new Color(1f, 1f, 1f, .12f);
+        internal static readonly Color Ink = new Color(.95f, .91f, .82f);
+        internal static readonly Color Muted = new Color(.72f, .68f, .60f);
+        internal static readonly Color Rule = new Color(1f, 1f, 1f, .12f);
         static readonly Color Good = new Color(.42f, .80f, .47f);
         static readonly Color Fair = new Color(.96f, .76f, .26f);
         static readonly Color Bad = new Color(.93f, .36f, .32f);
         static readonly Color Unknown = new Color(.62f, .60f, .56f);
 
         readonly ILoc loc;
-        readonly VisualElement header, headerDot, body, statusDot, rows, facts;
-        readonly Label title, role, chevron, statusText;
+        readonly VisualElement topSection, header, headerDot, body, statusDot, rows, facts, chatArea;
+        readonly Label title, role, chevron, statusText, unreadBadge;
+        int shownUnread;
+        bool chatDisabled;
 
         public VisualElement Root { get; }
+
+        /// <summary>The chat half, or null if it could not be built (the rest of the panel still works).</summary>
+        public ChatView Chat { get; }
 
         /// <summary>Raised when the header is clicked: the player wants to collapse or expand the panel.</summary>
         public event Action HeaderClicked;
 
-        public ConnectionPanelView(ILoc loc)
+        public ConnectionPanelView(ILoc loc, VisualElementInitializer initializer)
         {
             this.loc = loc;
             Root = new VisualElement { name = "BeaverBuddiesConnectionPanel" };
@@ -47,9 +54,14 @@ namespace BeaverBuddies.Panel
             role = Text("", 11, Muted); role.style.marginLeft = 8;
             chevron = Text("-", 16, Muted, bold: true); chevron.style.marginLeft = 8; chevron.style.width = 14;
             chevron.style.unityTextAlign = TextAnchor.MiddleCenter;
-            header.Add(headerDot); header.Add(title); header.Add(role); header.Add(chevron);
+            // Shown only while the panel is collapsed, so new messages are not missed.
+            unreadBadge = Text("", 11, Fair, bold: true); unreadBadge.style.marginLeft = 8;
+            unreadBadge.style.display = DisplayStyle.None;
+            header.Add(headerDot); header.Add(title); header.Add(unreadBadge); header.Add(role); header.Add(chevron);
             header.RegisterCallback<ClickEvent>(_ => HeaderClicked?.Invoke());
-            Root.Add(header);
+            // Everything that was the panel before chat is the top section: chat is laid out to match its size.
+            topSection = new VisualElement { name = "BeaverBuddiesConnectionPanelTop" };
+            topSection.Add(header);
 
             body = new VisualElement();
             body.style.marginTop = 6;
@@ -59,11 +71,53 @@ namespace BeaverBuddies.Panel
             statusRow.Add(statusDot); statusRow.Add(statusText);
             rows = new VisualElement(); facts = new VisualElement();
             body.Add(statusRow); body.Add(Separator()); body.Add(rows); body.Add(Separator()); body.Add(facts);
-            Root.Add(body);
+            topSection.Add(body);
+            Root.Add(topSection);
+
+            // The chat sits below, in the same rectangle, and is exactly as tall as the section above it. It is laid
+            // out over its own area rather than inside the panel's flow, so the panel's width stays whatever the
+            // top section makes it. Chat is optional: if it cannot be built the panel is just what it was.
+            chatArea = new VisualElement { name = "BeaverBuddiesChatArea" };
+            chatArea.style.marginTop = 6;
+            try
+            {
+                Chat = new ChatView(loc, initializer);
+                chatArea.Add(Chat.Root);
+                topSection.RegisterCallback<GeometryChangedEvent>(e => chatArea.style.height = e.newRect.height);
+            }
+            catch (Exception error)
+            {
+                Chat = null; chatDisabled = true;
+                Plugin.LogWarning("The chat could not be created and is disabled: " + error.Message);
+            }
+            chatArea.style.display = DisplayStyle.None;
+            Root.Add(chatArea);
         }
 
-        public void SetVisible(bool visible) =>
+        /// <summary>Removes chat for the rest of the scene, after it failed. The rest of the panel carries on.</summary>
+        public void DisableChat()
+        {
+            chatDisabled = true;
+            try { Chat?.ReleaseFocus(); } catch (Exception) { }
+            chatArea.style.display = DisplayStyle.None;
+            SetUnread(0);
+        }
+
+        /// <summary>How many messages from others arrived while the panel was collapsed; 0 hides the badge.</summary>
+        public void SetUnread(int count)
+        {
+            if (count == shownUnread) return;
+            shownUnread = count;
+            unreadBadge.text = count > 0 ? string.Format(CultureInfo.InvariantCulture, loc.T("BeaverBuddies.Chat.Unread"), count) : "";
+            unreadBadge.style.display = count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        public void SetVisible(bool visible)
+        {
+            // Hiding a text box that has the cursor would leave the game's hotkeys switched off.
+            if (!visible) Chat?.ReleaseFocus();
             Root.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
 
         /// <summary>Keeps the panel to the side of the slot it sits in.</summary>
         public void SetAlignment(bool rightSide) =>
@@ -78,6 +132,8 @@ namespace BeaverBuddies.Panel
             role.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
             chevron.text = expanded ? "-" : "+";
             body.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!expanded) Chat?.ReleaseFocus();
+            chatArea.style.display = expanded && !chatDisabled ? DisplayStyle.Flex : DisplayStyle.None;
             if (!expanded) return;
 
             statusDot.style.backgroundColor = StatusColor(model.Status, headline);
@@ -181,7 +237,7 @@ namespace BeaverBuddies.Panel
             return line;
         }
 
-        static Label Text(string text, int size, Color color, bool bold = false)
+        internal static Label Text(string text, int size, Color color, bool bold = false)
         {
             var label = new Label(text);
             label.style.color = color; label.style.fontSize = size;
@@ -190,7 +246,7 @@ namespace BeaverBuddies.Panel
             return label;
         }
 
-        static void Border(VisualElement element, float width, Color color, float radius)
+        internal static void Border(VisualElement element, float width, Color color, float radius)
         {
             var style = element.style;
             style.borderTopWidth = width; style.borderBottomWidth = width; style.borderLeftWidth = width; style.borderRightWidth = width;

@@ -5,6 +5,46 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.7 (pre-release)
+
+A pre-release for testing, on top of 1.0.6. Every player should install this build.
+
+### A chat box in the connection panel
+
+Below the connection panel, in the same rectangle and exactly as tall as the section above it, is
+a chat box for the players in the game. See [CONNECTION-PANEL.md](CONNECTION-PANEL.md) for how it
+behaves; in short:
+
+- Type in the box and press Enter. Each line reads `Name: message`, the name in that player's
+  Ping Color. The log follows new messages unless you scroll up.
+- The host numbers every message and sends it to every player, the sender included, so everyone
+  sees one conversation in one order.
+- **Full history.** The host keeps the whole session's conversation (up to 2,000 messages) and
+  sends all of it to a player who joins later. It goes out in a few compressed frames after the
+  joining guest has its save, state and init event, and a message sent during the join is
+  either in that history or queued behind it, never both and never neither. Chat is per session:
+  a reload or a rehost starts an empty chat.
+- Collapsing the panel hides the chat; the collapsed header shows how many new messages there
+  are. A new optional key binding, **Chat: start typing**, puts the cursor in the box (unbound
+  until chosen; clicking the box always works).
+- While the cursor is in the box the game's hotkeys are switched off, using the game's own
+  mechanism for text boxes, so typing does not move the camera. Focus is released whenever the
+  chat is hidden, collapsed, or the scene ends, so the hotkeys cannot stay off.
+
+How it travels: chat frames use the same separate lane as cursor activity and the connection
+status feed. They are handled on the receive thread before they can reach the game's event queue,
+so they never enter the replay script or the desync hash. The host assigns each message's sender
+and number (a guest's own claims are ignored), rate-limits each guest to a burst of six and then
+two a second, and everything a peer sends is cleaned (plain text, one line, 200 characters, no `<`
+or `>`) and validated; a malformed frame is dropped and never ends the session. The lane gained an
+in-order queue for this: its existing latest-wins queue would have dropped messages.
+
+If the chat fails it disables itself and the rest of the panel carries on.
+
+Not verified: none of it has run in the game yet. The transport is covered by automated checks
+over real host and guest sessions; the look, the keyboard handling and the mouse wheel over the
+log are not, and are the things to look at first.
+
 ## 1.0.6 (pre-release)
 
 A pre-release for testing, on top of 1.0.5. Every player should install this build.

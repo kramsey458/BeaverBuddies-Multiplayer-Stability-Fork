@@ -71,6 +71,7 @@ A small panel appears in the top-left corner during a multiplayer game.
 - **Collapse it** by clicking its title; it shrinks to one line and remembers your choice.
 - **Hide it or move it** in Mod Settings → BeaverBuddies: **Connection panel** (Expanded / Collapsed / Hidden) and **Connection panel position** (any corner).
 - **Optional key:** bind **Toggle connection panel** under Options → Bindings → BeaverBuddies. It is unbound until you choose a key.
+- **Chat:** below the panel, in the same box, type a message and press Enter. Everyone in the game sees it in the same order, and a player who joins later is sent the whole conversation. Bind **Chat: start typing** in the same place to jump into the box from the keyboard (also unbound until you choose a key). Chat lasts for the session and is not saved with the game.
 
 Ping is measured by the network layer (a tiny probe once a second), so it means the same thing over Steam, Hamachi and direct IP, and it never touches the game simulation. Full details: [CONNECTION-PANEL.md](CONNECTION-PANEL.md).
 

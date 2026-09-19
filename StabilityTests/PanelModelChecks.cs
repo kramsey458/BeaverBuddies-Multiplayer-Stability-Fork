@@ -57,7 +57,7 @@ static class PanelModelChecks
             var missing = new List<string>(); int used = 0;
             foreach (string file in files)
                 foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(file),
-                    "\"(BeaverBuddies\\.(?:Panel|Settings\\.ConnectionPanel|KeyBindings\\.TogglePanel)[A-Za-z0-9.]*)\""))
+                    "\"(BeaverBuddies\\.(?:Panel|Chat|Settings\\.ConnectionPanel|KeyBindings\\.(?:TogglePanel|FocusChat))[A-Za-z0-9.]*)\""))
                 { used++; if (!defined.Contains(m.Groups[1].Value)) missing.Add(m.Groups[1].Value); }
             Check(used > 25, "found only " + used + " string keys; the check is not looking in the right place");
             Check(missing.Count == 0, "missing from enUS_BeaverBuddie.csv: " + string.Join(", ", missing.Distinct()));
