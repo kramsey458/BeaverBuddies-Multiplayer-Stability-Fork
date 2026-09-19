@@ -94,6 +94,23 @@ namespace TimberNet
             activityChannel?.Post(activity);
         }
 
+        public override bool SendChat(string name, string color, string text)
+        {
+            // Like activity, chat waits until the map has arrived. The host numbers it and sends it back to
+            // everyone, this guest included, so all players see the same order.
+            if (IsStopped || activityChannel == null || !ChatMessage.TryCreate(name, color, text, out ChatMessage? message) || message == null)
+                return false;
+            activityChannel.PostOrdered(message.ToJson());
+            return true;
+        }
+
+        protected override void HandleChat(ISocketStream source, IReadOnlyList<ChatMessage> messages, bool isHistory)
+        {
+            // Only the host numbers messages; an unnumbered one is not from the host.
+            foreach (ChatMessage message in messages)
+                if (message.Sequence > 0) Chat.Add(message);
+        }
+
         protected override void ProcessReceivedEvent(JObject message)
         {
             base.ProcessReceivedEvent(message);

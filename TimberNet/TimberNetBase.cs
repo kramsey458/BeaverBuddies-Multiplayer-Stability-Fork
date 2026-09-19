@@ -102,6 +102,34 @@ namespace TimberNet
             activityMailbox.Put(activity, ActivityMailbox.Now);
         }
 
+        // ---- Chat (presentation only) ----
+        // Chat shares the activity lane: never replayed, never hashed, handled before it can reach the event queue.
+
+        /// <summary>Every chat message of this session, oldest first. Safe to read from the game thread.</summary>
+        public ChatLog Chat { get; } = new ChatLog();
+
+        /// <summary>
+        /// Says something in chat as this player. The host assigns the sender's id and the message's place in
+        /// the conversation, so the name and color are all a guest gets to choose. False if it could not be sent:
+        /// nothing left of the text once cleaned, or not connected yet.
+        /// </summary>
+        public virtual bool SendChat(string name, string color, string text) => false;
+
+        /// <summary>A chat frame arrived on the receive thread. <paramref name="isHistory"/> is true for a host's catch-up batch.</summary>
+        protected virtual void HandleChat(ISocketStream source, IReadOnlyList<ChatMessage> messages, bool isHistory) { }
+
+        private void ReceiveChat(ISocketStream source, JObject frame, string type)
+        {
+            if (type == ChatMessage.HistoryType)
+            {
+                if (ChatMessage.TryParseHistory(frame, out List<ChatMessage> history)) HandleChat(source, history, true);
+            }
+            else if (ChatMessage.TryParse(frame, out ChatMessage? message) && message != null)
+            {
+                HandleChat(source, new[] { message }, false);
+            }
+        }
+
         // ---- Connection status feed (presentation only) ----
         // Ping probes and the player roster share the activity lane: never replayed, never hashed.
 
@@ -385,6 +413,13 @@ namespace TimberNet
                     // Optional display data: a bad frame is ignored, never fatal to the session.
                     try { HandleStatusFrame(client, controlType!, control); }
                     catch (Exception e) { Log("Ignoring a bad status frame: " + e.Message); }
+                    continue;
+                }
+                if (ChatMessage.IsChatType(controlType))
+                {
+                    // Optional display data: a bad frame is ignored, never fatal to the session.
+                    try { ReceiveChat(client, control, controlType!); }
+                    catch (Exception e) { Log("Ignoring a bad chat frame: " + e.Message); }
                     continue;
                 }
                 if ((string?)control[TYPE_KEY] == "SessionFault")

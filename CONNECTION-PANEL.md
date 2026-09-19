@@ -2,7 +2,8 @@
 
 A small panel in the corner of your screen during a multiplayer game. It shows who is
 connected, how good each connection is, whether you are in sync, and how fast the
-simulation is running. It can be collapsed to a single line or hidden completely.
+simulation is running, and below that it has a chat box for the players in the game. It can be
+collapsed to a single line or hidden completely.
 
 ## What it shows
 
@@ -50,9 +51,65 @@ players' pings **to the host**, which is the connection that matters for keeping
   right, bottom left or bottom right.
 - **Options -> Bindings -> BeaverBuddies -> Toggle connection panel:** an optional key to
   hide and show the panel. It is unbound until you choose a key.
+- **Options -> Bindings -> BeaverBuddies -> Chat: start typing:** an optional key that shows
+  the panel if it was collapsed or hidden and puts the cursor in the chat box. It is unbound
+  until you choose a key; clicking the box always works.
+
+Collapsing the panel hides the chat with it. While it is collapsed, the header shows a yellow
+**N new** for messages other players sent that you have not seen; expanding the panel clears it.
 
 The panel is docked into the game's own interface, so it scales with your UI scale and
 does not overlap other panels in the same corner. It appears only in multiplayer games.
+
+## Chat
+
+Below the connection panel, inside the same rectangle and exactly as tall as the section above
+it, is a chat box: the messages, and a box to type in. It appears whenever the panel is
+expanded, in a multiplayer game only.
+
+```
+o  Multiplayer                              Host     -
+o  In sync
+-------------------------------------------------------
+o  Kyler                                 You / Host
+o  Sarah                                       42 ms
+-------------------------------------------------------
+Tick rate   1.7 ticks/s
+Speed       1x
+-------------------------------------------------------
+Sarah: anyone want to build a second dam?
+Kyler: yes, upstream of the farm
+Sarah: on it
+[ Type a message...                                   ]
+```
+
+- **Send:** click the box, type, press **Enter**. Enter sends and leaves the cursor in the box
+  so you can keep talking. **Enter on an empty box, Esc, or a click on the game itself** gives
+  the keyboard back to the game.
+- **Typing does not play the game.** While the cursor is in the box the game's own hotkeys are
+  switched off (the game does this for its own text boxes), so a typed W does not move the camera.
+- **Who said what:** each line reads `Name: message`, the name in that player's **Ping Color**
+  (a very dark color is lightened so it can be read on the dark panel) and using the same
+  **Ping Display Name** as cursors and pings. Chat lines have no "(Host)" or "(P2)" tag, so two
+  players who both keep the default name and color look alike: set your own **Ping Display Name**
+  and **Ping Color** in Mod Settings.
+- **One order for everyone.** The host numbers every message and sends it to every player,
+  the sender included, so everyone sees the same conversation in the same order. Your own
+  message appears when the host has it, normally at once.
+- **Full history.** The host keeps the whole conversation and sends all of it to a player who
+  joins later, so they see what they missed. A session that goes past 2,000 messages drops the
+  oldest ones for everybody.
+- **Per session.** Chat is not saved with the game. Reloading a save or rehosting starts with
+  an empty chat.
+- **Scrolling:** the log follows new messages, unless you scroll up to read older ones. Use the
+  mouse wheel over it.
+- **Plain text, one line, up to 200 characters.** Line breaks and control characters are
+  removed, and so are `<` and `>` so nobody can put formatting into anyone else's screen.
+- **No flooding.** The host allows a player a burst of six messages and then two a second;
+  anything faster is dropped. The box also waits a moment between your own messages.
+
+The chat is laid out over the space below the panel instead of inside it, so a long message
+wraps to the panel's width and can never make the panel wider.
 
 ## How ping is measured
 
@@ -65,15 +122,17 @@ they appear as "Player N".
 
 ## It cannot affect the game
 
-Probes and the roster use the same separate lane as cursor activity. They are never part
-of the replay script or the desync hash, are handled before they can reach the game's event
-queue, are never sent to a guest who is still joining, and are validated on arrival; a
-malformed frame is ignored and never ends the session. The panel only reads: it sends no
-gameplay event. If it ever fails, it disables itself and the game continues.
+Probes, the roster and chat all use the same separate lane as cursor activity. They are never
+part of the replay script or the desync hash, are handled before they can reach the game's event
+queue, are never sent to a guest who is still joining (a joining guest gets its save and state
+first, then the chat history), and are validated on arrival; a malformed frame is ignored and
+never ends the session. The panel only reads, and chat sends no gameplay event. If the panel
+ever fails, it disables itself and the game continues; if only the chat fails, the rest of the
+panel carries on.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (73 checks) covers:
+`dotnet run --project StabilityTests` (160 checks) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
@@ -88,13 +147,35 @@ gameplay event. If it ever fails, it disables itself and the game continues.
   numbers formatted the same in every culture, and that every string the panel asks for
   exists in the English file.
 
-**Not verified: how it looks.** The panel's layout, colors, spacing and where it sits in each
-corner have not been seen in the running game; that needs a screenshot from a real
-session. The controls (click to collapse, the settings, the optional key) are likewise
-untested in the game.
+The chat adds checks (1.0.7) for:
+
+- the wire format and cleaning: control and direction-changing characters, markup, length,
+  surrogate pairs, and every kind of malformed message or history frame;
+- the history log (order, duplicates, the 2,000 message cap) and the host's rate limit;
+- real host and guest sessions: the host ignoring a guest's claimed id and number, everyone
+  seeing one order, no change to the hash, the event script or tick progress, gameplay events
+  keeping their order under a chat flood, a guest that floods being limited, a guest that
+  leaves, and a guest that joins receiving the whole history in order after its save, state and
+  init event, with a message sent during the join arriving exactly once, also while two guests
+  join during a burst of messages;
+- how a line is written (only the name is colored, no message can add markup, dark colors are
+  lightened), the English strings and the chat key binding's blueprint.
+
+**Not verified: how it looks and feels.** The panel's layout, colors, spacing and where it sits in
+each corner have not been seen in the running game; that needs a screenshot from a real
+session. The controls (click to collapse, the settings, the optional keys) are likewise
+untested in the game. For the chat that also means: how the box and the messages look, that
+the box takes and gives back the keyboard as described (Enter, Esc, a click on the game, the
+optional key), that the game's hotkeys really stay off while you type and come back after, how a
+long message wraps, whether the log follows new messages and lets you scroll up, and that the
+mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming
+while the pointer is over its interface, which this relies on).
 
 ## Known limits
 
-- Other languages show the English text for the new strings.
+- Other languages show the English text for the new strings. Chat itself carries any text
+  players type, but the game's font decides which characters can be drawn.
+- Chat is text only: no emoji picker, no private messages, no commands, no message editing.
+- Chat is not saved: it lasts as long as the multiplayer session, and starts empty after a reload.
 - Ping is measured about once a second, so it lags a sudden change slightly.
 - The panel does not show packet loss or bandwidth.

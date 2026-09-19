@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using BeaverBuddies.Activity;
 using BeaverBuddies.IO;
+using Timberborn.CoreUI;
 using Timberborn.InputSystem;
 using Timberborn.Localization;
 using Timberborn.SingletonSystem;
@@ -21,35 +22,45 @@ namespace BeaverBuddies.Panel
     public sealed class ConnectionPanelService : RegisteredSingleton, IPostLoadableSingleton, IUpdatableSingleton, IInputProcessor, IResettableSingleton
     {
         public const string ToggleKeyBindingId = "BeaverBuddies.KeyBind.TogglePanel";
+        public const string FocusChatKeyBindingId = "BeaverBuddies.KeyBind.FocusChat";
         // Later than the game's own panels, so this one sits after them in its corner.
         const int LayoutOrder = 1000;
         const float RefreshSeconds = .5f, TickSampleSeconds = .25f;
         // A guest is briefly out of events between every tick; only a longer wait means it is waiting on the host.
         const float WaitingDebounceSeconds = 1.5f;
+        // The host allows a short burst and then a steady rate; staying a little under it means an honest sender is
+        // never the one it drops.
+        const float MinChatIntervalSeconds = .4f;
 
         readonly UILayout layout;
+        readonly VisualElementInitializer initializer;
         readonly InputService input;
         readonly ILoc loc;
         readonly SpeedManager speed;
         readonly TickRateMeter tickMeter = new TickRateMeter();
         ConnectionPanelView view;
-        bool loaded, failed;
+        bool loaded, failed, chatFailed;
+        // Chat: the session the chat belongs to, how far messages have been counted, and what is unread.
+        TimberNetBase chatNet;
+        int countedSequence, unread, myPlayerId;
+        float lastChatSend;
         PanelCorner placedIn = (PanelCorner)(-1);
         PanelDisplayMode lastVisibleMode = PanelDisplayMode.Expanded;
         float nextRefresh, nextTickSample, waitingSince = -1;
         double? tickRate;
 
-        public ConnectionPanelService(UILayout layout, InputService input, ILoc loc, SpeedManager speed)
+        public ConnectionPanelService(UILayout layout, VisualElementInitializer initializer, InputService input, ILoc loc, SpeedManager speed)
         {
-            this.layout = layout; this.input = input; this.loc = loc; this.speed = speed;
+            this.layout = layout; this.initializer = initializer; this.input = input; this.loc = loc; this.speed = speed;
         }
 
         public void PostLoad()
         {
             try
             {
-                view = new ConnectionPanelView(loc);
+                view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
+                if (view.Chat != null) view.Chat.Submit = OnChatSubmit;
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
                 loaded = true;
@@ -60,6 +71,8 @@ namespace BeaverBuddies.Panel
         public void Reset()
         {
             loaded = false;
+            // Before the chat goes away: a text box that still has the cursor keeps the game's hotkeys switched off.
+            try { view?.Chat?.ReleaseFocus(); } catch (Exception) { }
             try { view?.Root.RemoveFromHierarchy(); } catch (Exception) { }
             try { input.RemoveInputProcessor(this); } catch (Exception) { }
             placedIn = (PanelCorner)(-1);
@@ -72,17 +85,31 @@ namespace BeaverBuddies.Panel
             Reset();
         }
 
-        // ---- input: an optional key to show or hide the panel ----
+        // ---- input: optional keys to show or hide the panel, and to start typing in the chat ----
 
         public bool ProcessInput()
         {
-            if (!loaded || failed || !input.IsKeyDown(ToggleKeyBindingId)) return false;
-            var mode = Settings.ConnectionPanelDisplayMode;
-            if (mode == PanelDisplayMode.Hidden) Settings.SetConnectionPanelDisplayMode(lastVisibleMode);
-            else { lastVisibleMode = mode; Settings.SetConnectionPanelDisplayMode(PanelDisplayMode.Hidden); }
-            nextRefresh = 0;
+            if (!loaded || failed) return false;
+            if (input.IsKeyDown(ToggleKeyBindingId))
+            {
+                var mode = Settings.ConnectionPanelDisplayMode;
+                if (mode == PanelDisplayMode.Hidden) Settings.SetConnectionPanelDisplayMode(lastVisibleMode);
+                else { lastVisibleMode = mode; Settings.SetConnectionPanelDisplayMode(PanelDisplayMode.Hidden); }
+                nextRefresh = 0;
+            }
+            else if (input.IsKeyDown(FocusChatKeyBindingId)) FocusChat();
             // Never swallow the key press for anyone else.
             return false;
+        }
+
+        void FocusChat()
+        {
+            if (view.Chat == null || chatFailed || CurrentNetwork() == null) return;
+            // Asking for the chat shows it, whatever state the panel was in.
+            if (Settings.ConnectionPanelDisplayMode != PanelDisplayMode.Expanded)
+                Settings.SetConnectionPanelDisplayMode(PanelDisplayMode.Expanded);
+            view.Chat.RequestFocus();
+            nextRefresh = 0;
         }
 
         void OnHeaderClicked()
@@ -105,6 +132,7 @@ namespace BeaverBuddies.Panel
         {
             var mode = Settings.ConnectionPanelDisplayMode;
             var net = CurrentNetwork();
+            if (!ReferenceEquals(net, chatNet)) StartChatSession(net);
             if (mode == PanelDisplayMode.Hidden || net == null)
             {
                 view.SetVisible(false);
@@ -112,6 +140,8 @@ namespace BeaverBuddies.Panel
                 return;
             }
             PlaceIfNeeded();
+            // Every frame, not just at each refresh: typing and new messages must not wait half a second.
+            UpdateChat(net, mode == PanelDisplayMode.Expanded);
 
             float now = Time.unscaledTime;
             var replay = SingletonManager.GetSingleton<ReplayService>();
@@ -126,6 +156,67 @@ namespace BeaverBuddies.Panel
             var model = PanelModelBuilder.Build(Collect(net, replay, now), Translate);
             view.Show(model, mode == PanelDisplayMode.Expanded);
             view.SetVisible(true);
+        }
+
+        // ---- chat ----
+
+        // A new session (or none) starts an empty chat; the messages themselves live with the network session.
+        void StartChatSession(TimberNetBase net)
+        {
+            chatNet = net; countedSequence = 0; unread = 0; lastChatSend = -100;
+            if (view.Chat == null || chatFailed) return;
+            try { view.Chat.ReleaseFocus(); view.Chat.Clear(); view.SetUnread(0); }
+            catch (Exception error) { DisableChat(error); }
+        }
+
+        void UpdateChat(TimberNetBase net, bool expanded)
+        {
+            if (view.Chat == null || chatFailed) return;
+            try
+            {
+                ChatLog log = net.Chat;
+                if (expanded)
+                {
+                    view.Chat.Tick();
+                    view.Chat.Sync(log);
+                    // A click on the game itself, not on any interface, gives the keyboard back to the game.
+                    if (view.Chat.IsFocused && input.MainMouseButtonDown && !input.MouseOverUI) view.Chat.ReleaseFocus();
+                    countedSequence = log.LastSequence; unread = 0;
+                }
+                else
+                {
+                    // Collapsed: the box is off screen, so the keyboard goes back to the game at once (waiting for the
+                    // next refresh would leave the hotkeys off for up to half a second).
+                    view.Chat.ReleaseFocus();
+                    // And count what others say, so the header can say there is something to read.
+                    if (log.LastSequence > countedSequence)
+                    {
+                        foreach (ChatMessage message in log.Since(countedSequence))
+                            if (message.PlayerId != myPlayerId) unread++;
+                        countedSequence = log.LastSequence;
+                    }
+                }
+                view.SetUnread(expanded ? 0 : unread);
+            }
+            catch (Exception error) { DisableChat(error); }
+        }
+
+        bool OnChatSubmit(string text)
+        {
+            var net = CurrentNetwork();
+            float now = Time.unscaledTime;
+            if (net == null || net.IsStopped || now - lastChatSend < MinChatIntervalSeconds) return false;
+            if (!net.SendChat(Settings.PingDisplayName, ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), text)) return false;
+            lastChatSend = now;
+            return true;
+        }
+
+        // Chat is optional: if it fails, the rest of the panel keeps working.
+        void DisableChat(Exception error)
+        {
+            chatFailed = true;
+            Plugin.LogWarning("The chat stopped working and is disabled for this scene: " + error.Message);
+            try { view.DisableChat(); } catch (Exception) { }
         }
 
         void PlaceIfNeeded()
@@ -151,6 +242,7 @@ namespace BeaverBuddies.Panel
         {
             var io = EventIO.Get();
             NetworkStatus status = net.GetNetworkStatus();
+            myPlayerId = status.IsHost ? 0 : status.YourPlayerId;
 
             // A guest is only "waiting" if it has been out of events for a while, not between ticks.
             bool outOfEvents = !status.IsHost && io != null && io.IsOutOfEvents;

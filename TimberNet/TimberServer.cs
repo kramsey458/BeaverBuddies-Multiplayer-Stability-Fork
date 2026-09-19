@@ -28,6 +28,14 @@ namespace TimberNet
             new ConcurrentDictionary<ISocketStream, ActivityChannel>();
         private int lastPlayerId;
 
+        // Chat: the host numbers every message and keeps the whole conversation, so a guest who joins late can be
+        // sent all of it. chatGate makes "publish a message" and "send the history to a new guest" one step each, so
+        // a message is either in the history a joining guest gets or queued behind it, never both and never neither.
+        private readonly object chatGate = new object();
+        private readonly ConcurrentDictionary<ISocketStream, ChatRateLimiter> chatLimits =
+            new ConcurrentDictionary<ISocketStream, ChatRateLimiter>();
+        private int lastChatSequence;
+
         // How often the host pings each guest and publishes the roster. Adjustable so tests need not wait.
         public static int StatusIntervalMs = 1000;
         private readonly ConcurrentDictionary<ISocketStream, RttTracker> trackers = new ConcurrentDictionary<ISocketStream, RttTracker>();
@@ -152,6 +160,7 @@ namespace TimberNet
             playerIds.TryRemove(client, out _);
             trackers.TryRemove(client, out _);
             guestTicksBehind.TryRemove(client, out _);
+            chatLimits.TryRemove(client, out _);
             if (activityChannels.TryRemove(client, out ActivityChannel? channel)) channel.Close();
         }
 
@@ -243,6 +252,52 @@ namespace TimberNet
             }
         }
 
+        protected override void HandleChat(ISocketStream source, IReadOnlyList<ChatMessage> messages, bool isHistory)
+        {
+            // History only flows from the host to a guest, and a guest sends one message at a time.
+            if (isHistory || messages.Count != 1) return;
+            // Frames from a connection that has not been admitted are ignored.
+            if (!playerIds.TryGetValue(source, out int id)) return;
+            // A guest that talks too fast is dropped, not disconnected: chat is optional.
+            if (!chatLimits.GetOrAdd(source, _ => new ChatRateLimiter()).TryTake(RttTracker.NowMs)) return;
+            Publish(messages[0], id);
+        }
+
+        public override bool SendChat(string name, string color, string text)
+        {
+            if (IsStopped || !ChatMessage.TryCreate(name, color, text, out ChatMessage? message) || message == null) return false;
+            Publish(message, 0);
+            return true;
+        }
+
+        /// <summary>Numbers a message, keeps it, and queues it for every guest that has finished joining.</summary>
+        private void Publish(ChatMessage message, int playerId)
+        {
+            lock (chatGate)
+            {
+                ChatMessage stamped = message.Stamped(++lastChatSequence, playerId);
+                Chat.Add(stamped);
+                JObject frame = stamped.ToJson();
+                foreach (var pair in activityChannels)
+                {
+                    if (!pair.Key.Connected) { RemoveActivity(pair.Key); continue; }
+                    pair.Value.PostOrdered(frame);
+                }
+            }
+        }
+
+        // The map, state and init event are already written, so this guest can now receive activity and chat.
+        private void OpenActivityLane(ISocketStream client)
+        {
+            ActivityChannel channel = CreateActivityChannel(client);
+            lock (chatGate)
+            {
+                // Opened and given the history in one step: a message published after this is queued behind it.
+                activityChannels[client] = channel;
+                foreach (JObject frame in ChatMessage.HistoryFrames(Chat.All())) channel.PostOrdered(frame);
+            }
+        }
+
         private void FinishQueuing(ISocketStream client)
         {
             // Log("finishing queuing");
@@ -257,9 +312,7 @@ namespace TimberNet
                         SendEvent(client, message);
                     }
                     queuedMessages.TryRemove(client, out _);
-                    // The map, state and init event are already written, so this client can
-                    // now receive activity frames.
-                    if (!IsStopped) activityChannels[client] = CreateActivityChannel(client);
+                    if (!IsStopped) OpenActivityLane(client);
                 }
                 else
                 {

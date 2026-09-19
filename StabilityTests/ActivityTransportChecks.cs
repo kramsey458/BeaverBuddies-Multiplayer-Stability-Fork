@@ -208,7 +208,7 @@ static class ActivityTransportChecks
     static void Equal<T>(T expected, T actual) =>
         Check(EqualityComparer<T>.Default.Equals(expected, actual), $"expected {expected}, got {actual}");
 
-    sealed class TestGuest : TimberClient
+    internal sealed class TestGuest : TimberClient
     {
         readonly ISocketStream stream;
         public TestGuest(ISocketStream stream) : base(stream) { this.stream = stream; }
@@ -216,7 +216,7 @@ static class ActivityTransportChecks
     }
 
     // Records every byte the host writes to a guest so the frame order can be checked.
-    sealed class TapStream : ISocketStream
+    internal sealed class TapStream : ISocketStream
     {
         readonly ISocketStream inner; readonly object gate = new();
         readonly List<byte> bytes = new();
@@ -259,7 +259,7 @@ static class ActivityTransportChecks
         public void Stop() => Pending.CompleteAdding();
     }
 
-    sealed class Session : IDisposable
+    internal sealed class Session : IDisposable
     {
         public readonly TimberServer Host;
         public readonly List<TestGuest> Guests = new();
@@ -287,7 +287,7 @@ static class ActivityTransportChecks
             return tap!;
         }
 
-        TestGuest AddGuest(Func<ISocketStream, TapStream>? tapFactory, bool wait = true)
+        public TestGuest AddGuest(Func<ISocketStream, TapStream>? tapFactory = null, bool wait = true)
         {
             var (hostSide, guestSide) = PipeStreamFactory.Pair();
             listener.Pending.Add(tapFactory != null ? tapFactory(hostSide) : hostSide);
