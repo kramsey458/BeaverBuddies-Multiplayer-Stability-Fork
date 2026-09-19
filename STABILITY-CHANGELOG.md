@@ -5,6 +5,54 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9-framethrottler-preview (pre-release)
+
+A pre-release for testing, on top of everything in 1.0.8. Every player should install this build:
+guests send the host one more number than before, and a 1.0.8 host ignores replies that carry it
+(it would lose its ping and lag figures for that guest).
+
+### The host can ease off for a guest's frame rate
+
+- With the large colony speed limit removed, a slower computer can keep up with the simulation
+  and still have a bad time: in a real session a guest stayed within a few ticks of the host at
+  a true speed 7 while drawing 13 to 14 frames a second, because the simulation took about 63%
+  of every second on that computer. The existing easing only looks at how many ticks behind a
+  guest is, so it never reacted.
+- New host choice, **Ease off below**: Off (the default), 20, 30, 45 or 60 fps. It is a line in
+  the connection panel that the host clicks to pick the next value, and the same setting is in
+  the mod settings. Only the host's value is ever used, and it can be changed at any time during
+  a session.
+- Guests report their frames per second in the reply they already send to the host's ping
+  probe, about once a second. A guest reports nothing while its game window is in the
+  background, where the system throttles it and the figure says nothing about the computer, and
+  the host forgets a guest's figure as soon as a reply arrives without one.
+- While the slowest guest stays below the floor for three reports in a row, the host drops 10%
+  of the chosen speed, down to 30%. It climbs back 5% once the guest has been clear of the floor
+  by some headroom (a quarter of the floor, at least 5 fps) for three reports. In between it
+  holds, which keeps it from see-sawing, because easing off is exactly what raises the guest's
+  frame rate. A paused game and speed 1 are never eased, and switching the choice off or the
+  guest leaving restores full speed at once.
+- It combines with the existing easing by taking the lower of the two percentages, never both
+  multiplied, and the hold for a guest far behind still wins. The panel says which one is
+  holding the host back: **Easing off for guests** reads "N% of chosen speed (guest frame
+  rate)" when it is this one. The host also sees **Slowest guest fps**. Each change is written
+  to `Player.log`.
+- In the test model of a guest that draws 15 fps at a true speed 7, a floor of 30 brings it back
+  above 30 fps with the host settled at 50% of the chosen speed and no further changes; a fast
+  guest is never slowed at any floor; and full speed returns when the guest's load drops.
+- Like the other pacing, this changes how fast the host works through ticks, never which tick
+  anything happens on, so it cannot change what anyone simulates.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 176 StabilityTests (fifteen new in
+  `FrameRatePacingChecks`: the frame rate meter, the reply format and its limits, the rule step
+  by step, how it combines with lag easing, the model above, a real host and guest session in
+  which the host reads the guest's frame rate and forgets it when the guest stops reporting, and
+  the panel), 64 RuntimeChecks against the built mod and 2 Python checks pass.
+- Not yet played in a multiplayer session. The clickable line in the panel is new and has not
+  been seen in the game.
+
 ## 1.0.8
 
 The current release. It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were

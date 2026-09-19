@@ -467,6 +467,7 @@ namespace BeaverBuddies
         public void UpdateSingleton()
         {
             if (!CanAct) return;
+            ReportFrameRate();
             if (waitUpdates > 0)
             {
                 waitUpdates--;
@@ -514,6 +515,21 @@ namespace BeaverBuddies
         /// <summary>True while the host stands still because a guest is very far behind.</summary>
         public bool HostPacingHolding => hostPacing.IsHolding;
 
+        private readonly FrameRatePacing frameRatePacing = new FrameRatePacing();
+        private readonly FrameRateMeter frameRateMeter = new FrameRateMeter();
+
+        /// <summary>Percent of the chosen speed the host runs at because of a guest's frame rate. 100 unless the host chose a floor and a guest is below it.</summary>
+        public int FrameRatePacingPercent => frameRatePacing.Percent;
+
+        // A guest tells the host its frame rate with each reply to the host's ping probe. Nothing is reported while
+        // the window is in the background, where the system throttles it and the figure says nothing about the computer.
+        private void ReportFrameRate()
+        {
+            if (!(io is ClientEventIO guest) || guest.NetBase == null) return;
+            frameRateMeter.Frame(UnityEngine.Time.realtimeSinceStartupAsDouble);
+            guest.NetBase.ReportedFps = UnityEngine.Application.isFocused ? frameRateMeter.Fps : 0;
+        }
+
         // Guests report their tick about once a second, so sampling more often would count the same report twice.
         private void SampleHostPacing(ServerEventIO host)
         {
@@ -533,6 +549,16 @@ namespace BeaverBuddies
             {
                 Plugin.Log($"Host pacing: now {hostPacing.Percent}% of the chosen speed " +
                            $"(slowest guest is {host.NetBase?.WorstGuestTicksBehind} ticks behind)");
+            }
+
+            // Same once-a-second reports, a different question: is a guest keeping up in ticks but drawing few frames?
+            int fpsBefore = frameRatePacing.Percent;
+            int floor = Settings.GuestFpsFloorValue;
+            frameRatePacing.Sample(floor, host.NetBase?.WorstGuestFps, TargetSpeed > 1 && !hostPacing.IsHolding);
+            if (frameRatePacing.Percent != fpsBefore)
+            {
+                Plugin.Log($"Host pacing: now {frameRatePacing.Percent}% of the chosen speed for guest frame rate " +
+                           $"(slowest guest draws {host.NetBase?.WorstGuestFps?.ToString() ?? "?"} fps, floor {floor})");
             }
         }
 
@@ -558,7 +584,7 @@ namespace BeaverBuddies
             if (io is ServerEventIO host)
             {
                 SampleHostPacing(host);
-                targetSpeed = hostPacing.Apply(targetSpeed);
+                targetSpeed = hostPacing.Apply(targetSpeed, frameRatePacing.Percent);
             }
 
             if (_speedManager.CurrentSpeed != targetSpeed)

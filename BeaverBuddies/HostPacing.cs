@@ -105,15 +105,23 @@ namespace BeaverBuddies
         // The speed the host should actually run at for the speed the players chose.
         public float Apply(float targetSpeed)
         {
+            return Apply(targetSpeed, 100);
+        }
+
+        // As above, with a second reason to ease off (FrameRatePacing). The lower of the two percentages wins:
+        // whichever guest problem is worse decides, and they are never multiplied together.
+        public float Apply(float targetSpeed, int otherPercent)
+        {
             if (IsHolding)
             {
                 return 0;
             }
-            if (Percent >= 100 || targetSpeed <= 1)
+            int percent = Math.Min(Percent, otherPercent);
+            if (percent >= 100 || targetSpeed <= 1)
             {
                 return targetSpeed;
             }
-            return Math.Max(1f, targetSpeed * Percent / 100f);
+            return Math.Max(1f, targetSpeed * percent / 100f);
         }
     }
 }

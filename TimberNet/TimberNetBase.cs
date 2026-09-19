@@ -59,6 +59,13 @@ namespace TimberNet
 
         public int TickCount { get; private set; }
 
+        private volatile int reportedFps;
+        /// <summary>
+        /// This player's own frames per second, set by the game every frame and sent to the host with each reply
+        /// to its ping probe (which happens on a network thread). Zero or less means there is nothing to report.
+        /// </summary>
+        public int ReportedFps { get => reportedFps; set => reportedFps = value; }
+
         public int TicksBehind
         {
             get

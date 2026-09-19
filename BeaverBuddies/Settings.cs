@@ -117,6 +117,20 @@ namespace BeaverBuddies
                 .SetLocalizedTooltip("BeaverBuddies.Settings.ConnectionPanelCorner.Tooltip")
         );
 
+        // ---- Guest frame rate ----
+
+        // Also changed from the connection panel, where the host can see each guest's frame rate.
+        public LimitedStringModSetting GuestFpsFloor { get; } =
+            new(0, new[] {
+                new LimitedStringModSettingValue("0", "BeaverBuddies.Settings.GuestFpsFloor.Off"),
+                new LimitedStringModSettingValue("20", "BeaverBuddies.Settings.GuestFpsFloor.20"),
+                new LimitedStringModSettingValue("30", "BeaverBuddies.Settings.GuestFpsFloor.30"),
+                new LimitedStringModSettingValue("45", "BeaverBuddies.Settings.GuestFpsFloor.45"),
+                new LimitedStringModSettingValue("60", "BeaverBuddies.Settings.GuestFpsFloor.60")
+            }, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.GuestFpsFloor")
+                .SetLocalizedTooltip("BeaverBuddies.Settings.GuestFpsFloor.Tooltip")
+        );
+
         // ---- Developer Settings ----
 
         public ModSetting<bool> AlwaysTrace { get; } =
@@ -179,6 +193,13 @@ namespace BeaverBuddies
 
         public static PanelCorner ConnectionPanelCornerValue =>
             ParseChoice(instance?.ConnectionPanelCorner?.Value, PanelCorner.TopLeft);
+
+        /// <summary>The frame rate below which a host eases off for a guest. 0 is off. Only the host's value matters.</summary>
+        public static int GuestFpsFloorValue =>
+            int.TryParse(instance?.GuestFpsFloor?.Value, out int floor) && System.Array.IndexOf(FrameRatePacing.Floors, floor) >= 0 ? floor : 0;
+
+        /// <summary>Saves the floor chosen from the connection panel.</summary>
+        public static void SetGuestFpsFloor(int floor) => instance?.GuestFpsFloor.SetValue(floor.ToString());
 
         /// <summary>Saves the panel's state, so collapsing it from the panel itself is remembered.</summary>
         public static void SetConnectionPanelDisplayMode(PanelDisplayMode mode) =>
