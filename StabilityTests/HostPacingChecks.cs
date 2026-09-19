@@ -173,7 +173,12 @@ static class HostPacingChecks
                 guest.Start();
                 Check(SpinWait.SpinUntil(() => { host.Update(); guest.Update(); return mapped; }, 3000), "guest never joined");
                 Check(host.WorstGuestTicksBehind == null || host.WorstGuestTicksBehind == 0, "nothing reported yet");
-                host.ReadEvents(140); guest.ReadEvents(100);   // the game tells each side which tick it has reached
+                // A guest that has not ticked yet is loading, not behind: a rehost keeps the old session's tick
+                // count, and 1.0.6 made the host wait for a joining guest that was "150 ticks behind".
+                host.ReadEvents(140);
+                for (int i = 0; i < 40; i++) { host.Update(); guest.Update(); Thread.Sleep(5); }
+                Check(host.WorstGuestTicksBehind == null, $"a guest still at tick 0 counted as {host.WorstGuestTicksBehind} behind");
+                guest.ReadEvents(100);   // the game tells each side which tick it has reached
                 Check(SpinWait.SpinUntil(() => { host.Update(); guest.Update(); Thread.Sleep(2); return host.WorstGuestTicksBehind == 40; }, 3000),
                     $"host saw {host.WorstGuestTicksBehind}");
                 Equal((int?)40, host.GetNetworkStatus().Peers.Single().TicksBehind);
@@ -185,6 +190,26 @@ static class HostPacingChecks
                     "a guest that left is still counted");
             }
             finally { TimberServer.StatusIntervalMs = previousInterval; guest.Close(); host.Close(); }
+        });
+        yield return ("Walker trace: keeps the most recent ticks, groups a tick's buckets, writes exact bits", () =>
+        {
+            var trace = new BeaverBuddies.DesyncDetecter.WalkerTrace(ticksKept: 3);
+            for (int tick = 1; tick <= 5; tick++)
+            {
+                // Two buckets of the same tick arrive as separate calls.
+                trace.Add(tick, new BeaverBuddies.DesyncDetecter.WalkerRecord { EntityId = "a", Name = "Ann\tB", X = 1f, Y = 0.1f, Z = tick, OnZiplineEdge = true });
+                trace.Add(tick, new BeaverBuddies.DesyncDetecter.WalkerRecord { EntityId = "b", Name = "Bo", X = 2f, CornerCount = 4, NextCornerIndex = 2 });
+            }
+            Equal(3, trace.TickCount);
+            var text = new System.IO.StringWriter();
+            trace.Write(text);
+            string[] lines = text.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            Equal(1 + 3 * 2, lines.Length);
+            Check(lines[0].StartsWith("tick\tentity\tname\tx"), lines[0]);
+            Check(lines[1].StartsWith("3\ta\tAnn B\t3F800000=1\t3DCCCCCD=0.1\t40400000=3\t"), lines[1]);   // a tab in a name cannot break a column
+            Check(lines[1].TrimEnd().EndsWith("\t1\t0"), lines[1]);
+            Check(lines[6].StartsWith("5\tb\tBo\t40000000=2\t") && lines[6].Contains("\t2\t4\t"), lines[6]);
+            Equal("3DCCCCCD=0.1", BeaverBuddies.DesyncDetecter.WalkerTrace.Bits(0.1f));
         });
         yield return ("Panel: the host sees the slowest guest's lag, and a line while it is easing off", () =>
         {

@@ -1028,6 +1028,8 @@ namespace BeaverBuddies
                     var targetPos = pathFollower._transform.position;
                     animatedPathFollower.CurrentPosition = targetPos;
                     PositionHash = TimberNetBase.CombineHash(PositionHash, targetPos.GetHashCode());
+                    BeaverBuddies.DesyncDetecter.WalkerDiagnostics.Capture(entityComponent, pathFollower,
+                        BeaverBuddies.DesyncDetecter.DesyncDetecterService.CurrentTick);
                 }
                 // Make sure it updates the model's position as well
                 try
