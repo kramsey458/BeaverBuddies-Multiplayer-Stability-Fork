@@ -5,6 +5,60 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.10-release-candidate (pre-release)
+
+A pre-release for testing, on top of 1.0.9, which is still the current release. It changes one thing:
+how much work this mod does on every tick of a co-op game. **It has not been played yet.** Every
+player should install this build: the join check compares the mod build, so it will not join a
+session with a different one.
+
+### The pass over every entity on each tick is cheaper
+
+Before each batch of entities ticks, this mod visits every entity in it to keep the animation of the
+ones that walk (the beavers and bots: 361 of the 11,464 entities in the colony below) in step
+between the players. To find them it looked up a component on every entity, on every tick, and it
+also folded every entity into two hashes that only the detailed log ever prints.
+
+Measured in a two-player recording of a large colony (speed 7, 11.7 ticks a second), that pass took
+7.1 ms a tick on the host and 7.4 ms on the guest, about a fifth of the guest's 36 ms tick. About
+3.2 to 3.5 ms of it was that component lookup (estimated from a sample of one lookup in sixteen)
+and about 3.4 ms was the loop and the hashing together.
+
+- The pass now remembers, for each position in a bucket, whether the entity there has the walking
+  component, and only asks the game again when a different entity turns up at that position.
+  Adding or removing an entity shifts the positions after it, and those are asked again; nothing
+  has to be invalidated, and a stale answer cannot be reused because an answer is only trusted for
+  the very same entity object. This relies on an entity not gaining or losing that component once
+  it is ticking. The walkers themselves are handled exactly as before.
+- The two hashes ("Order hash" and "Move hash" in the detailed log's line for each tick) are now
+  only kept while detailed logging is on, which is when they are printed, and nothing else read
+  them. They start from zero when detailed logging turns on, including when a desync turns it on, so
+  both players' lines agree from the first one. Their values are therefore not comparable with a log
+  written by an earlier build.
+- Nothing that is simulated, sent or saved changes.
+
+Expected effect: roughly 3 to 6 ms less on each tick, between about 8% and 17% of the guest's tick
+in that recording. That is an estimate from the measurements above (how much of the
+loop and hashing time was the hashing is not known); it has not been measured with this build.
+
+What it does not fix: in the same recording the guest's frame rate fell from 23 to 8.5 frames a
+second over about seven minutes at speed 7, and an earlier recording of the host showed the same
+kind of slowing (from 80 to 29 frames a second). Most of that time was spent in Unity's late-update phase (about 20 ms a tick on the host
+and 34 ms on the guest), which is not code of this mod, and what runs there is not known. Every
+recording so far started fast and slowed down over a session at a high speed, and a restart
+started fast again. This release does not change that.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 208 StabilityTests (9 new, for the
+  memory of which entities walk, including one that adds and removes entities at random in a real
+  sorted list, the game's own container for a bucket, and checks every answer), 69 RuntimeChecks
+  against the built mod and 3 Python checks pass.
+- **Not tested: the pass itself has not run in the game.** It works on Unity's entities, which the
+  checks cannot create, so the memory is checked on its own with stand-ins and the patch is covered
+  only by the build and by the runtime checks loading the mod. How much it saves in a real colony
+  is not known.
+
 ## 1.0.9
 
 The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the

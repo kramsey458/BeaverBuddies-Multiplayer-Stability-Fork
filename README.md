@@ -6,6 +6,9 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
+> [!NOTE]
+> **Release candidate.** `1.1.10-release-candidate` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original) and the [changelog](STABILITY-CHANGELOG.md)). **It has not been played yet.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
+
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
 ## Highlights
@@ -20,7 +23,7 @@ This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thoma
 - **Mismatched builds are caught early.** Joining with a different build is refused before the save is sent, with a message that says what to do, instead of failing halfway through.
 - **Mismatched mods are flagged.** When someone joins, both players are warned if their lists of mods differ, naming the mods that are on only one computer or at different versions, so a mismatched mod is caught in the lobby instead of as a desync later. It is a warning, not a block.
 - **Failures are explained.** A failed connection or multiplayer action ends with a plain-language reason (including Steam's own error code) instead of a silent hang.
-- **Tested.** 271 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
+- **Tested.** 280 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
 
 ## Install
 
@@ -87,7 +90,7 @@ Ping is measured by the network layer (a tiny probe once a second, answered on t
 
 ## How this fork improves on the original
 
-The comparison below is against the original project's `v1.1` branch at the point this fork branched (commit `a13b1f2`, 24 August 2026). Since then the fork has changed 128 files (about 15,700 lines added, tests and documentation included). As of September 2026 the original's `v1.1` branch has not moved since that commit, so this comparison is current.
+The comparison below is against the original project's `v1.1` branch at the point this fork branched (commit `a13b1f2`, 24 August 2026). Since then the fork has changed 131 files (about 16,000 lines added, tests and documentation included). As of September 2026 the original's `v1.1` branch has not moved since that commit, so this comparison is current.
 
 Each item says how well it is confirmed: **confirmed** means the maintainer verified it in a real multiplayer playtest; **tested** means it is covered by automated regression checks but has not been confirmed in a live session.
 
@@ -124,6 +127,8 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 **Performance.** Fewer allocations from diagnostics, faster handling of the event backlog, one JSON parse per network message instead of two, and routine logging skipped unless needed. In synthetic tests, 4,000 ordered event inserts went from about 439 ms to under 1 ms, and 16 diagnostic captures stopped allocating about 85 MB. These are not frame-rate measurements. *Confirmed to play well in a two-player playtest.*
 
+**The per-tick pass over every entity.** In co-op this mod visits every entity in a bucket before it ticks, to keep the walkers' animation in step between the players. It used to look up a component on all of them, and fold all of them into two hashes that only the detailed log prints, on every tick. In a two-player recording of a colony with 11,464 entities (361 of them walkers) that pass took about 7 ms of a 30 to 36 ms tick. It now remembers which entities walk and keeps the hashes only while detailed logging is on; the expected saving is roughly 3 to 6 ms per tick (an estimate). It does not change what is simulated. *Tested with synthetic checks (adding and removing entities at random); not yet run in the game, and the effect on frame rate has not been measured.* It does not fix the frame rate that falls over a long session at a high speed: in that recording most of the time was spent outside this mod, in Unity's late-update phase, and what runs there is not known.
+
 **What the fork does not change.** It does not make desyncs impossible, and it has not been tried on more than two players. Everything the original provides (multi-start maps, pings, the pause-reduction setting, hosting and joining from the menus) is still there.
 
 ## Things to know before you play
@@ -140,7 +145,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 ## Testing and verification
 
-The 1.0.9 validation run passed **271 checks**: **199** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box and the walker trace), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
+The 1.1.10-release-candidate validation run passed **280 checks**: **208** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
 
 These checks cannot start Unity or prove full multiplayer determinism, and they need the game installed locally (no proprietary game files are included in this repository). See [StabilityTests/README.md](StabilityTests/README.md) for how to run them. The maintainer's real playtests, described above, are what confirm behavior in the live game.
 

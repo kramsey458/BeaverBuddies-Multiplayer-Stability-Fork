@@ -13,6 +13,7 @@ using MonoMod.RuntimeDetour;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Timberborn.Autosaving;
@@ -1003,22 +1004,54 @@ namespace BeaverBuddies
             PositionHash = positionHash;
         }
 
+        // Which entities in each bucket have a MovementAnimator. Whether an entity has one never
+        // changes once it is ticking, so it is looked up once and remembered (see EntitySlotCache),
+        // not on every tick for every entity in the colony. Keyed weakly so a bucket from a game
+        // that has been left takes its cache with it.
+        private static readonly ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>> animators =
+            new ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>>();
+        private static readonly ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>>.CreateValueCallback newAnimatorCache =
+            _ => new EntitySlotCache<TickableEntity, MovementAnimator>();
+
+        // Whether the previous pass kept the hashes, to start them from zero when they are switched on.
+        private static bool keepingHashes;
+
         static void Prefix(TickableEntityBucket __instance)
         {
             if (EventIO.IsNull) return;
 
+            // The two hashes are only ever read by the detailed log line in ReplayService, which
+            // prints them under this same condition, so they are only kept while it is on. Hashing
+            // every entity is a real cost on every tick of every game otherwise. They start from
+            // zero when detailed logging turns on (including when a desync turns it on), so that
+            // both players' lines agree from the first one.
+            bool hashes = Settings.Debug && Settings.VerboseLogging;
+            if (hashes && !keepingHashes)
+            {
+                EntityUpdateHash = 0;
+                PositionHash = 0;
+            }
+            keepingHashes = hashes;
+
+            var slots = animators.GetValue(__instance, newAnimatorCache);
+            var entities = __instance._tickableEntities.Values;
             for (int i = 0; i < __instance._tickableEntities.Count; i++)
             {
-                var entity = __instance._tickableEntities.Values[i];
-                EntityUpdateHash = TimberNetBase.CombineHash(EntityUpdateHash, entity.EntityId.GetHashCode());
+                var entity = entities[i];
+                if (hashes)
+                    EntityUpdateHash = TimberNetBase.CombineHash(EntityUpdateHash, entity.EntityId.GetHashCode());
 
-                var entityComponent = entity._entityComponent;
                 // Only characters that move have a MovementAnimator (buildings, for example, do
-                // not), and both steps below need one. Look it up once and skip everything else,
-                // instead of four component lookups for every entity on every tick.
+                // not), and both steps below need one. Skip everything else. Most entities in a
+                // colony do not move, so this is what keeps the pass cheap.
                 // ReferenceEquals keeps the null semantics of the original "?." lookups.
-                MovementAnimator anim = entityComponent.GetComponent<MovementAnimator>();
+                if (!slots.TryGet(i, entity, out MovementAnimator anim))
+                {
+                    anim = entity._entityComponent.GetComponent<MovementAnimator>();
+                    slots.Set(i, entity, anim);
+                }
                 if (ReferenceEquals(anim, null)) continue;
+                var entityComponent = entity._entityComponent;
                 var pathFollower = entityComponent.GetComponent<Walker>()?.PathFollower;
                 var animatedPathFollower = anim._animatedPathFollower;
                 if (pathFollower != null && animatedPathFollower != null)
@@ -1027,7 +1060,8 @@ namespace BeaverBuddies
                     // (hopefully) deterministic position
                     var targetPos = pathFollower._transform.position;
                     animatedPathFollower.CurrentPosition = targetPos;
-                    PositionHash = TimberNetBase.CombineHash(PositionHash, targetPos.GetHashCode());
+                    if (hashes)
+                        PositionHash = TimberNetBase.CombineHash(PositionHash, targetPos.GetHashCode());
                     BeaverBuddies.DesyncDetecter.WalkerDiagnostics.Capture(entityComponent, pathFollower,
                         BeaverBuddies.DesyncDetecter.DesyncDetecterService.CurrentTick);
                 }
@@ -1094,6 +1128,8 @@ namespace BeaverBuddies
                 //    Plugin.Log($"{entity.EntityId}: {FVS(transform.position)}");
                 //}
             }
+            // Let go of positions past the end if entities were removed from this bucket.
+            slots.Trim(__instance._tickableEntities.Count);
         }
 
         private static string FVS(Vector3 vector)
