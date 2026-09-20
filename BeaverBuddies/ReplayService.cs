@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using BeaverBuddies.Perf;
+using TimberNet.Perf;
 using Timberborn.Automation;
 using Timberborn.Autosaving;
 using Timberborn.BlockObjectTools;
@@ -140,6 +142,7 @@ namespace BeaverBuddies
         public void Reset()
         {
             Plugin.Log("Resetting Replay Service...");
+            PerfSession.Stop();
             IsLoaded = false;
             HasReplayFailure = false;
             IsReplayingEvents = false;
@@ -292,6 +295,13 @@ namespace BeaverBuddies
         }
 
         private void ReplayEvents()
+        {
+            long perf = PerfProbe.Begin(PerfSlot.Replay);
+            try { ReplayEventsCore(); }
+            finally { PerfProbe.End(perf); }
+        }
+
+        private void ReplayEventsCore()
         {
             if (_tickingService.NextBucket != 0)
             {
@@ -491,6 +501,7 @@ namespace BeaverBuddies
             DesyncDetecterService.StartTick(ticksSinceLoad);
 
             IsLoaded = true;
+            PerfSession.Start(io is ServerEventIO);
         }
 
         // TODO: Find a better callback way of waiting until initial game
@@ -500,6 +511,7 @@ namespace BeaverBuddies
         public void UpdateSingleton()
         {
             if (!CanAct) return;
+            PerfFrame();
             ReportFrameRate();
             if (waitUpdates > 0)
             {
@@ -543,6 +555,17 @@ namespace BeaverBuddies
         {
             TargetSpeed = speed;
             UpdateSpeed();
+        }
+
+        // For the frame rate log: how far behind the newest received tick this player was when the speed was last set,
+        // kept here so the log does not ask again (asking parses a message).
+        private int perfTicksBehind;
+
+        private void PerfFrame()
+        {
+            if (!PerfProbe.Enabled) return;
+            PerfProbe.OnFrame(ticksSinceLoad, _speedManager.CurrentSpeed, TargetSpeed,
+                perfTicksBehind, hostPacing.Percent, hostPacing.IsHolding, UnityEngine.Application.isFocused);
         }
 
         private readonly HostPacing hostPacing = new HostPacing();
@@ -619,7 +642,8 @@ namespace BeaverBuddies
             }
 
             // If we're not out of ticks to process, speed up while we're behind.
-            float targetSpeed = CatchUpSpeed.For(TargetSpeed, io.TicksBehind, _speedManager.CurrentSpeed);
+            perfTicksBehind = io.TicksBehind;
+            float targetSpeed = CatchUpSpeed.For(TargetSpeed, perfTicksBehind, _speedManager.CurrentSpeed);
 
             // The host is never behind. It eases off instead, and only when a guest cannot keep up.
             if (io is ServerEventIO host)
@@ -655,6 +679,7 @@ namespace BeaverBuddies
             }
 
             ticksSinceLoad++;
+            PerfProbe.NoteTickStart(ticksSinceLoad);
 
             if (io.ShouldSendHeartbeat)
             {
@@ -800,6 +825,7 @@ namespace BeaverBuddies
                     // suggest the client can get ahead of the server, which would
                     // trigger this warning (and now prevent the client's tick)
                     int tick = replayService.TicksSinceLoad;
+                    if (numberOfBucketsToTick > 0) PerfProbe.NoteWaiting(tick);
                     // This runs every time the game asks to tick, which can be every frame while a
                     // caught-up guest waits for the host, so log it once per tick.
                     if (tick > 0 && tick != lastNotReadyWarningTick)
@@ -869,8 +895,10 @@ namespace BeaverBuddies
             }
 #endif
 
+            long perf = PerfProbe.Begin(PerfSlot.Sim);
             while (ShouldTick(__instance, numberOfBucketsToTick--))
             {
+                PerfProbe.NoteBucket();
                 bool tickedReplayService = TickReplayServiceOrNextBucket(__instance);
                 // Steam only moves data when this thread asks it to, and the simulation is spread over the frames
                 // it needs: at a high speed nearly a whole frame is spent here, so without this every message, in
@@ -886,6 +914,7 @@ namespace BeaverBuddies
 
             // Tell the TickRequester we've finished this partial (or possibly complete) tick
             OnTickingCompleted();
+            PerfProbe.End(perf);
 
             // Replace the default behavior entirely
             return false;

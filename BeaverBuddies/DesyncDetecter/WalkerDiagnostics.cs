@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using BeaverBuddies.IO;
+using TimberNet.Perf;
 using Timberborn.CharacterMovementSystem;
 using Timberborn.EntitySystem;
 using Timberborn.WalkingSystem;
@@ -28,6 +29,7 @@ namespace BeaverBuddies.DesyncDetecter
         internal static void Capture(EntityComponent entity, PathFollower pathFollower, int tick)
         {
             if (!Settings.Debug || tick < 0 || EventIO.IsNull || written || failed) return;
+            long perf = PerfProbe.Begin(PerfSlot.Detail);
             try
             {
                 Vector3 position = pathFollower._transform.position;
@@ -61,6 +63,7 @@ namespace BeaverBuddies.DesyncDetecter
                 trace.Add(tick, record);
             }
             catch (Exception e) { Fail(e); }
+            PerfProbe.End(perf);
         }
 
         public static void WriteOnDesync()

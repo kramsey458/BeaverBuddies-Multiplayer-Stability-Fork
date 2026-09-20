@@ -133,8 +133,10 @@ namespace BeaverBuddies.Panel
         public void UpdateSingleton()
         {
             if (!loaded || failed) return;
+            long perf = TimberNet.Perf.PerfProbe.Begin(TimberNet.Perf.PerfSlot.Ui);
             try { Tick(); }
             catch (Exception error) { Disable("stopped working", error); }
+            TimberNet.Perf.PerfProbe.End(perf);
         }
 
         void Tick()

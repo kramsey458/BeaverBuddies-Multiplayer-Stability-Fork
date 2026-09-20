@@ -151,6 +151,7 @@ namespace BeaverBuddies.Activity
         public void UpdateSingleton()
         {
             if (!loaded || failed) return;
+            long perf = TimberNet.Perf.PerfProbe.Begin(TimberNet.Perf.PerfSlot.Ui);
             try { UpdateActivity(); }
             catch (Exception error)
             {
@@ -159,6 +160,7 @@ namespace BeaverBuddies.Activity
                 Reset();
                 Plugin.LogWarning("Player activity display disabled for this scene: " + error.Message);
             }
+            TimberNet.Perf.PerfProbe.End(perf);
         }
 
         void UpdateActivity()

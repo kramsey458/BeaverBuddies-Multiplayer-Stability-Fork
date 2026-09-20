@@ -253,6 +253,7 @@ namespace TimberNet
 
         protected void AddEventToHash(JObject message)
         {
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.EventHash);
             if (GetType(message) == SET_STATE_EVENT)
             {
                 Hash = message["hash"]!.ToObject<int>();
@@ -261,6 +262,7 @@ namespace TimberNet
             {
                 AddToHash(message.ToString());
             }
+            Perf.PerfProbe.End(perf);
             if (ShouldLogDetails) Log($"Event: {GetType(message)}");
         }
 
@@ -273,6 +275,14 @@ namespace TimberNet
         }
 
         protected void SendDataWithLength(ISocketStream stream, byte[] data)
+        {
+            Perf.PerfProbe.CountSent(data.Length + HEADER_SIZE);
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.Send);
+            try { SendFrame(stream, data); }
+            finally { Perf.PerfProbe.End(perf); }
+        }
+
+        private void SendFrame(ISocketStream stream, byte[] data)
         {
             // A frame includes both its header and every payload chunk. Join
             // workers and the game thread can otherwise interleave their writes.
@@ -404,6 +414,7 @@ namespace TimberNet
                 //Log($"Starting to read {messageLength} bytes");
                 // TODO: How should this fail and not hang if map stops sending?
                 byte[] buffer = client.ReadUntilComplete(messageLength);
+                Perf.PerfProbe.CountReceived(messageLength + HEADER_SIZE);
 
                 string message = BufferToStringMessage(buffer);
                 var control = JObject.Parse(message);
@@ -442,8 +453,11 @@ namespace TimberNet
 
         protected byte[] MessageToBuffer(JObject message)
         {
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.Compress);
             string json = message.ToString(Newtonsoft.Json.Formatting.None);
-            return MessageToBuffer(json);
+            byte[] buffer = MessageToBuffer(json);
+            Perf.PerfProbe.End(perf);
+            return buffer;
         }
 
         protected byte[] MessageToBuffer(string message)
@@ -574,6 +588,13 @@ namespace TimberNet
          */
         public void Update()
         {
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.Recv);
+            try { UpdateCore(); }
+            finally { Perf.PerfProbe.End(perf); }
+        }
+
+        private void UpdateCore()
+        {
             ProcessLogs();
             while (sessionFaults.TryDequeue(out string? fault))
             {
@@ -617,19 +638,29 @@ namespace TimberNet
          */
         public virtual List<JObject> ReadEvents(int ticksSinceLoad)
         {
-            //if (ticksSinceLoad != TickCount) Log($"Setting ticks from {TickCount} to {ticksSinceLoad}");
-            TickCount = ticksSinceLoad;
-            Update();
-            if (IsStopped) return new List<JObject>();
-            List<JObject> toProcess = PopEventsToProcess(receivedEvents);
-            toProcess.ForEach(e => ProcessReceivedEvent(e));
-            return FilterEvents(toProcess);
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.Recv);
+            try
+            {
+                //if (ticksSinceLoad != TickCount) Log($"Setting ticks from {TickCount} to {ticksSinceLoad}");
+                TickCount = ticksSinceLoad;
+                Update();
+                if (IsStopped) return new List<JObject>();
+                List<JObject> toProcess = PopEventsToProcess(receivedEvents);
+                toProcess.ForEach(e => ProcessReceivedEvent(e));
+                return FilterEvents(toProcess);
+            }
+            finally { Perf.PerfProbe.End(perf); }
         }
 
         public bool HasEventsForTick(int tickSinceLoad)
         {
-            Update();
-            return !IsStopped && receivedEvents.Any(e => GetTick(e) == tickSinceLoad);
+            long perf = Perf.PerfProbe.Begin(Perf.PerfSlot.Recv);
+            try
+            {
+                Update();
+                return !IsStopped && receivedEvents.Any(e => GetTick(e) == tickSinceLoad);
+            }
+            finally { Perf.PerfProbe.End(perf); }
         }
     }
 }

@@ -147,6 +147,30 @@ namespace BeaverBuddies
                 ).SetLocalizedTooltip("BeaverBuddies.Settings.SilenceLogging.Tooltip")
         );
 
+        // ---- Frame rate log ----
+
+        // Read when a session starts, so change them before hosting or joining.
+        public ModSetting<bool> PerfLog { get; } =
+            new(false,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerfLog"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerfLog.Tooltip")
+        );
+
+        public ModSetting<int> PerfLogThreshold { get; } =
+            new(50,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerfLogThreshold"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerfLogThreshold.Tooltip")
+        );
+
+        public ModSetting<int> PerfLogSummaryTicks { get; } =
+            new(100,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerfLogSummaryTicks"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerfLogSummaryTicks.Tooltip")
+        );
+
         // ---- Ping Settings ----
 
         public const string DefaultPingPlayerName = "Player";
@@ -187,6 +211,12 @@ namespace BeaverBuddies
         public static bool ShouldShowFirstTimerMessage => instance?.ShowFirstTimerMessage.Value ?? true;
         public static bool PlayerActivityEnabled => instance?.PlayerActivity.Value ?? true;
         public static bool RemoveSpeedLimit => instance?.RemoveLargeColonySpeedLimit.Value ?? false;
+
+        public static bool PerfLogEnabled => instance?.PerfLog.Value ?? false;
+        /// <summary>Milliseconds. A frame this long or longer gets its own row in the frame rate log.</summary>
+        public static int PerfLogThresholdMs => System.Math.Clamp(instance?.PerfLogThreshold.Value ?? 50, 1, 5000);
+        /// <summary>Game ticks between summary rows in the frame rate log.</summary>
+        public static int PerfLogSummaryEveryTicks => System.Math.Clamp(instance?.PerfLogSummaryTicks.Value ?? 100, 10, 100000);
 
         public static PanelDisplayMode ConnectionPanelDisplayMode =>
             ParseChoice(instance?.ConnectionPanelDisplay?.Value, PanelDisplayMode.Expanded);

@@ -14,6 +14,7 @@ using Bindito.Core;
 using HarmonyLib;
 using System.Diagnostics;
 using System.Reflection;
+using TimberNet.Perf;
 using Timberborn.ModManagerScene;
 
 namespace BeaverBuddies
@@ -139,22 +140,30 @@ namespace BeaverBuddies
         public static void Log(string message)
         {
             if (!Settings.VerboseLogging) return;
+            long perf = PerfProbe.Begin(PerfSlot.Log);
             logger.LogInfo(GetWithDate(message));
+            PerfProbe.End(perf);
         }
 
         public static void LogWarning(string message)
         {
+            long perf = PerfProbe.Begin(PerfSlot.Log);
             logger.LogWarning(GetWithDate(message));
+            PerfProbe.End(perf);
         }
 
         public static void LogError(string message)
         {
+            long perf = PerfProbe.Begin(PerfSlot.Log);
             logger.LogError(GetWithDate(message));
+            PerfProbe.End(perf);
         }
 
         public static void LogStackTrace()
         {
+            long perf = PerfProbe.Begin(PerfSlot.Log);
             logger.LogInfo(new StackTrace().ToString());
+            PerfProbe.End(perf);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Steamworks;
+using TimberNet.Perf;
 using UnityEngine;
 
 namespace BeaverBuddies.Steam
@@ -55,6 +56,13 @@ namespace BeaverBuddies.Steam
         internal static void Pump()
         {
             if (manager == null) return;
+            long perf = PerfProbe.Begin(PerfSlot.Steam);
+            try { PumpFrame(); }
+            finally { PerfProbe.End(perf); }
+        }
+
+        private static void PumpFrame()
+        {
             while (mainQueue.TryDequeue(out Action action))
             {
                 try { action(); }
@@ -84,12 +92,14 @@ namespace BeaverBuddies.Steam
         {
             var current = manager;
             if (current == null) return;
+            long perf = PerfProbe.Begin(PerfSlot.Steam);
             try { current.PumpBetweenTicks(force); }
             catch (Exception e)
             {
                 double now = Clock();
                 if (now - lastPumpErrorLog > 5) { lastPumpErrorLog = now; Plugin.LogWarning("Steam networking pump between ticks failed: " + e); }
             }
+            finally { PerfProbe.End(perf); }
         }
 
         static string NameOf(ulong steamId)

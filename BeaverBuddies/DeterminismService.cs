@@ -41,6 +41,7 @@ using Timberborn.WalkingSystem;
 using Timberborn.WaterBuildings;
 using Timberborn.WorkshopsEffects;
 using TimberNet;
+using TimberNet.Perf;
 using UnityEngine;
 using static BeaverBuddies.SingletonManager;
 using static Timberborn.GameSaveRuntimeSystem.GameSaver;
@@ -765,12 +766,14 @@ namespace BeaverBuddies
             {
                 bool wasSaving = IsSaving;
                 IsSaving = true;
+                long perf = PerfProbe.Begin(PerfSlot.Save);
                 try
                 {
                     original(instance, queuedSave);
                 }
                 finally
                 {
+                    PerfProbe.End(perf);
                     IsSaving = wasSaving;
                 }
             });
@@ -1006,6 +1009,7 @@ namespace BeaverBuddies
         static void Prefix(TickableEntityBucket __instance)
         {
             if (EventIO.IsNull) return;
+            long perf = PerfProbe.Begin(PerfSlot.EntityHash);
 
             for (int i = 0; i < __instance._tickableEntities.Count; i++)
             {
@@ -1094,6 +1098,7 @@ namespace BeaverBuddies
                 //    Plugin.Log($"{entity.EntityId}: {FVS(transform.position)}");
                 //}
             }
+            PerfProbe.End(perf);
         }
 
         private static string FVS(Vector3 vector)

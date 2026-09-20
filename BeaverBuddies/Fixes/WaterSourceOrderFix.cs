@@ -3,6 +3,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TimberNet.Perf;
 using Timberborn.WaterSystem;
 
 namespace BeaverBuddies.Fixes
@@ -20,6 +21,7 @@ namespace BeaverBuddies.Fixes
             Canonicalize(__instance._threadSafeWaterSources);
             if (Settings.Debug)
             {
+                long perf = PerfProbe.Begin(PerfSlot.Detail);
                 int hash = 13;
                 var details = new StringBuilder();
                 unchecked
@@ -44,6 +46,7 @@ namespace BeaverBuddies.Fixes
                 DesyncDetecter.DesyncDetecterService.Trace(
                     $"Water sources count={__instance._threadSafeWaterSources.Count} hash={hash:X8}");
                 DesyncDetecter.DesyncDetecterService.Trace($"Water source values {details}", skipStackTrack: true);
+                PerfProbe.End(perf);
             }
         }
 

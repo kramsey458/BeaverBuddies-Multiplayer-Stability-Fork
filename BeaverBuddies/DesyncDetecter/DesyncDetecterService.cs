@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using TimberNet.Perf;
 
 namespace BeaverBuddies.DesyncDetecter
 {
@@ -134,6 +135,7 @@ namespace BeaverBuddies.DesyncDetecter
             }
             // Trace called before the service has been initialized
             if (traces.Count == 0) return;
+            long perf = PerfProbe.Begin(PerfSlot.Detail);
             // Capturing the stack is much cheaper than formatting it, and most traces are never
             // looked at, so it is only turned into text if a desync report needs it.
             CurrentTrace.Add(new Trace()
@@ -142,6 +144,7 @@ namespace BeaverBuddies.DesyncDetecter
                 stack = skipStackTrack ? null : new StackTrace(),
                 stackSkipped = skipStackTrack,
             });
+            PerfProbe.End(perf);
         }
 
         public static string GetLastDesyncTrace()

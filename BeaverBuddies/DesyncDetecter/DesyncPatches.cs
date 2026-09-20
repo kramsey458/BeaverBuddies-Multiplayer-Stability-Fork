@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System;
+using TimberNet.Perf;
 using Timberborn.BehaviorSystem;
 using Timberborn.BlockSystem;
 using Timberborn.EnterableSystem;
@@ -238,6 +239,7 @@ namespace BeaverBuddies.DesyncDetecter
             // Just always update the moisture levels at the end of the tick.
             if (GameSaverSavePatcher.IsSaving) return;
 
+            long perf = PerfProbe.Begin(PerfSlot.Detail);
             var levels = __instance._soilMoistureSimulator.MoistureLevels;
             int hash = 13;
             foreach (var level in levels)
@@ -245,6 +247,7 @@ namespace BeaverBuddies.DesyncDetecter
                 hash = (hash * 7) + BitConverter.SingleToInt32Bits(level);
             }
             DesyncDetecterService.Trace($"Updating moisture levels with hash {hash:X8}");
+            PerfProbe.End(perf);
         }
     }
 
@@ -255,6 +258,7 @@ namespace BeaverBuddies.DesyncDetecter
         {
             if (!Settings.Debug) return;
 
+            long perf = PerfProbe.Begin(PerfSlot.Detail);
             var columns = __instance._threadSafeWaterColumns;
             WaterDiagnostics.Capture(__instance, DesyncDetecterService.CurrentTick);
             DesyncDetecterService.Trace(WaterDiagnostics.Describe(columns,
@@ -273,6 +277,7 @@ namespace BeaverBuddies.DesyncDetecter
                 hash = (hash * 7) + count;
             }
             DesyncDetecterService.Trace($"Updating water map column counts with hash {hash:X8}");
+            PerfProbe.End(perf);
         }
 
         private static int GetHashCode(ReadOnlyWaterColumn waterColumn)

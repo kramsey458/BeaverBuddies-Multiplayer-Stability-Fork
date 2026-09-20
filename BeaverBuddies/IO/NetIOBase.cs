@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BeaverBuddies.Events;
 using TimberNet;
+using TimberNet.Perf;
 using BeaverBuddies.Steam;
 
 namespace BeaverBuddies.IO
@@ -48,10 +49,13 @@ namespace BeaverBuddies.IO
         public List<ReplayEvent> ReadEvents(int ticksSinceLoad)
         {
             if (NetBase == null) return new List<ReplayEvent>();
-            return NetBase.ReadEvents(ticksSinceLoad)
+            long perf = PerfProbe.Begin(PerfSlot.Deserialize);
+            var result = NetBase.ReadEvents(ticksSinceLoad)
                 .Select(ToEvent)
                 .Where(e => e != null)
                 .ToList();
+            PerfProbe.End(perf);
+            return result;
         }
 
         public virtual void WriteEvents(params ReplayEvent[] events)
@@ -61,7 +65,10 @@ namespace BeaverBuddies.IO
             {
                 // TODO: It is silly to convert to JObject here, but not sure if there's
                 // a better way to do it.
-                NetBase.DoUserInitiatedEvent(JObject.Parse(JsonSettings.Serialize(e)));
+                long perf = PerfProbe.Begin(PerfSlot.Serialize);
+                JObject message = JObject.Parse(JsonSettings.Serialize(e));
+                PerfProbe.End(perf);
+                NetBase.DoUserInitiatedEvent(message);
             }
         }
 

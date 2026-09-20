@@ -5,6 +5,46 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.10-perflog-preview (pre-release)
+
+A pre-release for testing, on top of 1.0.9. It adds no gameplay change and no fix: it only adds a way to measure where a slow frame's
+time went. **Not yet run in a game.** Every player should install this build: the join check compares the mod build, so it will not join
+a session running a different one.
+
+### An optional frame rate log, to find what causes the drops in co-op
+
+A recurring drop in frame rate in co-op can start on either computer, or between them, and from inside the game the three look the same.
+Guessing between them is how a session of profiling gets spent on the wrong computer. **Log Frame Rate Details**, in Mod Settings under
+BeaverBuddies and off by default, writes a CSV into the `BeaverBuddiesDiagnostics` folder (next to the desync diagnostics), named for
+the player and whether they hosted. See [PERFORMANCE-LOG.md](PERFORMANCE-LOG.md) for how to record a session, where the file is, what
+to send back and what each column means.
+
+- Every row is keyed on the game tick, the only clock two players share.
+- For each frame over a threshold (50 ms by default): the frame time, the ticks it ran, and separately the time in the per-tick entity
+  hash, replaying, serializing, hashing, compressing, sending, receiving and deserializing events, Steam, log lines, detailed-logging
+  work, the panel, and saving, plus the rest of the frame. Alongside those: garbage collections, the managed heap, bytes and messages,
+  and the speed the game ran at against the speed that was chosen.
+- **Waiting is not a blocked wait.** A guest that has not received the next tick's events does not start the tick, and the frame is still
+  drawn, so the frame rate stays high while the tick rate drops. Waits are recorded as their own rows, with how long they lasted. A
+  player who has fallen behind runs the simulation faster to catch up, which lengthens frames with no extra work behind them; the speed
+  columns show that.
+- A summary row every so many ticks records what normal looks like, not only the spikes.
+- The header records every enabled mod with its version, and Harmony's view of which mod has patched which method, with the priority,
+  for the methods that run every tick or frame.
+- `RuntimeChecks/compare_perf_logs.py` reads both players' files. It compares the two mod lists first and stops if they differ, then
+  lines the files up by tick and classifies each slow stretch: a hitch on one player with a matching wait on the other, garbage
+  collection on both, waits on both with no local cause, a wait followed by a catch-up burst, or a hitch the other player never felt.
+
+It only observes. It never records or replays an action, never uses the game's random numbers and never changes anything the simulation
+reads. With the log off, each measured point reads one static flag. With it on, the frame path allocates nothing, rows go into a buffer
+allocated when the game starts, and a thread of its own writes them twice a second; if that thread falls behind, rows are dropped and
+counted instead of the buffer growing.
+
+**Tested:** 230 of 230 checks in `StabilityTests` (the timing against a fake clock, the file format in a language that writes `1,5`, the
+buffer, the writer, the patch report's logic, and that the frame path allocates nothing), and the analysis script's 33 checks. **Not
+tested:** a real game session, and the part of the patch report that reads Harmony's records, which only runs inside the game; if it
+fails there the header says `patches-unavailable` and the rest of the file is still written.
+
 ## 1.0.9
 
 The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
