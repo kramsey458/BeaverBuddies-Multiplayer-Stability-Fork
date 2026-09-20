@@ -124,9 +124,13 @@ wraps to the panel's width and can never make the panel wider.
 
 ## How ping is measured
 
-Once a second the host sends each guest a tiny probe, and the guest answers immediately on
-its network thread, so the number reflects the network and not how busy that player's game
-is. The host smooths the results (so a single spike does not jump around) and publishes a
+Once a second the host sends each guest a tiny probe, and the guest answers on its network
+thread, not its game thread. Over Steam, data still only moves while a player's game thread
+is serving Steam, so the number is the network plus a short wait at each end. That wait is
+the gap between two pumps: at most a millisecond during the simulation, and the length of the
+non-simulation part of a frame outside it. Serving Steam only once per frame made it grow
+with the game speed, because at a high speed most of a frame is simulation; a direct
+connection has no such wait. The host smooths the results (so a single spike does not jump around) and publishes a
 short roster that every guest receives. Names come from the same **Ping Display Name**
 players already use for cursors and pings; if a player has activity indicators turned off,
 they appear as "Player N".
@@ -157,6 +161,11 @@ panel carries on.
   window, host and guest views, the priority between statuses, silent players, placeholders,
   numbers formatted the same in every culture, and that every string the panel asks for
   exists in the English file.
+
+The ping over Steam has checks (1.0.9-tickspeed-preview) for the between-ticks pump (once a millisecond at most,
+only for a connection that is up, never for one being closed), the timing line, and the ping
+as a function of both players' frame length over a fake Steam network, with and without that
+pump (`dotnet run --project StabilityTests -- --ping-report` prints the table).
 
 The chat adds checks (1.0.7) for:
 

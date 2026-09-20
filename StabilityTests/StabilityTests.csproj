@@ -15,6 +15,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkTypes.cs" Link="SteamLinkTypes.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkSocket.cs" Link="SteamLinkSocket.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkManager.cs" Link="SteamLinkManager.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/PumpTiming.cs" Link="PumpTiming.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Fixes/AnimationFixes.cs" Link="AnimationFixes.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/DesyncDetecter/WalkerTrace.cs" Link="WalkerTrace.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerCursorPreferences.cs" Link="PlayerCursorPreferences.cs" />

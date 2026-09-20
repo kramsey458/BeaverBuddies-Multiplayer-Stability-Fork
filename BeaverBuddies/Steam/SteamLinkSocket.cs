@@ -206,6 +206,33 @@ namespace BeaverBuddies.Steam
             }
         }
 
+        /// <summary>
+        /// Moves data both ways for a connection that is already up, without asking Steam about its state. The game
+        /// calls this between ticks: <see cref="Pump"/> runs once per frame, and at a high game speed a frame is
+        /// long, so everything queued for Steam (and everything Steam has for us) would wait for the end of it.
+        /// Anything that is not plain data transfer (connecting, closing, failures, end of stream) is left to
+        /// <see cref="Pump"/>; a failure seen here is recorded and the next <see cref="Pump"/> closes the connection.
+        /// Game thread only, like <see cref="Pump"/>.
+        /// </summary>
+        internal void PumpData(double now)
+        {
+            // Only a connection that Pump has already seen connect, and that nobody is closing.
+            if (nativeClosed || lastState != LinkState.Connected) return;
+            lock (gate)
+            {
+                if (closeRequested || finished) return;
+            }
+            try
+            {
+                if (!Receive()) return;
+                SendPending(now);
+            }
+            catch (Exception e)
+            {
+                Fail("Steam networking error: " + e.Message);
+            }
+        }
+
         bool PumpCore(double now)
         {
             bool closing, done; double closeAt;
