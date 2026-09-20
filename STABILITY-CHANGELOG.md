@@ -5,6 +5,44 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9-chatbox-fix-preview (pre-release)
+
+A pre-release for testing, on top of everything in 1.0.9-framethrottler-preview (and so in 1.0.8).
+Every player should install this build: the game warns when mod versions differ, and mixed versions
+are untested. Nothing here touches the network or the simulation.
+
+### The chat and the panel are smaller, line up with the game's panels, and stay in front
+
+From a screenshot of 1.0.9-framethrottler-preview: the chat was as tall as the whole top of the
+panel, so with everything the host sees it ran down to the bottom of the screen and the game's
+alerts ("Nothing to do in range") were drawn over its text box; and the pacing lines were long
+enough to push the panel to its widest, wider than the game's beaver counters above it.
+
+- **A compact chat.** The chat has a fixed height (150 interface units, about five lines and the
+  box to type in) instead of matching the section above it, so it no longer grows with the rest
+  of the panel.
+- **The panel is as wide as the beaver counters above it.** Its width is now measured from the
+  game's own population panel (a root element named `Counters`) in the same corner each time the
+  panel refreshes, so it lines up with it at any UI scale. Without those counters it follows the
+  nearest visible panel above it; with nothing to follow it sizes to its text as before. A width
+  outside 180 to 520 is never followed. Each change is written to `Player.log` with the widths of
+  the panels in that corner, so a session shows what it followed if it ever looks wrong.
+- **Shorter words.** The pacing text is what made the panel wide, and three labels wrapped onto two
+  lines. **Slowest guest behind** is now **Guest behind**, **Easing off for guests** is **Easing
+  off**, **Slowest guest fps** is **Guest fps**; the values read "75% of speed", "75% (frame rate)"
+  and "waiting for a guest". A new check keeps every label within its column and every pacing text
+  within 20 characters, and it fails on the old strings.
+- **In front of the alerts while you type.** While the cursor is in the chat box, the panel's
+  corner of the game's interface is drawn in front of the other corners, where the alerts are, and
+  it goes back to its place when the cursor leaves (or the chat is hidden, collapsed or reset).
+  The game defines each corner as ignoring the pointer, so this changes only what is drawn on
+  top. If the game ever stopped positioning its corners on their own, it is left alone and a line
+  says so in `Player.log`.
+
+Not verified: none of this has been seen in the game. The decisions (which width to follow, the
+height, the string lengths) are covered by checks; the measuring, the drawing order and how it
+looks are not, and are the things to look at first.
+
 ## 1.0.9-framethrottler-preview (pre-release)
 
 A pre-release for testing, on top of everything in 1.0.8. Every player should install this build:
