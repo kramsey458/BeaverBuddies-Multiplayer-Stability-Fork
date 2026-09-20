@@ -5,6 +5,33 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.10-panel-design-preview (pre-release)
+
+A pre-release for testing, on top of 1.0.10-perflog-preview2. It changes how the connection panel looks and what color chat is drawn in, and
+nothing else: no gameplay change, no fix, nothing new sent over the network. Every player should install this build: the join check compares the
+mod build, so it will not join a session running a different one. **None of it has been seen in a game.**
+
+### A plainer connection panel
+
+- **One dot.** While the panel is expanded, the dot beside the sync status (green, yellow or red with the status) is the only one: the dot beside
+  the title and the dots beside each player are gone. A collapsed panel is one line with no status row, so it keeps its own dot.
+- **A player's row is a name and a ping.** The "You" and "Host" tags are gone. The host reads each guest's ping. A guest reads its own ping to the
+  host on the host's row, and the ping the host measured for every other guest. Over 80 ms the number is yellow and over 160 ms red, and "No
+  response" is red.
+- **Your own row is bold, with a dash where the ping would be**, since you have no ping to yourself.
+
+### Chat takes the cursor colors
+
+A chat line, name and message, is drawn in the color you see on that player's cursor: the color they chose (their Ping Color), or the one you set
+for them under Options, Player cursors. Change that color and the lines already written change with it, within a moment. Your own lines use your
+Ping Color. A player who has left, or whose cursor is off, keeps the color you saved for them, else the one their messages carried. A color too dark
+to read on the panel is lightened, as before. Before, only the name was colored, and always in the color the player chose for themselves.
+
+**Tested:** 251 of 251 checks in `StabilityTests` (among them the rows without tags, the ping on every row, a line in one color that no message can
+add markup to, and the color saved for a player who is not connected), 69 of 69 `RuntimeChecks` against the built mod, and the 51 Python checks.
+**Not tested:** how any of it looks in a game: the header without its dot, the rows, whether the game's font draws your own row in bold, and chat
+lines in the cursor colors, also after a color is changed. The interface cannot be built outside the game, so none of it can be checked without one.
+
 ## 1.0.10-perflog-preview2 (pre-release)
 
 A pre-release for testing, on top of 1.0.9. It adds no gameplay change and no fix: it only adds a way to measure where a slow frame's

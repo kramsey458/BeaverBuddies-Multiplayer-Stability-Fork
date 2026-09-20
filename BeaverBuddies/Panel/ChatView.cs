@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Timberborn.CoreUI;
 using Timberborn.Localization;
 using TimberNet;
@@ -17,11 +18,23 @@ namespace BeaverBuddies.Panel
         // A backlog (a long history arriving) is drawn over a few frames rather than in one.
         const int MaxLinesPerSync = 100;
 
+        // A drawn line and what it was drawn from, so it can be drawn again in another color.
+        sealed class Line
+        {
+            public readonly Label Label;
+            public readonly ChatMessage Message;
+            public string Hex;
+            public Line(Label label, ChatMessage message, string hex) { Label = label; Message = message; Hex = hex; }
+        }
+
         readonly ILoc loc;
         readonly ScrollView log;
         readonly TextField input;
+        readonly Queue<Line> lines = new Queue<Line>();
+        // Who is which color, worked out once per refresh instead of once per line.
+        readonly Dictionary<(int Player, string Name, string Sent), string> colors = new Dictionary<(int, string, string), string>();
         Label emptyHint;
-        int renderedSequence, lineCount, focusDelayFrames;
+        int renderedSequence, focusDelayFrames;
         bool stickToBottom = true, blurRequested;
 
         public VisualElement Root { get; }
@@ -31,6 +44,13 @@ namespace BeaverBuddies.Panel
 
         /// <summary>Asked to send what was typed. Returns true if it went out, and only then is the box cleared.</summary>
         public Func<string, bool> Submit;
+
+        /// <summary>
+        /// Asked for the color (six hex digits) a message is drawn in. It follows the sender's cursor color, which the
+        /// player can change at any time, so it is asked again on every <see cref="RefreshColors"/>. Without it, or if
+        /// it fails, a line uses the color that came with the message.
+        /// </summary>
+        public Func<ChatMessage, string> ColorOf;
 
         public ChatView(ILoc loc, VisualElementInitializer initializer)
         {
@@ -97,22 +117,49 @@ namespace BeaverBuddies.Panel
             if (emptyHint != null) { emptyHint.RemoveFromHierarchy(); emptyHint = null; }
             foreach (var message in fresh)
             {
-                var line = ConnectionPanelView.Text(ChatFormat.Line(message.Name, message.Color, message.Text), 13, ConnectionPanelView.Ink);
-                line.enableRichText = true;
-                line.style.marginBottom = 3; line.style.flexShrink = 0;
-                log.contentContainer.Add(line);
-                lineCount++;
+                string hex = Resolve(message);
+                var label = ConnectionPanelView.Text(ChatFormat.Line(message.Name, hex, message.Text), 13, ConnectionPanelView.Ink);
+                label.enableRichText = true;
+                label.style.marginBottom = 3; label.style.flexShrink = 0;
+                log.contentContainer.Add(label);
+                lines.Enqueue(new Line(label, message, hex));
                 renderedSequence = message.Sequence;
             }
             // Only the drawing is trimmed here; the log itself keeps its own cap.
-            while (lineCount > ChatLog.MaxMessages) { log.contentContainer.RemoveAt(0); lineCount--; }
+            while (lines.Count > ChatLog.MaxMessages) lines.Dequeue().Label.RemoveFromHierarchy();
+        }
+
+        /// <summary>
+        /// Draws again the lines whose color has changed since they were written: the player picked another color for
+        /// someone's cursor, or someone changed their own.
+        /// </summary>
+        public void RefreshColors()
+        {
+            if (ColorOf == null || lines.Count == 0) return;
+            colors.Clear();
+            foreach (Line line in lines)
+            {
+                var key = (line.Message.PlayerId, line.Message.Name, line.Message.Color);
+                if (!colors.TryGetValue(key, out string hex)) colors[key] = hex = Resolve(line.Message);
+                if (hex == line.Hex) continue;
+                line.Hex = hex;
+                line.Label.text = ChatFormat.Line(line.Message.Name, hex, line.Message.Text);
+            }
+        }
+
+        // The color is cosmetic: whatever goes wrong while working it out must not cost anyone the chat.
+        string Resolve(ChatMessage message)
+        {
+            try { return ColorOf?.Invoke(message) ?? message.Color; }
+            catch (Exception) { return message.Color; }
         }
 
         /// <summary>Starts over, for a new session.</summary>
         public void Clear()
         {
             log.contentContainer.Clear();
-            lineCount = 0; renderedSequence = 0; stickToBottom = true;
+            lines.Clear();
+            renderedSequence = 0; stickToBottom = true;
             AddEmptyHint();
         }
 
