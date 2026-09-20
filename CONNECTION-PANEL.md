@@ -38,6 +38,8 @@ Connection  Direct
 | **Behind host** | Guests only: how many ticks behind the host this game is. Should sit at 0 or 1. |
 | **Slowest guest behind** | Host only: how many ticks behind the slowest guest was at its last report, about once a second. Shown once a guest running 1.0.4 or newer has reported. |
 | **Easing off for guests** | Host only, and only while it applies: the share of the chosen speed the host is running at because a guest cannot keep up. It returns to full speed by itself. Reads **waiting for a guest to catch up** while the host stands still for a guest more than 60 ticks behind (1.0.6). |
+| **Slowest guest fps** | Host only: the lowest frame rate any guest reported, about once a second. A guest reports nothing while its game window is in the background. |
+| **Ease off below** | Host only. Click it to choose a guest frame rate floor: Off, 20, 30, 45 or 60 fps. While a guest stays below the floor the host slows the game a little, and speeds back up by itself. The same choice is in the mod settings. |
 | **Connection** | How players are connected: Direct (IP, including Hamachi or port forwarding) or Steam. |
 
 The host sees every guest's ping. A guest sees their own ping in the pill and the other

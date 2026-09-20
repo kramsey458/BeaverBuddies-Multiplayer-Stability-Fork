@@ -36,6 +36,9 @@ namespace BeaverBuddies.Panel
         /// <summary>Raised when the header is clicked: the player wants to collapse or expand the panel.</summary>
         public event Action HeaderClicked;
 
+        /// <summary>Raised when the host clicks the guest frame rate floor: pick the next one.</summary>
+        public event Action FpsFloorClicked;
+
         public ConnectionPanelView(ILoc loc, VisualElementInitializer initializer)
         {
             this.loc = loc;
@@ -149,6 +152,8 @@ namespace BeaverBuddies.Panel
             if (model.BehindText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelBehind", model.BehindText));
             if (model.GuestsBehindText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelGuestsBehind", model.GuestsBehindText));
             if (model.PacingText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelPacing", model.PacingText));
+            if (model.GuestFpsText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelGuestFps", model.GuestFpsText));
+            if (model.FpsFloorText != null) facts.Add(Choice("BeaverBuddies.Panel.LabelFpsFloor", model.FpsFloorText, () => FpsFloorClicked?.Invoke()));
             if (model.LinkText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelLink", model.LinkText));
         }
 
@@ -161,6 +166,17 @@ namespace BeaverBuddies.Panel
             var ping = Text(row.PingText, 13, PingColor(row.Quality));
             ping.style.marginLeft = 10; ping.style.minWidth = 52; ping.style.unityTextAlign = TextAnchor.MiddleRight;
             line.Add(dot); line.Add(name); line.Add(tag); line.Add(ping);
+            return line;
+        }
+
+        // A fact the player can change: the value is underlined by a rule and clicking the line picks the next choice.
+        VisualElement Choice(string labelKey, string value, Action clicked)
+        {
+            var line = Fact(labelKey, value + "  >");
+            line.tooltip = loc.T(labelKey + ".Tooltip");
+            Border(line, 1, Rule, 3);
+            line.style.paddingLeft = 3; line.style.paddingRight = 3; line.style.marginLeft = -4;
+            line.RegisterCallback<ClickEvent>(e => { clicked(); e.StopPropagation(); });
             return line;
         }
 

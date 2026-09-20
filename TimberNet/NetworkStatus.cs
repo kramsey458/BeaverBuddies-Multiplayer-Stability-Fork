@@ -29,15 +29,25 @@ namespace TimberNet
         /// roster guests receive. Null until the guest has reported a tick (or if it runs an older build).
         /// </summary>
         public int? TicksBehind { get; }
+        /// <summary>
+        /// The frames per second this guest last reported. Host-side only, like TicksBehind. Null if the guest has
+        /// not reported one: its window is in the background, it has not finished a second of play, or it runs an
+        /// older build.
+        /// </summary>
+        public int? Fps { get; }
 
-        public PeerStatus(int playerId, string transport, double? rttMs, double jitterMs, double? silenceSeconds, int? ticksBehind = null)
+        public PeerStatus(int playerId, string transport, double? rttMs, double jitterMs, double? silenceSeconds,
+            int? ticksBehind = null, int? fps = null)
         {
             PlayerId = playerId; Transport = transport ?? ""; RttMs = rttMs; JitterMs = jitterMs; SilenceSeconds = silenceSeconds;
-            TicksBehind = ticksBehind;
+            TicksBehind = ticksBehind; Fps = fps;
         }
 
         public PeerStatus WithTicksBehind(int? ticksBehind) =>
-            new PeerStatus(PlayerId, Transport, RttMs, JitterMs, SilenceSeconds, ticksBehind);
+            new PeerStatus(PlayerId, Transport, RttMs, JitterMs, SilenceSeconds, ticksBehind, Fps);
+
+        public PeerStatus WithFps(int? fps) =>
+            new PeerStatus(PlayerId, Transport, RttMs, JitterMs, SilenceSeconds, TicksBehind, fps);
     }
 
     /// <summary>A snapshot of the multiplayer connection. Presentation only; never part of the simulation.</summary>
@@ -144,24 +154,55 @@ namespace TimberNet
         public static JObject Reply(int sequence, int tick) =>
             new JObject { ["type"] = ReplyType, ["seq"] = sequence, ["tick"] = Math.Max(0, tick) };
 
-        /// <summary>Parses a reply. The tick is optional, so a reply from a build that does not send one still counts.</summary>
-        public static bool TryParseReply(JObject message, out int sequence, out int? tick)
+        /// <summary>The largest frame rate a reply may carry. Anything above it is rejected as malformed.</summary>
+        public const int MaxReportedFps = 1000;
+
+        /// <summary>
+        /// A guest's reply that also carries its frames per second, so the host can ease off for a guest whose
+        /// frame rate has collapsed. A frame rate of zero or less means "nothing to report" and is left out.
+        /// </summary>
+        public static JObject Reply(int sequence, int tick, int fps)
         {
-            sequence = 0; tick = null;
+            JObject reply = Reply(sequence, tick);
+            if (fps > 0) reply["fps"] = Math.Min(fps, MaxReportedFps);
+            return reply;
+        }
+
+        /// <summary>Parses a reply. The tick is optional, so a reply from a build that does not send one still counts.</summary>
+        public static bool TryParseReply(JObject message, out int sequence, out int? tick) =>
+            TryParseReply(message, out sequence, out tick, out _);
+
+        /// <summary>Parses a reply. The tick and the frame rate are both optional, and every field is validated.</summary>
+        public static bool TryParseReply(JObject message, out int sequence, out int? tick, out int? fps)
+        {
+            sequence = 0; tick = null; fps = null;
             try
             {
-                if (message.Count > 3 || message["seq"]?.Type != JTokenType.Integer) return false;
+                if (message.Count > 4 || message["seq"]?.Type != JTokenType.Integer) return false;
                 sequence = (int)message["seq"]!;
                 if (sequence < 0) return false;
-                JToken? reported = message["tick"];
-                if (reported == null) return message.Count <= 2;
-                if (reported.Type != JTokenType.Integer) return false;
-                int value = (int)reported;
-                if (value < 0) return false;
-                tick = value;
+                int expectedFields = 2;
+                JToken? reportedTick = message["tick"];
+                if (reportedTick != null)
+                {
+                    if (reportedTick.Type != JTokenType.Integer) return false;
+                    int value = (int)reportedTick;
+                    if (value < 0) return false;
+                    tick = value; expectedFields++;
+                }
+                JToken? reportedFps = message["fps"];
+                if (reportedFps != null)
+                {
+                    if (reportedFps.Type != JTokenType.Integer) return false;
+                    int value = (int)reportedFps;
+                    if (value < 1 || value > MaxReportedFps) return false;
+                    fps = value; expectedFields++;
+                }
+                // Nothing but the fields above.
+                if (message.Count != expectedFields) { tick = null; fps = null; return false; }
                 return true;
             }
-            catch (Exception e) when (e is OverflowException || e is InvalidCastException) { return false; }
+            catch (Exception e) when (e is OverflowException || e is InvalidCastException) { tick = null; fps = null; return false; }
         }
 
         public static bool TryParseSequence(JObject message, out int sequence)

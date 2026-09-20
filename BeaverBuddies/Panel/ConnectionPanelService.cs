@@ -60,6 +60,7 @@ namespace BeaverBuddies.Panel
             {
                 view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
+                view.FpsFloorClicked += OnFpsFloorClicked;
                 if (view.Chat != null) view.Chat.Submit = OnChatSubmit;
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
@@ -109,6 +110,13 @@ namespace BeaverBuddies.Panel
             if (Settings.ConnectionPanelDisplayMode != PanelDisplayMode.Expanded)
                 Settings.SetConnectionPanelDisplayMode(PanelDisplayMode.Expanded);
             view.Chat.RequestFocus();
+            nextRefresh = 0;
+        }
+
+        // Only the host is shown this choice, and only the host's value is ever used.
+        void OnFpsFloorClicked()
+        {
+            Settings.SetGuestFpsFloor(FrameRatePacing.NextFloor(Settings.GuestFpsFloorValue));
             nextRefresh = 0;
         }
 
@@ -261,6 +269,8 @@ namespace BeaverBuddies.Panel
                 Speed = speed.CurrentSpeed,
                 HostPacingPercent = replay?.HostPacingPercent ?? 100,
                 HostPacingHolding = replay?.HostPacingHolding == true,
+                GuestFpsFloor = Settings.GuestFpsFloorValue,
+                FrameRatePacingPercent = replay?.FrameRatePacingPercent ?? 100,
             };
 
             // Names come from player activity (the same names other players chose for pings and cursors).
@@ -295,6 +305,7 @@ namespace BeaverBuddies.Panel
             Id = peer.PlayerId, Name = name, IsYou = isYou,
             RttMs = peer.RttMs, SilenceSeconds = peer.SilenceSeconds, Transport = peer.Transport,
             TicksBehind = peer.TicksBehind,
+            Fps = peer.Fps,
         };
 
         string NameOf(int id, Dictionary<int, string> names)

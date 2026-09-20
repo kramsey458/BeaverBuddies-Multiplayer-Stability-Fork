@@ -20,6 +20,8 @@ static class PanelModelChecks
         ["BeaverBuddies.Panel.TickRateValue"] = "{0} ticks/s", ["BeaverBuddies.Panel.SpeedValue"] = "{0}x", ["BeaverBuddies.Panel.Paused"] = "Paused",
         ["BeaverBuddies.Panel.TicksOne"] = "{0} tick", ["BeaverBuddies.Panel.TicksMany"] = "{0} ticks",
         ["BeaverBuddies.Panel.LinkDirect"] = "Direct", ["BeaverBuddies.Panel.LinkSteam"] = "Steam",
+        ["BeaverBuddies.Panel.FpsValue"] = "{0} fps", ["BeaverBuddies.Panel.FpsFloorOff"] = "Off",
+        ["BeaverBuddies.Panel.PacingFpsValue"] = "{0}% of chosen speed (guest frame rate)",
     };
     static string T(string key, object[] args) => string.Format(CultureInfo.InvariantCulture, English[key], args);
 
