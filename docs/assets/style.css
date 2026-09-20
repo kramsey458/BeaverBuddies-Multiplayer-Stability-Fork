@@ -215,26 +215,12 @@ th, td { text-align: left; padding: .7rem .95rem; border-bottom: 1px solid var(-
 th { background: var(--bg-tint); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 tr:last-child td { border-bottom: 0; }
 
-/* ---------- connection panel illustration ---------- */
-.panel-demo { justify-self: center; width: min(100%, 360px); }
-.panel-window {
-  font: 500 .93rem/1.35 var(--font);
-  background: color-mix(in srgb, #1d2a26 92%, transparent); color: #eef2ea;
+/* ---------- connection panel screenshot ---------- */
+.panel-demo { justify-self: center; width: min(100%, 360px); margin: 0; }
+.panel-shot {
+  display: block; width: 100%; height: auto;
   border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
-  overflow: hidden;
 }
-.panel-row { display: flex; align-items: center; gap: .6rem; padding: .5rem .9rem; }
-.panel-title { font-weight: 750; padding-top: .7rem; }
-.panel-title .spacer { margin-left: auto; opacity: .7; font-weight: 600; font-size: .82rem; }
-.panel-status { padding-bottom: .7rem; }
-.panel-sep { border-top: 1px solid rgba(255, 255, 255, .12); }
-.dot { width: .7rem; height: .7rem; border-radius: 50%; flex: none; background: #56c17a; box-shadow: 0 0 0 3px rgba(86, 193, 122, .22); }
-.dot.yellow { background: #e6b93f; box-shadow: 0 0 0 3px rgba(230, 185, 63, .22); }
-.dot.red { background: #ea6b5c; box-shadow: 0 0 0 3px rgba(234, 107, 92, .22); }
-.panel-row .value { margin-left: auto; font-variant-numeric: tabular-nums; opacity: .92; }
-.panel-meta { display: grid; grid-template-columns: auto 1fr; gap: .15rem 1rem; padding: .6rem .9rem .8rem; font-size: .85rem; }
-.panel-meta dt { opacity: .65; }
-.panel-meta dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .demo-caption { margin: .7rem .2rem 0; font-size: .82rem; color: var(--muted); text-align: center; }
 
 /* ---------- prose pages ---------- */
