@@ -16,23 +16,26 @@ o  3 players  42 ms                                   +
 **Expanded:**
 
 ```
-o  Multiplayer                              Host     -
+Multiplayer                                 Host     -
 o  In sync
 -------------------------------------------------------
-o  Kyler                                 You / Host
-o  Sarah                                       42 ms
-o  Bob                                        190 ms
+Kyler                                              -
+Sarah                                          42 ms
+Bob                                           190 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
 Speed       1x
 Connection  Direct
 ```
 
+The dot beside the status is the only dot while the panel is expanded. A player's row is a name and a ping
+and nothing else; your own row (Kyler here) is in bold, with a dash where the ping would be.
+
 | Item | Meaning |
 | --- | --- |
-| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): nothing has arrived from the host for a moment. *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected. *Disconnected*: the session has ended. |
-| **Players** | Everyone in the session, host first. **You** marks your own row. |
-| **Ping** | Round-trip time to the host in milliseconds. Green dot: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. Grey `...`: not measured yet. |
+| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): nothing has arrived from the host for a moment. *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected. *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
+| **Players** | Everyone in the session, host first, each as a name and a ping. Your own row is bold and shows a dash instead of a ping. |
+| **Ping** | Round-trip time between you and that player, in milliseconds. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. `...`: not measured yet. |
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |
 | **Speed** | The current game speed, or Paused. |
 | **Behind host** | Guests only: how many ticks behind the host this game is. Should sit at 0 or 1. |
@@ -42,8 +45,9 @@ Connection  Direct
 | **Ease off below** | Host only. Click it to choose a guest frame rate floor: Off, 20, 30, 45 or 60 fps. While a guest stays below the floor the host slows the game a little, and speeds back up by itself. The same choice is in the mod settings. |
 | **Connection** | How players are connected: Direct (IP, including Hamachi or port forwarding) or Steam. |
 
-The host sees every guest's ping. A guest sees their own ping in the pill and the other
-players' pings **to the host**, which is the connection that matters for keeping in sync.
+The host sees every guest's ping. A guest sees its own ping to the host on the host's row (and on
+the collapsed line), and the other guests' pings **to the host**, which is the connection that
+matters for keeping in sync.
 
 ## Showing, collapsing and hiding
 
@@ -75,11 +79,11 @@ type in. It has a fixed, compact height (about five lines and the box), so it do
 the rest of the panel, and it appears whenever the panel is expanded, in a multiplayer game only.
 
 ```
-o  Multiplayer                              Host     -
+Multiplayer                                 Host     -
 o  In sync
 -------------------------------------------------------
-o  Kyler                                 You / Host
-o  Sarah                                       42 ms
+Kyler                                              -
+Sarah                                          42 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
 Speed       1x
@@ -99,11 +103,15 @@ Sarah: on it
   range") at the bottom of the screen, and a tall panel can reach them. While the cursor is in
   the chat box, the panel is drawn in front of them so they cannot cover what you are typing, and
   it goes back when the cursor leaves. This only changes what is drawn on top.
-- **Who said what:** each line reads `Name: message`, the name in that player's **Ping Color**
-  (a very dark color is lightened so it can be read on the dark panel) and using the same
-  **Ping Display Name** as cursors and pings. Chat lines have no "(Host)" or "(P2)" tag, so two
-  players who both keep the default name and color look alike: set your own **Ping Display Name**
-  and **Ping Color** in Mod Settings.
+- **Who said what:** each line reads `Name: message`, all of it in the color you see on that
+  player's cursor: the color they chose (their **Ping Color**), or the one you set for them under
+  Options, **Player cursors**. Change that color and the lines already written change with it, within a
+  moment. Your own lines use your **Ping Color**. A player who has left, or whose cursor is off, keeps the
+  color you saved for them, else the one their messages carried. A very dark color is lightened so it can
+  be read on the dark panel. Names are the same **Ping Display Name** as cursors and pings. Chat lines
+  have no "(Host)" or "(P2)" tag, so two players who both keep the default name and color look alike:
+  set your own **Ping Display Name** and **Ping Color** in Mod Settings, or give one of them another
+  color under **Player cursors**.
 - **One order for everyone.** The host numbers every message and sends it to every player,
   the sender included, so everyone sees the same conversation in the same order. Your own
   message appears when the host has it, normally at once.
@@ -148,7 +156,7 @@ panel carries on.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (199 checks) covers:
+`dotnet run --project StabilityTests` (210 checks) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
@@ -159,7 +167,8 @@ panel carries on.
   bad frames being ignored, a departed guest leaving the roster, and no status traffic
   before a joining guest has its save, state and init frames;
 - the panel's wording and states without a game: ping colors and boundaries, the tick-rate
-  window, host and guest views, the priority between statuses, silent players, placeholders,
+  window, host and guest views, the ping on every row (a dash on your own, the guest's own ping on
+  the host's row), the priority between statuses, silent players, placeholders,
   numbers formatted the same in every culture, and that every string the panel asks for
   exists in the English file.
 
@@ -183,8 +192,9 @@ The chat adds checks (1.0.7) for:
   leaves, and a guest that joins receiving the whole history in order after its save, state and
   init event, with a message sent during the join arriving exactly once, also while two guests
   join during a burst of messages;
-- how a line is written (only the name is colored, no message can add markup, dark colors are
-  lightened), the English strings and the chat key binding's blueprint.
+- how a line is written (all of it in the sender's color, no message can add markup, dark colors are
+  lightened), the color saved for a player who is not connected, the English strings and the chat key
+  binding's blueprint.
 
 The panel's sizing adds checks for the width it follows (the
 population panel first, then the nearest panel above, never a width that is not believable, and
@@ -196,7 +206,9 @@ and every pacing text is short enough for its column (the old ones were not).
 the alerts covering its text box, and the pacing text pushing the panel wider than the game's own
 counters; the sizing checks above and the current layout are the response.
 
-**Not verified: how it looks and feels.** The fixes themselves have not been seen in the running
+**Not verified: how it looks and feels.** The panel without the dots beside the title and the players,
+whether the game's font draws your own row in bold, and chat lines in the cursor colors (also after a
+color is changed) have not been seen in the running game. The fixes themselves have not been seen in the running
 game: that the panel now matches the counters' width (and to what), that the chat clears the
 alerts, and that the panel really is drawn in front of them while you type. The panel's layout,
 colors, spacing and where it sits in each corner other than the top left have not been seen

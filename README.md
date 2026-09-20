@@ -7,7 +7,7 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
 > [!NOTE]
-> **Release candidate.** `1.1.10-release-candidate` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original) and the [changelog](STABILITY-CHANGELOG.md)). **It has not been played yet.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
+> **Release candidate.** `1.1.10-release-candidate-2` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original)), gives the connection panel a plainer look, and draws chat in the color of each player's cursor (see [the connection panel](#the-connection-panel) and the [changelog](STABILITY-CHANGELOG.md)). **It has not been played yet.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
 
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
@@ -23,7 +23,7 @@ This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thoma
 - **Mismatched builds are caught early.** Joining with a different build is refused before the save is sent, with a message that says what to do, instead of failing halfway through.
 - **Mismatched mods are flagged.** When someone joins, both players are warned if their lists of mods differ, naming the mods that are on only one computer or at different versions, so a mismatched mod is caught in the lobby instead of as a desync later. It is a warning, not a block.
 - **Failures are explained.** A failed connection or multiplayer action ends with a plain-language reason (including Steam's own error code) instead of a silent hang.
-- **Tested.** 280 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
+- **Tested.** 282 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
 
 ## Install
 
@@ -69,12 +69,12 @@ A small panel appears in the top-left corner during a multiplayer game.
 
 <img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, two players with one at 21 ms, tick rate 10.7 ticks per second, speed 6.3x, the host pacing lines, a Steam connection and a chat box.">
 
-*The panel as the host sees it during a Steam co-op session.*
+*The panel as the host sees it during a Steam co-op session, in 1.0.9. In 1.1.10-release-candidate-2 the dots by the title and by each player, and the "You / Host" tag, are gone (your own row is bold with a dash for its ping), and chat is drawn in each player's cursor color. The screenshot has not been retaken.*
 
 | It shows | Meaning |
 | --- | --- |
-| **Players** | Everyone in the session, host first. |
-| **Ping** | Round-trip time to the host. Green dot: 80 ms or less. Yellow: up to 160 ms. Red: higher, or "No response". Grey "...": not measured yet. |
+| **Players** | Everyone in the session, host first, each as a name and a ping. Your own row is bold and shows a dash instead of a ping. |
+| **Ping** | Round-trip time between you and that player. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: higher, or "No response". "...": not measured yet. |
 | **Sync status** | In sync, Catching up, Waiting for host, Connection unstable, Out of sync, or Disconnected. |
 | **Tick rate and speed** | Simulation ticks per second right now, and the game speed or Paused. |
 | **Behind host** | Guests only: how many ticks this game is behind the host (0 or 1 is normal). |
@@ -145,7 +145,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 ## Testing and verification
 
-The 1.1.10-release-candidate validation run passed **280 checks**: **208** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
+The 1.1.10-release-candidate-2 validation run passed **282 checks**: **210** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
 
 These checks cannot start Unity or prove full multiplayer determinism, and they need the game installed locally (no proprietary game files are included in this repository). See [StabilityTests/README.md](StabilityTests/README.md) for how to run them. The maintainer's real playtests, described above, are what confirm behavior in the live game.
 

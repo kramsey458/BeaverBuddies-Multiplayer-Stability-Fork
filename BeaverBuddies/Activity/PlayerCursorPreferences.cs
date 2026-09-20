@@ -90,6 +90,14 @@ namespace BeaverBuddies.Activity
         }
 
         /// <summary>
+        /// The color saved for a player who may not be connected right now, found from what a chat message
+        /// records (their name and number), or null if none is saved. The numbered key is tried first: it
+        /// is the one used while two connected players share a name.
+        /// </summary>
+        public string SavedColorFor(string name, int playerId) =>
+            Get(KeyFor(name, playerId, true)).ColorHex ?? Get(KeyFor(name, playerId, false)).ColorHex;
+
+        /// <summary>
         /// Name-based key. When several connected players share a name, each also gets its player
         /// number so their styles stay separate.
         /// </summary>

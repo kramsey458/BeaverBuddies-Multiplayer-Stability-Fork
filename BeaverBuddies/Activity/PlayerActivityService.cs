@@ -144,6 +144,17 @@ namespace BeaverBuddies.Activity
 
         public Color ColorOf(RemoteActivity player) => player.ResolveColor(StyleOf(player));
 
+        /// <summary>
+        /// The color this player's cursor is drawn in for you right now: the one you set for them, else the
+        /// one they chose. False if they have no cursor (they left, or player activity is off).
+        /// </summary>
+        public bool TryGetCursorColor(int playerId, out Color color)
+        {
+            if (remote.TryGetValue(playerId, out var player) && player.State != null) { color = ColorOf(player); return true; }
+            color = default;
+            return false;
+        }
+
         /// <summary>Connected players in a stable order (host first), for the settings panel.</summary>
         public List<PlayerCursorEntry> Players() =>
             remote.Values.OrderBy(p => p.PlayerId).Select(p => new PlayerCursorEntry(p)).ToList();

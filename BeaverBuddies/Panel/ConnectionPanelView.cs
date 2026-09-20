@@ -187,6 +187,8 @@ namespace BeaverBuddies.Panel
         {
             Color headline = ColorOf(model);
             headerDot.style.backgroundColor = headline;
+            // Expanded, the dot by the sync status is the only one. Collapsed there is no sync line, so the header keeps its own.
+            headerDot.style.display = expanded ? DisplayStyle.None : DisplayStyle.Flex;
             title.text = expanded ? loc.T("BeaverBuddies.Panel.Title") : model.Summary;
             role.text = expanded ? model.Role : "";
             role.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
@@ -216,13 +218,12 @@ namespace BeaverBuddies.Panel
 
         VisualElement PlayerRow(PanelRow row)
         {
+            // A name and a ping, nothing else. Your own row is bold and its ping is a dash.
             var line = Horizontal(); line.style.alignItems = Align.Center; line.style.marginTop = 3;
-            var dot = Dot(8); dot.style.backgroundColor = QualityColor(row.Quality);
-            var name = Text(row.Name, 13, Ink); name.style.flexGrow = 1; name.style.flexShrink = 1;
-            var tag = Text(row.Tag, 11, Muted); tag.style.marginLeft = 6;
-            var ping = Text(row.PingText, 13, PingColor(row.Quality));
+            var name = Text(row.Name, 13, Ink, bold: row.IsYou); name.style.flexGrow = 1; name.style.flexShrink = 1;
+            var ping = Text(row.PingText, 13, PingColor(row.Quality), bold: row.IsYou);
             ping.style.marginLeft = 10; ping.style.minWidth = 52; ping.style.unityTextAlign = TextAnchor.MiddleRight;
-            line.Add(dot); line.Add(name); line.Add(tag); line.Add(ping);
+            line.Add(name); line.Add(ping);
             return line;
         }
 

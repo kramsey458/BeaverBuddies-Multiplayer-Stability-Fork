@@ -105,5 +105,22 @@ static class CursorPreferencesChecks
             Equal("player", PlayerCursorPreferences.KeyFor("", 2, false));
             Equal("player", PlayerCursorPreferences.KeyFor(null, 2, false));
         });
+        yield return ("A color saved for a player is found again from a chat message, even when they are not connected", () =>
+        {
+            var prefs = new PlayerCursorPreferences(null);
+            Check(prefs.SavedColorFor("Sarah", 3) == null, "nothing saved yet");
+            prefs.Set("sarah", new PlayerCursorStyle { ColorHex = "F15BB5" });
+            Equal("F15BB5", prefs.SavedColorFor("Sarah", 3));           // by name, whatever the case
+            Equal("F15BB5", prefs.SavedColorFor("  SARAH ", 7));        // and whatever number they have this time
+            Check(prefs.SavedColorFor("Bob", 3) == null, "another player has no color");
+            // Two connected players with one name are saved under their numbers: that one wins for that player.
+            prefs.Set("sarah#5", new PlayerCursorStyle { ColorHex = "2EC4B6" });
+            Equal("2EC4B6", prefs.SavedColorFor("Sarah", 5));
+            Equal("F15BB5", prefs.SavedColorFor("Sarah", 6));
+            // A saved size or transparency alone is not a color.
+            prefs.Set("bob", new PlayerCursorStyle { Size = 2 });
+            Check(prefs.SavedColorFor("Bob", 1) == null, "size only");
+            Check(prefs.SavedColorFor(null, 1) == null, "no name");
+        });
     }
 }
