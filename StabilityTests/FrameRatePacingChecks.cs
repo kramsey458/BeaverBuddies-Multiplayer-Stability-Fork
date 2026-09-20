@@ -64,46 +64,76 @@ static class FrameRatePacingChecks
             for (int i = 0; i < 20; i++) { pacing.Sample(0, 5, true); Equal(100, pacing.Percent); }
             for (int i = 0; i < 20; i++) { pacing.Sample(30, null, true); Equal(100, pacing.Percent); }
         });
-        yield return ("Frame rate pacing: three reports below the floor ease 10%, down to the floor of 30%", () =>
+        yield return ("Frame rate pacing: a median of five reports below the floor eases 10%, down to the floor of 30%", () =>
         {
             var pacing = new FrameRatePacing();
-            pacing.Sample(30, 14, true); pacing.Sample(30, 14, true); Equal(100, pacing.Percent);
+            for (int i = 0; i < 4; i++) { pacing.Sample(30, 14, true); Equal(100, pacing.Percent); Check(pacing.SmoothedFps == null); }
             pacing.Sample(30, 14, true); Equal(90, pacing.Percent);
-            pacing.Sample(30, 29, true); pacing.Sample(30, 29, true); Equal(90, pacing.Percent);
+            // The next decision only sees reports from after the drop.
+            for (int i = 0; i < 4; i++) { pacing.Sample(30, 29, true); Equal(90, pacing.Percent); }
             pacing.Sample(30, 29, true); Equal(80, pacing.Percent);
             for (int i = 0; i < 100; i++) pacing.Sample(30, 1, true);
             Equal(FrameRatePacing.MinPercent, pacing.Percent); Check(pacing.IsEasing);
         });
-        yield return ("Frame rate pacing: one dip does not ease, and a report at the floor resets the count", () =>
+        yield return ("Frame rate pacing: bad seconds among good ones do not ease the host", () =>
         {
             var pacing = new FrameRatePacing();
-            foreach (int fps in new[] { 60, 12, 60, 12, 12, 30, 12, 12, 35 }) { pacing.Sample(30, fps, true); Equal(100, pacing.Percent); }
+            // Two seconds in every five far below the floor: a garbage collection, an autosave.
+            for (int i = 0; i < 200; i++) { pacing.Sample(30, i % 5 == 1 || i % 5 == 2 ? 2 : 34, true); Equal(100, pacing.Percent); }
+            Equal(34, pacing.SmoothedFps);
         });
-        yield return ("Frame rate pacing: climbs back only with room to spare, and holds in between", () =>
+        yield return ("Frame rate pacing: it speeds back up 5% at a time, only with headroom above the floor", () =>
         {
             var pacing = new FrameRatePacing();
-            for (int i = 0; i < 9; i++) pacing.Sample(30, 10, true);
+            for (int i = 0; i < 15; i++) pacing.Sample(30, 10, true);
             Equal(70, pacing.Percent);
-            Equal(37, FrameRatePacing.RecoverAbove(30));
-            for (int i = 0; i < 20; i++) pacing.Sample(30, 33, true);        // above the floor, short of the headroom
+            Equal(37, FrameRatePacing.RecoverAbove(30)); Equal(25, FrameRatePacing.RecoverAbove(20)); Equal(75, FrameRatePacing.RecoverAbove(60));
+            for (int i = 0; i < 40; i++) pacing.Sample(30, 33, true);        // above the floor, short of the headroom
             Equal(70, pacing.Percent);
-            pacing.Sample(30, 40, true); pacing.Sample(30, 40, true); Equal(70, pacing.Percent);
-            pacing.Sample(30, 40, true); Equal(75, pacing.Percent);
-            for (int i = 0; i < 30; i++) pacing.Sample(30, 90, true);
+            for (int i = 0; i < FrameRatePacing.SamplesBeforeRise - 1; i++) { pacing.Sample(30, 40, true); Equal(70, pacing.Percent); }
+            // Five reports of 33 are still in the window: the median passes the headroom with the third 40.
+            pacing.Sample(30, 40, true); Equal(70, pacing.Percent);
+            pacing.Sample(30, 40, true); pacing.Sample(30, 40, true); Equal(75, pacing.Percent);
+            for (int i = 0; i < 400; i++) pacing.Sample(30, 90, true);
             Equal(100, pacing.Percent);
-            Equal(25, FrameRatePacing.RecoverAbove(20)); Equal(75, FrameRatePacing.RecoverAbove(60));
         });
-        yield return ("Frame rate pacing: a paused game or speed 1 is never held against a guest; switching it off restores full speed", () =>
+        yield return ("Frame rate pacing: the speed that caused trouble stays out of reach for a minute, then longer each time", () =>
+        {
+            // A guest that draws 45 fps up to 80% of the chosen speed and 12 above it.
+            var pacing = new FrameRatePacing();
+            var changes = new List<(int Second, int Percent)>();
+            for (int second = 0; second < 1100; second++)
+            {
+                int before = pacing.Percent;
+                pacing.Sample(30, pacing.Percent <= 80 ? 45 : 12, true);
+                if (pacing.Percent != before) changes.Add((second, pacing.Percent));
+                if (second > 30) Check(pacing.Percent <= 85 && pacing.Percent >= 75, $"{pacing.Percent}% at {second} s");
+            }
+            // Tries at 85%: each one costs a drop to 75% and a climb back to 80%. The first version tried every 20 seconds.
+            var tries = changes.Where(c => c.Percent == 85).Select(c => c.Second).ToList();
+            Check(tries.Count >= 3 && tries.Count <= 6, $"{tries.Count} tries in 18 minutes: {string.Join(",", tries)}");
+            for (int i = 1; i < tries.Count; i++)
+                Check(tries[i] - tries[i - 1] >= FrameRatePacing.FirstRetryAfterSamples, $"tried again too soon: {string.Join(",", tries)}");
+            Check(tries[^1] - tries[^2] >= FrameRatePacing.LongestRetryAfterSamples, $"the last wait: {string.Join(",", tries)}");
+        });
+        yield return ("Frame rate pacing: pausing, switching it off and losing the report behave sensibly", () =>
         {
             var pacing = new FrameRatePacing();
-            for (int i = 0; i < 6; i++) pacing.Sample(30, 10, true);
+            for (int i = 0; i < 10; i++) pacing.Sample(30, 10, true);
             Equal(80, pacing.Percent);
             for (int i = 0; i < 20; i++) pacing.Sample(30, 5, false);        // paused: nothing moves
             Equal(80, pacing.Percent);
-            pacing.Sample(30, 5, true); pacing.Sample(30, 5, true); Equal(80, pacing.Percent);   // the count restarted
+            for (int i = 0; i < 4; i++) pacing.Sample(30, 5, true);
+            Equal(80, pacing.Percent);                                       // the reports started again
             pacing.Sample(0, 5, true); Equal(100, pacing.Percent);           // the host switched it off
-            for (int i = 0; i < 3; i++) pacing.Sample(30, 5, true);
+            for (int i = 0; i < 5; i++) pacing.Sample(30, 5, true);
+            Equal(90, pacing.Percent);
             pacing.Sample(30, null, true); Equal(100, pacing.Percent);       // the guest left, or tabbed out
+            // A different floor starts with a clean slate: what was trouble for 30 fps is forgotten.
+            for (int i = 0; i < 5; i++) pacing.Sample(30, 5, true);
+            Equal(90, pacing.Percent);
+            for (int i = 0; i < 40; i++) pacing.Sample(20, 60, true);
+            Equal(100, pacing.Percent);
         });
         yield return ("Frame rate pacing: the floors cycle Off, 20, 30, 45, 60 and back, and an unknown value starts again", () =>
         {

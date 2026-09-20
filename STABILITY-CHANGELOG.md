@@ -5,6 +5,39 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9-framethrottler-preview2 (pre-release)
+
+A pre-release for testing. Same network format as 1.0.9-framethrottler-preview, so the two can
+play together, but only the host's build decides how the easing behaves.
+
+### The frame rate easing no longer see-saws
+
+- Played once with the floor at 20 fps: no desync, and the guest's average frame rate went from
+  5 to 11 fps (1.0.8, same colony, true speed 7) to 21 to 27 fps. But the host changed speed 68
+  times in seven minutes, between 60% and 95%, and never settled. Two causes. The guest's
+  one-second frame rates are noisy (anything from 2 to 59 fps within a few seconds, because a
+  garbage collection or an autosave takes most of one second), and three bad seconds in a row
+  were enough for a drop. And after every drop the host climbed straight back, 5% every three
+  seconds, into the speed that had just caused the trouble.
+- The rule now looks at the middle value of the guest's last five reports, which one or two bad
+  seconds cannot move. Below the floor: drop 10% and start a fresh set of five reports, so the
+  next decision only sees frame rates from after the drop.
+- Speeding back up takes six good reports in a row instead of three.
+- The percentage the host had to drop from is remembered. It does not climb back to it for a
+  minute of play, then tries once; if that fails again from the same percentage the wait
+  doubles, up to four minutes. Changing the floor, switching it off, or the guest leaving
+  forgets it.
+- The line in `Player.log` also gives the middle value the decision was made on.
+- In a model of a guest that is fine up to 80% and collapses above it, the host stays between
+  75% and 85% and tries the higher speed at most six times in eighteen minutes; the first
+  version tried every twenty seconds.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 177 StabilityTests, 64
+  RuntimeChecks against the built mod and 2 Python checks pass.
+- Not yet played in a multiplayer session.
+
 ## 1.0.9-framethrottler-preview (pre-release)
 
 A pre-release for testing, on top of everything in 1.0.8. Every player should install this build:

@@ -558,7 +558,8 @@ namespace BeaverBuddies
             if (frameRatePacing.Percent != fpsBefore)
             {
                 Plugin.Log($"Host pacing: now {frameRatePacing.Percent}% of the chosen speed for guest frame rate " +
-                           $"(slowest guest draws {host.NetBase?.WorstGuestFps?.ToString() ?? "?"} fps, floor {floor})");
+                           $"(slowest guest draws {host.NetBase?.WorstGuestFps?.ToString() ?? "?"} fps, " +
+                           $"middle of its last five reports {frameRatePacing.SmoothedFps?.ToString() ?? "?"}, floor {floor})");
             }
         }
 
