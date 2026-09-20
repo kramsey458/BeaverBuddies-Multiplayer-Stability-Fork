@@ -12,7 +12,9 @@ a session with it on simulates exactly what the same session would without it.
 ## Using it
 
 1. **Both players** turn on **Log Frame Rate Details** in the mod's settings, under Developer
-   Settings. Both, or there is nothing to compare.
+   Settings. Both, or there is nothing to compare. The setting is read as the map finishes loading,
+   so turn it on before hosting or joining; changing it during a session does nothing until the
+   next one.
 2. Optionally set **Slow Frame Threshold** (default 50 ms, which is 20 frames per second) and
    **Frame Rate Summary Interval** (default every 100 ticks).
 3. Play. Keep the session long enough to hit the problem several times.
