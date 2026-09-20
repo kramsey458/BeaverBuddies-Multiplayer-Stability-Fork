@@ -49,9 +49,14 @@ code, and each fix changes a decision that is checked on its own.
   buttons held when its dialog appeared, so they did not carry over once it was closed. A failed
   action and a lost connection now do the same.
 
-## 1.0.8 (pre-release)
+## 1.0.8
 
-A pre-release for testing, on top of 1.0.7. Every player should install this build.
+The current release. It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were
+never full releases themselves. Every player should install this build.
+
+The fork owner played this build in multiplayer at a true speed 7 (large colony speed limit
+removed), the configuration in which 1.0.7 desynced within minutes both times it was tried, and
+reported that it works great, with no desync in a ten minute session.
 
 ### A desync at high speed: a beaver's zipline state came from the animation
 
@@ -75,9 +80,10 @@ can differ by a tick.
   fact as simulation state: it follows the path corners the walker actually moved along, from the
   tick, and it is saved with the game. The values are the game's own. The animation, harness and
   swimming visuals still follow the animated model. Single player is untouched.
-- **This is the one frame-timed input to walking speed found by reading the game's code. It has
-  not been confirmed as the cause of those two desyncs**: the logs could not say which beaver
-  differed. That is what the next item is for.
+- This is the one frame-timed input to walking speed found by reading the game's code. The logs
+  could not say which beaver differed, so it was not proven to be the cause of those two desyncs;
+  what is known is that the desync did not come back in the session described above. If one
+  does, the next item will say which beaver and why.
 
 ### Walker diagnostics, written with the water diagnostics on a desync
 
@@ -97,7 +103,7 @@ zero and logged `Host pacing: waiting for a guest that is 150 ticks behind`. It 
 and cost nothing, because the game was loading. A guest that has not ticked yet is no longer
 counted as behind.
 
-## 1.0.7 (pre-release)
+## 1.0.7 (pre-release, included in 1.0.8)
 
 A pre-release for testing, on top of 1.0.6. Every player should install this build.
 
@@ -137,7 +143,7 @@ Not verified: none of it has run in the game yet. The transport is covered by au
 over real host and guest sessions; the look, the keyboard handling and the mouse wheel over the
 log are not, and are the things to look at first.
 
-## 1.0.6 (pre-release)
+## 1.0.6 (pre-release, included in 1.0.8)
 
 A pre-release for testing, on top of 1.0.5. Every player should install this build.
 
@@ -175,7 +181,7 @@ no progress for 30 seconds ends the connection.
 This changes how fast the host works through ticks, never which tick anything happens on, so
 it cannot change what anyone simulates.
 
-## 1.0.5 (pre-release)
+## 1.0.5 (pre-release, included in 1.0.8)
 
 A pre-release for testing, on top of 1.0.4. Every player should install this build.
 
@@ -202,7 +208,7 @@ closed, and the game then crashed with a `NullReferenceException` in `PanelStack
 
 Neither change affects what anyone simulates.
 
-## 1.0.4 (pre-release)
+## 1.0.4 (pre-release, included in 1.0.8)
 
 A pre-release for testing. Every player should install this build: the game warns when mod
 versions differ, and mixed versions are untested.
