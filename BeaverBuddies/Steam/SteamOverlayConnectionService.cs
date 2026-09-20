@@ -51,6 +51,10 @@ namespace BeaverBuddies.Steam
         public void UpdateSingleton()
         {
             //Read();
+            // Runs whether or not Steam has finished starting: it only does anything for a blocker the overlay left
+            // behind under a dialog.
+            try { SteamOverlayInputBlockerPatch.ReleaseSurfacedBlocker(_inputBlocker); }
+            catch (Exception e) { Plugin.LogWarning("Could not release the Steam overlay's input blocker: " + e.Message); }
             if (!done)
             {
                 if (_steamManager.Initialized)

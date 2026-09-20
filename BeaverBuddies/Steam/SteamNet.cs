@@ -60,12 +60,35 @@ namespace BeaverBuddies.Steam
                 try { action(); }
                 catch (Exception e) { Plugin.LogWarning("Steam networking task failed: " + e.Message); }
             }
-            try { manager.Pump(); }
+            try
+            {
+                manager.Pump();
+                string timing = manager.TakeTimingReport();
+                if (timing != null) Plugin.Log(timing);
+            }
             catch (Exception e)
             {
                 // Never let a networking problem throw into Unity's update loop every frame.
                 double now = Clock();
                 if (now - lastPumpErrorLog > 5) { lastPumpErrorLog = now; Plugin.LogWarning("Steam networking pump failed: " + e); }
+            }
+        }
+
+        /// <summary>
+        /// Lets Steam move data now, if it is due. The game's tick loop calls this between buckets: Steam is
+        /// otherwise only served once per frame, and at a high game speed most of a frame is simulation, so every
+        /// message waited for the end of it. Runs on the game thread, in the middle of a tick, so it does data
+        /// transfer only: no queued main-thread work, and nothing that touches the game.
+        /// </summary>
+        internal static void PumpBetweenTicks(bool force)
+        {
+            var current = manager;
+            if (current == null) return;
+            try { current.PumpBetweenTicks(force); }
+            catch (Exception e)
+            {
+                double now = Clock();
+                if (now - lastPumpErrorLog > 5) { lastPumpErrorLog = now; Plugin.LogWarning("Steam networking pump between ticks failed: " + e); }
             }
         }
 

@@ -5,10 +5,205 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9
+
+The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
+fix for controls that stopped answering, the frame rate easing, and the compact chat and panel
+layout. Every player should install this build: guests now send the host one more number than
+before (their frame rate), and the join check compares the mod build, so it will not join a session
+with an earlier version.
+
+### The ping over Steam no longer grows with the game speed
+
+Reported as a good ping at a low game speed and 200 to 300 ms at a high one. **The fork owner ran a
+session at 11.7 ticks a second (a true speed 7) with the ping under 100 ms.**
+
+Over Steam the ping is not only the network. Steam is only served from the game thread, and the
+game thread served it once per frame. A probe passes four of those pumps on its way round: the host
+sending it, the guest receiving it, the guest sending the reply (queued just after the pump that
+delivered the probe, so it waits a whole frame) and the host receiving that. Run through the real
+transport and ping code over a fake Steam network, that comes to about a frame and a half per
+player, so the panel showed roughly the round trip on the wire plus 1.5 x (the host's frame + the
+guest's frame). The waits also delayed real traffic, not only the number: every action a guest
+made and every tick the host sent waited for the same pumps.
+
+At a low game speed a frame is short and this is a few milliseconds. At a high speed it is not.
+The game ticks as many of a tick's 129 buckets in a frame as the frame's time, multiplied by the
+game speed, asks for, so the simulation is spread over the frames it needs and a frame lasts
+roughly the non-simulation work divided by (1 - the share of the main thread the simulation
+takes). The share grows with the speed. In a host log at a true speed 7 the simulation took 51%
+of the main thread (44 ms a tick, 11.7 ticks a second) and frames were 17 to 19 ms, about twice
+what they are at speed 1. A computer that needs 90% of its main thread at that speed has frames ten
+times as long as an idle one, and a guest that is catching up (it runs up to speed 10) can need
+more than 100%. So the ping rises with the game speed, and most of all with the frame length of the
+slower computer.
+
+- The game's tick loop now lets Steam move data between the buckets of a tick, at most once every
+  millisecond, and straight after a tick's events are queued for the guests. This only moves data
+  (one native call per connection when nothing is waiting), runs on the game thread like every
+  other Steam call, and does nothing outside a Steam session. The once-per-frame pump is unchanged
+  and still does everything else: connecting, closing and failures.
+- The simulation over the fake Steam network (5 ms each way) shows the pings below, in ms. The last
+  column adds a 12 ms part of every tick that cannot be interrupted (the singletons and the wait for
+  the parallel work), which the extra pumps cannot reach.
+
+  | Host frame | Guest frame | Once per frame | Between ticks | Between ticks, 12 ms uninterruptible |
+  |---:|---:|---:|---:|---:|
+  | 8 ms | 8 ms | 35 | 32 | 31 |
+  | 17 ms | 17 ms | 58 | 18 | 20 |
+  | 17 ms | 60 ms | 123 | 17 | 19 |
+  | 17 ms | 100 ms | 177 | 17 | 19 |
+  | 100 ms | 100 ms | 323 | 13 | 18 |
+  | 200 ms | 200 ms | 713 | 13 | 17 |
+
+  What is left is the part of each frame that is not simulation (rendering, the garbage collector),
+  where nothing can be served, so it is a few milliseconds at most for a frame like the ones in the
+  host log.
+- A direct-IP connection is not affected: its data moves on its own threads, not on the frame.
+- The log now says how long data waited, once a minute while someone is connected, for example
+  `Steam link timing over 60 s: data waited for the game thread 17.3 ms on average and up to 118 ms
+  if Steam were only served once per frame (4 gaps over 50 ms); with the pumping between ticks it
+  waited 1.6 ms on average and up to 24 ms (0 gaps over 50 ms).` The first figures are what a
+  once-per-frame pump would have cost in that session and the second are what it cost, so one
+  session shows both, to read next to the ping in the panel.
+
+Not confirmed: the guest's frame length at a high speed has never been measured, so it is not known
+that this accounts for all of the 200 to 300 ms that was seen. The timing line in `Player.log` on
+both computers is what to look at if the ping is still high.
+
+### Controls that stopped answering after a message was closed
+
+Reported after a disconnect or a resync attempt: once the message was closed, the controls did not
+work as expected, and Escape did not open the menu. Going through every way a session can end, in
+this mod and in the game's own code, found five separate causes. Each leaves the game running but
+ignoring the player. **The fork owner confirmed that the controls work after a disconnect.** Which of
+the five that covered was not recorded, and the rest have not been seen in a running game: they come
+from reading the code, and each fix changes a decision that is checked on its own.
+
+- **After "Multiplayer has stopped", the menu could not be opened.** A multiplayer action that
+  fails to replay stops multiplayer for the rest of that game and blocks every further action, so a
+  half-applied action cannot make things worse. The block also covered the game menu: Escape and
+  the options button both open it through the same call. The message tells the player to return to
+  the main menu, so the only way out was to kill the game. The menu now opens, and everything else
+  stays blocked.
+- **A dropped connection left the dead session in place.** When a guest lost the connection during
+  a game, its network was closed but the session stayed installed. Every action, the menu included,
+  was then queued for a session that no longer existed and never played, and the game was held
+  paused. The message meant to explain it was shown through the main menu's dialogs, which no longer
+  exist once a game has loaded, and the fallback looked the dialog up where it is never registered,
+  so nothing was shown at all. The session now ends the way a desync ends it: what the player does
+  applies here again, the game stays paused, and the game itself shows the reason and the way out
+  (open the menu to save, or to return to the main menu and join again). If the connection drops
+  while the game is still loading, the message appears as soon as the game is up.
+- **A cancelled or failed join or host left a dead session in the main menu.** Cancelling the host's
+  lobby, or a join that failed after the connection was made (a host that had already started, a
+  build mismatch), left the closed session installed until the main menu was loaded again. Whatever
+  was played next from that menu, single player included, then started as a multiplayer game with
+  nobody to talk to: paused for good, and Escape did nothing. A session that ends before it has a
+  game is now cleared away, and a host who cancels a rehost from a running game goes back to
+  playing locally.
+- **Steam's overlay closing under a dialog.** While the overlay is open the game pushes an empty
+  panel that blocks input, and pops it when the overlay closes, but only if it is still on top. If a
+  dialog opened over it in between (an invite that cannot be joined, a connection error), the game
+  left it in place for good: once the dialog was closed, a panel that no key could close sat on top
+  and swallowed every key press, until the overlay was opened again. The panel is now removed as
+  soon as the dialog above it is closed.
+- **Input held when a session stops is cleared.** A desync already cleared the keys and mouse
+  buttons held when its dialog appeared, so they did not carry over once it was closed. A failed
+  action and a lost connection now do the same.
+
+### The host can ease off for a guest's frame rate
+
+- With the large colony speed limit removed, a slower computer can keep up with the simulation
+  and still have a bad time: in a real session a guest stayed within a few ticks of the host at
+  a true speed 7 while drawing 13 to 14 frames a second, because the simulation took about 63%
+  of every second on that computer. The existing easing only looks at how many ticks behind a
+  guest is, so it never reacted.
+- New host choice, **Ease off below**: Off (the default), 20, 30, 45 or 60 fps. It is a line in
+  the connection panel that the host clicks to pick the next value, and the same setting is in
+  the mod settings. Only the host's value is ever used, and it can be changed at any time during
+  a session.
+- Guests report their frames per second in the reply they already send to the host's ping
+  probe, about once a second. A guest reports nothing while its game window is in the
+  background, where the system throttles it and the figure says nothing about the computer, and
+  the host forgets a guest's figure as soon as a reply arrives without one.
+- **The rule looks at the middle value of the slowest guest's last five reports**, which one or two
+  bad seconds cannot move: a guest's one-second frame rates are noisy (anything from 2 to 59 fps
+  within a few seconds, because a garbage collection or an autosave takes most of one second).
+  Below the floor, the host drops 10% of the chosen speed, down to 30%, and waits for five fresh
+  reports, so the next decision only sees frame rates from after the drop. It climbs back 5% after
+  six reports in a row that are clear of the floor by some headroom (a quarter of the floor, at
+  least 5 fps). In between it holds, which keeps it from see-sawing, because easing off is exactly
+  what raises the guest's frame rate. A paused game and speed 1 are never eased, and switching the
+  choice off or the guest leaving restores full speed at once.
+- The percentage the host had to drop from is remembered. It does not climb back to it for a
+  minute of play, then tries once; if that fails again from the same percentage the wait doubles,
+  up to four minutes. Changing the floor, switching it off, or the guest leaving forgets it.
+- It combines with the existing easing by taking the lower of the two percentages, never both
+  multiplied, and the hold for a guest far behind still wins. The panel says which one is
+  holding the host back: **Easing off** reads "75% (frame rate)" when it is this one. The host
+  also sees **Guest fps**. Each change is written to `Player.log`, with the middle value the
+  decision was made on.
+- In a model of a guest that is fine up to 80% of the chosen speed and collapses above it, the
+  host stays between 75% and 85% and tries the higher speed at most six times in eighteen minutes;
+  a model of a guest that draws 15 fps at a true speed 7 is brought back above 30 fps with the host
+  settled at 50% of the chosen speed, and a fast guest is never slowed at any floor.
+- Like the other pacing, this changes how fast the host works through ticks, never which tick
+  anything happens on, so it cannot change what anyone simulates.
+- **Played once, with an earlier version of the rule** and the floor at 20 fps: no desync, and the
+  guest's average frame rate went from 5 to 11 fps (1.0.8, same colony, true speed 7) to 21 to 27
+  fps. But the host changed speed 68 times in seven minutes, between 60% and 95%, and never
+  settled, because that version dropped after three bad seconds and climbed straight back. The rule
+  above is the one that replaced it, and **it has not been played in a multiplayer session**. The
+  clickable line in the panel has not been seen in the game.
+
+### The chat and the panel are smaller, line up with the game's panels, and stay in front
+
+From a screenshot with the frame rate easing lines showing: the chat was as tall as the whole top
+of the panel, so with everything the host sees it ran down to the bottom of the screen and the
+game's alerts ("Nothing to do in range") were drawn over its text box; and the pacing lines were
+long enough to push the panel to its widest, wider than the game's beaver counters above it.
+
+- **A compact chat.** The chat has a fixed height (150 interface units, about five lines and the
+  box to type in) instead of matching the section above it, so it no longer grows with the rest
+  of the panel.
+- **The panel is as wide as the beaver counters above it.** Its width is measured from the
+  game's own population panel (a root element named `Counters`) in the same corner each time the
+  panel refreshes, so it lines up with it at any UI scale. Without those counters it follows the
+  nearest visible panel above it; with nothing to follow it sizes to its text. A width
+  outside 180 to 520 is never followed. Each change is written to `Player.log` with the widths of
+  the panels in that corner, so a session shows what it followed if it ever looks wrong.
+- **Short labels.** The pacing text is what made the panel wide, and labels wrapped onto two
+  lines. The labels are **Guest behind**, **Easing off** and **Guest fps**; the values read "75% of
+  speed", "75% (frame rate)" and "waiting for a guest". A check keeps every label within its
+  column and every pacing text within 20 characters.
+- **In front of the alerts while you type.** While the cursor is in the chat box, the panel's
+  corner of the game's interface is drawn in front of the other corners, where the alerts are, and
+  it goes back to its place when the cursor leaves (or the chat is hidden, collapsed or reset).
+  The game defines each corner as ignoring the pointer, so this changes only what is drawn on
+  top. If the game ever stopped positioning its corners on their own, it is left alone and a line
+  says so in `Player.log`.
+
+Not verified: none of this has been seen in the game. The decisions (which width to follow, the
+height, the string lengths) are covered by checks; the measuring, the drawing order and how it
+looks are not, and are the things to look at first.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 199 StabilityTests (38 new since
+  1.0.8: 16 for the frame rate easing, 6 for the panel layout and label lengths, 5 for the Steam
+  pumping and the ping, 11 for ending a session), 69 RuntimeChecks against the built mod (5 new,
+  for the menu) and 3 Python checks pass (the water snapshot comparison, and the walker trace
+  comparison's self-test).
+- The four changes were built and tested on their own first and are combined here; the combined
+  build was checked by the same suites, which is what carries the interactions between them
+  (they meet in `ReplayService`, the connection panel and the tests). **The combined build has not
+  been played as a whole.** What was seen in the game is said in each section above.
+
 ## 1.0.8
 
-The current release. It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were
-never full releases themselves. Every player should install this build.
+It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were never full releases
+themselves. Every player should install this build.
 
 The fork owner played this build in multiplayer at a true speed 7 (large colony speed limit
 removed), the configuration in which 1.0.7 desynced within minutes both times it was tried, and

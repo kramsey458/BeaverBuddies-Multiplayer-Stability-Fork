@@ -58,6 +58,8 @@ namespace BeaverBuddies.Panel
         public string Transport = "";
         /// <summary>Host only: how many ticks behind the host this guest last reported being. Null if unknown.</summary>
         public int? TicksBehind;
+        /// <summary>Host only: the frames per second this guest last reported. Null if it has not reported one.</summary>
+        public int? Fps;
     }
 
     /// <summary>Everything the panel needs, gathered by the game and free of any game types.</summary>
@@ -71,6 +73,10 @@ namespace BeaverBuddies.Panel
         /// <summary>Host only: percent of the chosen speed the host is running at. Below 100 while easing off for a guest.</summary>
         public int HostPacingPercent = 100;
         public bool HostPacingHolding;
+        /// <summary>Host only: the guest frame rate below which the host eases off. 0 is off.</summary>
+        public int GuestFpsFloor;
+        /// <summary>Host only: percent of the chosen speed the host runs at because of a guest's frame rate.</summary>
+        public int FrameRatePacingPercent = 100;
         public List<PanelPlayer> Players = new List<PanelPlayer>();
     }
 
@@ -96,6 +102,10 @@ namespace BeaverBuddies.Panel
         public string GuestsBehindText;
         /// <summary>Only for the host while it is easing off so a guest can keep up. Null otherwise.</summary>
         public string PacingText;
+        /// <summary>Only for the host: the lowest frame rate any guest reported. Null for a guest or when unknown.</summary>
+        public string GuestFpsText;
+        /// <summary>Only for the host: the chosen guest frame rate floor ("Off", "30 fps"). Clicking it picks the next one.</summary>
+        public string FpsFloorText;
     }
 
     public static class PanelModelBuilder
@@ -167,8 +177,18 @@ namespace BeaverBuddies.Panel
                         new object[] { worst.Value });
                 if (input.HostPacingHolding)
                     model.PacingText = t("BeaverBuddies.Panel.PacingHolding", new object[0]);
+                else if (input.FrameRatePacingPercent < 100 && input.FrameRatePacingPercent <= input.HostPacingPercent)
+                    // The guest's frame rate is what is holding the host back, so say so.
+                    model.PacingText = t("BeaverBuddies.Panel.PacingFpsValue", new object[] { input.FrameRatePacingPercent });
                 else if (input.HostPacingPercent < 100)
                     model.PacingText = t("BeaverBuddies.Panel.PacingValue", new object[] { input.HostPacingPercent });
+
+                int? lowestFps = input.Players.Where(p => !p.IsYou && !p.IsHost && p.Fps != null)
+                    .Select(p => p.Fps).DefaultIfEmpty(null).Min();
+                if (lowestFps != null) model.GuestFpsText = t("BeaverBuddies.Panel.FpsValue", new object[] { lowestFps.Value });
+                model.FpsFloorText = input.GuestFpsFloor <= 0
+                    ? t("BeaverBuddies.Panel.FpsFloorOff", new object[0])
+                    : t("BeaverBuddies.Panel.FpsValue", new object[] { input.GuestFpsFloor });
             }
 
             // The host lists how each guest reaches it; a guest shows only how it reaches the host.

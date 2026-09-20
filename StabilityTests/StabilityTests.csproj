@@ -10,15 +10,21 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/ReplayExecution.cs" Link="ReplayExecution.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/CatchUpSpeed.cs" Link="CatchUpSpeed.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/HostPacing.cs" Link="HostPacing.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/FrameRatePacing.cs" Link="FrameRatePacing.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/SpeedLimitChoice.cs" Link="SpeedLimitChoice.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkTypes.cs" Link="SteamLinkTypes.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkSocket.cs" Link="SteamLinkSocket.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/SteamLinkManager.cs" Link="SteamLinkManager.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/PumpTiming.cs" Link="PumpTiming.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Fixes/AnimationFixes.cs" Link="AnimationFixes.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/DesyncDetecter/WalkerTrace.cs" Link="WalkerTrace.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerCursorPreferences.cs" Link="PlayerCursorPreferences.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ConnectionStatusModel.cs" Link="ConnectionStatusModel.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ChatFormat.cs" Link="ChatFormat.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/PanelLayout.cs" Link="PanelLayout.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ModListComparison.cs" Link="ModListComparison.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/SessionEndMessages.cs" Link="SessionEndMessages.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
   </ItemGroup>
 </Project>

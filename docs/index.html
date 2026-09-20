@@ -37,13 +37,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow">Timberborn co-op mod &middot; v1.0.8</div>
+      <div class="eyebrow">Timberborn co-op mod &middot; v1.0.9</div>
       <h1>Build your colony together.</h1>
       <p class="lede">BeaverBuddies Stability Fork lets you and your friends run one Timberborn colony at the same time, with Steam friend invites, a live connection panel, and fixes for the crashes and desyncs that make multiplayer painful.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          Download 1.0.8
+          Download 1.0.9
         </a>
         <a class="btn btn-secondary" href="install.html">Read the install guide</a>
       </div>
@@ -69,7 +69,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b>1.0.8</b><span>Latest release</span></li>
+      <li><b>1.0.9</b><span>Latest release</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built and tested against</span></li>
       <li><b>Windows + Steam</b><span>Tested platform</span></li>
       <li><b>Two players</b><span>Tested group size</span></li>
@@ -118,7 +118,7 @@
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
         <h3>A connection panel</h3>
-        <p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance. Collapse it to one line or hide it completely.</p>
+        <p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance, and chat with everyone in the game. Collapse it to one line or hide it completely.</p>
       </article>
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3l7 17 2.5-7.5L21 10z"/></svg></div>
@@ -138,7 +138,7 @@
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
         <h3>Quicker and lighter</h3>
-        <p>A guest's actions reach the host about half a tick sooner (roughly 0.3 seconds at normal speed), and the mod does less work every tick and every frame.</p>
+        <p>A guest's actions reach the host about half a tick sooner (roughly 0.3 seconds at normal speed), the mod does less work every tick and every frame, and over Steam the ping no longer climbs as the game speeds up.</p>
       </article>
     </div>
   </div>
@@ -193,10 +193,12 @@
           <li><b>Ping</b> is the round trip to the host. <span style="color:var(--good)"><b>Green</b></span> is 80 ms or less, <span style="color:var(--warn)"><b>yellow</b></span> up to 160 ms, <span style="color:var(--bad)"><b>red</b></span> anything higher or no response.</li>
           <li><b>Tick rate</b> and <b>speed</b> show how fast the simulation is really running, and guests see how many ticks they are <b>behind the host</b> (0 or 1 is normal).</li>
           <li><b>Connection</b> shows whether players are connected directly or through Steam.</li>
+          <li>The host also sees how far behind the slowest guest is and the lowest <b>guest frame rate</b>, and can click <b>Ease off below</b> to slow the game a little while a guest stays under a frame rate (Off, 20, 30, 45 or 60 fps).</li>
+          <li>A <b>chat box</b> sits below the panel. Everyone sees messages in the same order, and a player who joins later gets the whole conversation.</li>
           <li><b>Click the title</b> to collapse it to a single line. Your choice is remembered.</li>
           <li>Hide it or move it to any corner in <b>Mod Settings</b>, or bind the optional <b>Toggle connection panel</b> key.</li>
         </ul>
-        <p style="color:var(--muted);font-size:.95rem">Ping is measured by the mod's network layer, so it means the same thing over Steam, Hamachi and direct IP.</p>
+        <p style="color:var(--muted);font-size:.95rem">Ping is measured by the mod's network layer, so it means the same thing over Steam, Hamachi and direct IP. Over Steam it includes a short wait for each game to serve Steam, which the mod keeps to a few milliseconds even at a high game speed.</p>
       </div>
     </div>
   </div>
@@ -264,7 +266,15 @@
       </article>
       <article class="card">
         <h3 style="margin-top:0">Demolition and input fixes <span class="chip tested">Tested</span></h3>
-        <p>A replayed demolition selection that included already-demolished buildings no longer ends the session, equal-distance demolition jobs are chosen deterministically, and input state is recovered after a desync.</p>
+        <p>A replayed demolition selection that included already-demolished buildings no longer ends the session, equal-distance demolition jobs are chosen deterministically, and input state is recovered after a desync, a failed action or a lost connection, so the menu and controls keep working. The maintainer confirmed the controls work after a disconnect; the other cases are covered by checks only.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">The ping stays low at a high game speed <span class="chip ok">Confirmed</span></h3>
+        <p>Over Steam, data used to wait for the end of every frame, and at a high game speed a frame is mostly simulation, so the ping grew with the speed. Steam is now also served between the ticks of a frame. At a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">The host can ease off for a slow guest <span class="chip tested">Tested</span></h3>
+        <p>The host picks a frame rate floor; while a guest stays below it, the host slows the game a little and speeds back up by itself. It never changes what happens in a tick. An earlier version of the rule was played once and worked but changed speed too often; the current rule has not been played yet.</p>
       </article>
     </div>
     <p style="margin-top:1.5rem">The full list is in the <a href="https://github.com/kramsey458/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
@@ -308,7 +318,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest">Download 1.0.8</a>
+        <a class="btn btn-primary" href="https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest">Download 1.0.9</a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>

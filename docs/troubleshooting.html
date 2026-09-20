@@ -75,7 +75,7 @@
             <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
             <li>Enable <b>BeaverBuddies - Stability Fork</b> in the mod manager and restart the game.</li>
             <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions will not run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v1.0.8 is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v1.0.9 is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
@@ -225,9 +225,22 @@
           <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
+            <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
             <li><b>Do not overwrite your good save</b> with the session that stopped.</li>
             <li>If it repeats with the same action, <a href="#logs">collect the logs</a> and say what you were doing.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="q" id="lost">
+        <summary>The connection dropped and the game is paused</summary>
+        <div class="answer">
+          <p class="sub">What happens</p>
+          <p>When a guest loses the host, the game says why and stays paused, and the menu and controls work again. Nothing more will be played in that session.</p>
+          <p class="sub">Try this</p>
+          <ol>
+            <li>Press <b>Escape</b> to open the menu. You can save from there.</li>
+            <li>Return to the main menu and join again once the host has hosted again. Steam guests accept a fresh invite; direct IP guests reconnect.</li>
           </ol>
         </div>
       </details>
@@ -239,7 +252,7 @@
           <ol>
             <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>both</b> computers. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It is off by default.</li>
             <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
-            <li>Try a lower game speed if a slower computer keeps falling behind.</li>
+            <li>Try a lower game speed if a slower computer keeps falling behind, or, as the host, click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
             <li>Make sure both players run the latest release, which does less work every tick and every frame.</li>
           </ol>
         </div>

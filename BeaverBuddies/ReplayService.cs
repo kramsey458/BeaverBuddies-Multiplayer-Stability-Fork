@@ -369,9 +369,42 @@ namespace BeaverBuddies
                 EventIO.Reset();
                 SpeedChangePatcher.SetSpeedSilentlyNow(_speedManager, 0);
             }
+            // Like a desync: input held when the dialog appears must not carry over once it is closed.
+            GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             GetSingleton<DialogBoxShower>().Create()
                 .SetMessage(reason + "\n\nMultiplayer has stopped because this action may have changed only part of the game state. Return to the main menu and reload a known-good save before rehosting. Do not overwrite your good save with this session.")
                 .SetDefaultCancelButton().Show();
+        }
+
+        /// <summary>
+        /// The network session is over while the game is still running: the connection dropped, or a host gave up
+        /// rehosting. Multiplayer is left the way a desync leaves it, so that what the player does is applied here
+        /// instead of being queued for a session that is gone. Without that every patched action, the menu included,
+        /// goes nowhere and the game stays paused. The game is left paused. <paramref name="message"/> is shown to the
+        /// player; null says nothing (the host chose to give up).
+        /// </summary>
+        public void EndSession(string message)
+        {
+            // A desync or a failed action ended it already, and said so.
+            if (IsDesynced) return;
+            Plugin.Log("Ending the multiplayer session: " + (message ?? "no message"));
+            IsDesynced = true;
+            TargetSpeed = 0;
+            eventsToPlay.Clear();
+            eventsToSend.Clear();
+            EventIO.Reset();
+            SpeedChangePatcher.SetSpeedSilentlyNow(_speedManager, 0);
+            GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
+            if (message == null) return;
+            try
+            {
+                GetSingleton<DialogBoxShower>().Create().SetMessage(message).Show();
+            }
+            catch (Exception error)
+            {
+                // Losing the message is better than losing the game.
+                Plugin.LogError("Could not show the multiplayer message: " + error);
+            }
         }
 
         public void HandleDesync()
@@ -467,6 +500,7 @@ namespace BeaverBuddies
         public void UpdateSingleton()
         {
             if (!CanAct) return;
+            ReportFrameRate();
             if (waitUpdates > 0)
             {
                 waitUpdates--;
@@ -479,6 +513,13 @@ namespace BeaverBuddies
             }
             io.Update();
             if (!CanAct) return;
+            // A session that ended without anyone saying so: a host that cancelled its rehost, or a guest whose
+            // connection dropped while this game was still loading. Only a guest is told; a host chose it.
+            if (io.IsSessionOver)
+            {
+                EndSession(io is ClientEventIO ? SessionEndMessages.ConnectionLost(null) : null);
+                return;
+            }
             // Only replay events on Update if we're paused by the user.
             // Also only send events if paused, so the client doesn't play
             // then before the end of the tick.
@@ -514,6 +555,21 @@ namespace BeaverBuddies
         /// <summary>True while the host stands still because a guest is very far behind.</summary>
         public bool HostPacingHolding => hostPacing.IsHolding;
 
+        private readonly FrameRatePacing frameRatePacing = new FrameRatePacing();
+        private readonly FrameRateMeter frameRateMeter = new FrameRateMeter();
+
+        /// <summary>Percent of the chosen speed the host runs at because of a guest's frame rate. 100 unless the host chose a floor and a guest is below it.</summary>
+        public int FrameRatePacingPercent => frameRatePacing.Percent;
+
+        // A guest tells the host its frame rate with each reply to the host's ping probe. Nothing is reported while
+        // the window is in the background, where the system throttles it and the figure says nothing about the computer.
+        private void ReportFrameRate()
+        {
+            if (!(io is ClientEventIO guest) || guest.NetBase == null) return;
+            frameRateMeter.Frame(UnityEngine.Time.realtimeSinceStartupAsDouble);
+            guest.NetBase.ReportedFps = UnityEngine.Application.isFocused ? frameRateMeter.Fps : 0;
+        }
+
         // Guests report their tick about once a second, so sampling more often would count the same report twice.
         private void SampleHostPacing(ServerEventIO host)
         {
@@ -533,6 +589,17 @@ namespace BeaverBuddies
             {
                 Plugin.Log($"Host pacing: now {hostPacing.Percent}% of the chosen speed " +
                            $"(slowest guest is {host.NetBase?.WorstGuestTicksBehind} ticks behind)");
+            }
+
+            // Same once-a-second reports, a different question: is a guest keeping up in ticks but drawing few frames?
+            int fpsBefore = frameRatePacing.Percent;
+            int floor = Settings.GuestFpsFloorValue;
+            frameRatePacing.Sample(floor, host.NetBase?.WorstGuestFps, TargetSpeed > 1 && !hostPacing.IsHolding);
+            if (frameRatePacing.Percent != fpsBefore)
+            {
+                Plugin.Log($"Host pacing: now {frameRatePacing.Percent}% of the chosen speed for guest frame rate " +
+                           $"(slowest guest draws {host.NetBase?.WorstGuestFps?.ToString() ?? "?"} fps, " +
+                           $"middle of its last five reports {frameRatePacing.SmoothedFps?.ToString() ?? "?"}, floor {floor})");
             }
         }
 
@@ -558,7 +625,7 @@ namespace BeaverBuddies
             if (io is ServerEventIO host)
             {
                 SampleHostPacing(host);
-                targetSpeed = hostPacing.Apply(targetSpeed);
+                targetSpeed = hostPacing.Apply(targetSpeed, frameRatePacing.Percent);
             }
 
             if (_speedManager.CurrentSpeed != targetSpeed)
@@ -804,7 +871,13 @@ namespace BeaverBuddies
 
             while (ShouldTick(__instance, numberOfBucketsToTick--))
             {
-                if (TickReplayServiceOrNextBucket(__instance))
+                bool tickedReplayService = TickReplayServiceOrNextBucket(__instance);
+                // Steam only moves data when this thread asks it to, and the simulation is spread over the frames
+                // it needs: at a high speed nearly a whole frame is spent here, so without this every message, in
+                // both directions, waited for the end of the frame and the ping grew with the game speed. Right
+                // after the replay service ticked, the tick's events are queued for the guests, so send them now.
+                Steam.SteamNet.PumpBetweenTicks(force: tickedReplayService);
+                if (tickedReplayService)
                 {
                     // Refund a bucket if we ticked the ReplayService
                     numberOfBucketsToTick++;

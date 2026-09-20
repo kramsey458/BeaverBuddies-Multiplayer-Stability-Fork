@@ -41,6 +41,8 @@ namespace TimberNet
         private readonly ConcurrentDictionary<ISocketStream, RttTracker> trackers = new ConcurrentDictionary<ISocketStream, RttTracker>();
         // How many ticks behind the host each guest was at its last reply. Written on network threads.
         private readonly ConcurrentDictionary<ISocketStream, int> guestTicksBehind = new ConcurrentDictionary<ISocketStream, int>();
+        // The frames per second each guest last reported. Removed again when a reply carries none.
+        private readonly ConcurrentDictionary<ISocketStream, int> guestFps = new ConcurrentDictionary<ISocketStream, int>();
         private double nextStatusAtMs;
 
         private readonly ISocketListener listener;
@@ -160,6 +162,7 @@ namespace TimberNet
             playerIds.TryRemove(client, out _);
             trackers.TryRemove(client, out _);
             guestTicksBehind.TryRemove(client, out _);
+            guestFps.TryRemove(client, out _);
             chatLimits.TryRemove(client, out _);
             if (activityChannels.TryRemove(client, out ActivityChannel? channel)) channel.Close();
         }
@@ -167,13 +170,33 @@ namespace TimberNet
         protected override void HandleStatusFrame(ISocketStream source, string type, JObject message)
         {
             // Only a guest's reply to our probe means anything to the host.
-            if (type != StatusFrames.ReplyType || !StatusFrames.TryParseReply(message, out int sequence, out int? tick)) return;
+            if (type != StatusFrames.ReplyType || !StatusFrames.TryParseReply(message, out int sequence, out int? tick, out int? fps)) return;
             if (!trackers.TryGetValue(source, out RttTracker? tracker)) return;
             tracker.OnReply(sequence, RttTracker.NowMs);
             // The reply left the guest about half a round trip ago, which is a fraction of a tick.
             // A guest that has not ticked yet is loading, not behind. Without this a rehost compared the old
             // session's tick count with the joining guest's zero and made the host wait for it (1.0.6).
             if (tick != null && tick.Value > 0) guestTicksBehind[source] = Math.Max(0, TickCount - tick.Value);
+            // A guest leaves the frame rate out while its window is in the background, so an old figure must go.
+            if (fps != null) guestFps[source] = fps.Value; else guestFps.TryRemove(source, out _);
+        }
+
+        /// <summary>
+        /// The lowest frame rate any connected guest last reported, or null if none has reported one. Used to ease
+        /// the host's speed when the host has chosen a frame rate floor.
+        /// </summary>
+        public int? WorstGuestFps
+        {
+            get
+            {
+                int? worst = null;
+                foreach (var pair in guestFps)
+                {
+                    if (!pair.Key.Connected) continue;
+                    if (worst == null || pair.Value < worst.Value) worst = pair.Value;
+                }
+                return worst;
+            }
         }
 
         /// <summary>
@@ -220,7 +243,9 @@ namespace TimberNet
                 ISocketStream stream = pair.Key;
                 if (!stream.Connected || !playerIds.TryGetValue(stream, out int id) || !trackers.TryGetValue(stream, out RttTracker? tracker)) continue;
                 PeerStatus peer = tracker.Snapshot(id, (stream as ITransportInfo)?.TransportName ?? "", now);
-                peers.Add(guestTicksBehind.TryGetValue(stream, out int behind) ? peer.WithTicksBehind(behind) : peer);
+                if (guestTicksBehind.TryGetValue(stream, out int behind)) peer = peer.WithTicksBehind(behind);
+                if (guestFps.TryGetValue(stream, out int fps)) peer = peer.WithFps(fps);
+                peers.Add(peer);
             }
             peers.Sort((a, b) => a.PlayerId.CompareTo(b.PlayerId));
             return peers;

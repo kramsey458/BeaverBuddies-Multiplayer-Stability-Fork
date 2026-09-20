@@ -60,6 +60,7 @@ namespace BeaverBuddies.Panel
             {
                 view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
+                view.FpsFloorClicked += OnFpsFloorClicked;
                 if (view.Chat != null) view.Chat.Submit = OnChatSubmit;
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
@@ -73,6 +74,7 @@ namespace BeaverBuddies.Panel
             loaded = false;
             // Before the chat goes away: a text box that still has the cursor keeps the game's hotkeys switched off.
             try { view?.Chat?.ReleaseFocus(); } catch (Exception) { }
+            try { view?.SetLifted(false); } catch (Exception) { }
             try { view?.Root.RemoveFromHierarchy(); } catch (Exception) { }
             try { input.RemoveInputProcessor(this); } catch (Exception) { }
             placedIn = (PanelCorner)(-1);
@@ -109,6 +111,13 @@ namespace BeaverBuddies.Panel
             if (Settings.ConnectionPanelDisplayMode != PanelDisplayMode.Expanded)
                 Settings.SetConnectionPanelDisplayMode(PanelDisplayMode.Expanded);
             view.Chat.RequestFocus();
+            nextRefresh = 0;
+        }
+
+        // Only the host is shown this choice, and only the host's value is ever used.
+        void OnFpsFloorClicked()
+        {
+            Settings.SetGuestFpsFloor(FrameRatePacing.NextFloor(Settings.GuestFpsFloorValue));
             nextRefresh = 0;
         }
 
@@ -153,6 +162,8 @@ namespace BeaverBuddies.Panel
             if (now < nextRefresh) return;
             nextRefresh = now + RefreshSeconds;
 
+            // Line up with the game's own panel above this one (measured, so it follows the UI scale and any change).
+            view.SetWidth(view.MeasureMatchedWidth());
             var model = PanelModelBuilder.Build(Collect(net, replay, now), Translate);
             view.Show(model, mode == PanelDisplayMode.Expanded);
             view.SetVisible(true);
@@ -181,6 +192,8 @@ namespace BeaverBuddies.Panel
                     view.Chat.Sync(log);
                     // A click on the game itself, not on any interface, gives the keyboard back to the game.
                     if (view.Chat.IsFocused && input.MainMouseButtonDown && !input.MouseOverUI) view.Chat.ReleaseFocus();
+                    // While the cursor is in the box, the panel is drawn in front of the game's alerts.
+                    view.SetLifted(view.Chat.IsFocused);
                     countedSequence = log.LastSequence; unread = 0;
                 }
                 else
@@ -188,6 +201,7 @@ namespace BeaverBuddies.Panel
                     // Collapsed: the box is off screen, so the keyboard goes back to the game at once (waiting for the
                     // next refresh would leave the hotkeys off for up to half a second).
                     view.Chat.ReleaseFocus();
+                    view.SetLifted(false);
                     // And count what others say, so the header can say there is something to read.
                     if (log.LastSequence > countedSequence)
                     {
@@ -261,6 +275,8 @@ namespace BeaverBuddies.Panel
                 Speed = speed.CurrentSpeed,
                 HostPacingPercent = replay?.HostPacingPercent ?? 100,
                 HostPacingHolding = replay?.HostPacingHolding == true,
+                GuestFpsFloor = Settings.GuestFpsFloorValue,
+                FrameRatePacingPercent = replay?.FrameRatePacingPercent ?? 100,
             };
 
             // Names come from player activity (the same names other players chose for pings and cursors).
@@ -295,6 +311,7 @@ namespace BeaverBuddies.Panel
             Id = peer.PlayerId, Name = name, IsYou = isYou,
             RttMs = peer.RttMs, SilenceSeconds = peer.SilenceSeconds, Transport = peer.Transport,
             TicksBehind = peer.TicksBehind,
+            Fps = peer.Fps,
         };
 
         string NameOf(int id, Dictionary<int, string> names)
