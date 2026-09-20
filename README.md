@@ -1,8 +1,10 @@
-# BeaverBuddies — Stability Fork
+# BeaverBuddies Stability Fork
 
 Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game connection panel**, and a long list of crash and desync fixes.
 
-**Latest release: [1.0.9](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · built for Timberborn **1.1.2.4** · tested on Windows with the Steam version of the game · GPL-3.0
+[![Latest release](https://img.shields.io/github/v/release/timbermods/BeaverBuddies-Stability-Fork?label=latest&labelColor=172620&color=e0812f&style=flat-square)](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Tested on Windows with the Steam version](https://img.shields.io/badge/tested_on-Windows_%2B_Steam-2a4034?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
+
+**[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
@@ -61,6 +63,10 @@ Steam friend invites are a first-class way to play, alongside direct IP.
 ## The connection panel
 
 A small panel appears in the top-left corner during a multiplayer game.
+
+<img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, two players with one at 21 ms, tick rate 10.7 ticks per second, speed 6.3x, the host pacing lines, a Steam connection and a chat box.">
+
+*The panel as the host sees it during a Steam co-op session.*
 
 | It shows | Meaning |
 | --- | --- |
