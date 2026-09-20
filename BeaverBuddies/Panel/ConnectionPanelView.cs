@@ -18,6 +18,8 @@ namespace BeaverBuddies.Panel
         internal static readonly Color Ink = new Color(.95f, .91f, .82f);
         internal static readonly Color Muted = new Color(.72f, .68f, .60f);
         internal static readonly Color Rule = new Color(1f, 1f, 1f, .12f);
+        static readonly Color ButtonInk = new Color(.85f, .81f, .73f);
+        static readonly Color ButtonRule = new Color(1f, 1f, 1f, .4f);
         static readonly Color Good = new Color(.42f, .80f, .47f);
         static readonly Color Fair = new Color(.96f, .76f, .26f);
         static readonly Color Bad = new Color(.93f, .36f, .32f);
@@ -59,8 +61,14 @@ namespace BeaverBuddies.Panel
             headerDot = Dot(10);
             title = Text("", 14, Ink, bold: true); title.style.flexGrow = 1; title.style.flexShrink = 1;
             role = Text("", 11, Muted); role.style.marginLeft = 8;
-            chevron = Text("-", 16, Muted, bold: true); chevron.style.marginLeft = 8; chevron.style.width = 14;
+            // The collapse button has a box around it, so it is not mistaken for the dash that stands for your own ping
+            // in the rows below, which is drawn at the same edge.
+            chevron = Text("-", 13, ButtonInk, bold: true);
+            chevron.style.width = 16; chevron.style.height = 16; chevron.style.flexShrink = 0;
+            chevron.style.marginTop = 0; chevron.style.marginBottom = 0; chevron.style.marginRight = 0; chevron.style.marginLeft = 8;
+            chevron.style.paddingTop = 0; chevron.style.paddingBottom = 0; chevron.style.paddingLeft = 0; chevron.style.paddingRight = 0;
             chevron.style.unityTextAlign = TextAnchor.MiddleCenter;
+            Border(chevron, 1, ButtonRule, 3);
             // Shown only while the panel is collapsed, so new messages are not missed.
             unreadBadge = Text("", 11, Fair, bold: true); unreadBadge.style.marginLeft = 8;
             unreadBadge.style.display = DisplayStyle.None;

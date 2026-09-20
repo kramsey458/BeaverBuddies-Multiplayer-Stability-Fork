@@ -7,7 +7,7 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
 > [!NOTE]
-> **Release candidate.** `1.1.10-release-candidate-2` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original)), gives the connection panel a plainer look, and draws chat in the color of each player's cursor (see [the connection panel](#the-connection-panel) and the [changelog](STABILITY-CHANGELOG.md)). **It has not been played yet.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
+> **Release candidate.** `1.1.10-release-candidate-3` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original)), gives the connection panel a plainer look, and draws chat in the color of each player's cursor (see [the connection panel](#the-connection-panel) and the [changelog](STABILITY-CHANGELOG.md)). **Only a short two-player session has been played with it, and the saving from the entity pass has not been measured.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
 
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
@@ -69,7 +69,7 @@ A small panel appears in the top-left corner during a multiplayer game.
 
 <img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, two players with one at 21 ms, tick rate 10.7 ticks per second, speed 6.3x, the host pacing lines, a Steam connection and a chat box.">
 
-*The panel as the host sees it during a Steam co-op session, in 1.0.9. In 1.1.10-release-candidate-2 the dots by the title and by each player, and the "You / Host" tag, are gone (your own row is bold with a dash for its ping), and chat is drawn in each player's cursor color. The screenshot has not been retaken.*
+*The panel as the host sees it during a Steam co-op session, in 1.0.9. In 1.1.10-release-candidate-3 the dots by the title and by each player, and the "You / Host" tag, are gone (your own row is bold with a dash for its ping), the collapse button is boxed, and chat is drawn in each player's cursor color. The screenshot has not been retaken.*
 
 | It shows | Meaning |
 | --- | --- |

@@ -5,12 +5,27 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.10-release-candidate-3 (pre-release)
+
+A pre-release for testing, on top of 1.1.10-release-candidate-2, which it contains in full. It changes one thing: how the collapse button
+on the connection panel looks. Every player should install this build: the join check compares the mod build, so it will not join a session
+running a different one. **It has not been seen in a game.**
+
+### The collapse button has a box around it
+
+In 1.1.10-release-candidate-2 the button that collapses the panel (a small "-", or "+" while collapsed) sat at the right edge of the header,
+directly above the "-" that stands for your own ping, and the two looked alike. The button now has a thin box around it so it reads as a
+button. It does what it did before, and clicking the title still collapses and expands the panel. Nothing else changes.
+
+**Tested:** 210 of 210 checks in `StabilityTests`, 69 of 69 `RuntimeChecks` against the built mod, and the 3 Python checks; none of them can draw the
+panel. **Not tested:** how the box looks in a game.
+
 ## 1.1.10-release-candidate-2 (pre-release)
 
 A pre-release for testing, on top of 1.1.10-release-candidate, which is in turn on top of 1.0.9. It contains everything in the release candidate
 (the cheaper pass over every entity on each tick). What it adds changes how the connection panel looks and what color chat is drawn in, and
 nothing else: no gameplay change, no fix, nothing new sent over the network. Every player should install this build: the join check compares the
-mod build, so it will not join a session running a different one. **None of what it adds has been seen in a game.**
+mod build, so it will not join a session running a different one. **The panel changes have been seen in a game (screenshots of a host, alone and with a guest); the chat colors have not.**
 
 ### A plainer connection panel
 
@@ -30,8 +45,9 @@ to read on the panel is lightened, as before. Before, only the name was colored,
 
 **Tested:** 210 of 210 checks in `StabilityTests` (among them the rows without tags, the ping on every row, a line in one color that no message can
 add markup to, and the color saved for a player who is not connected), 69 of 69 `RuntimeChecks` against the built mod, and the 3 Python checks.
-**Not tested:** how any of it looks in a game: the header without its dot, the rows, whether the game's font draws your own row in bold, and chat
-lines in the cursor colors, also after a color is changed. The interface cannot be built outside the game, so none of it can be checked without one.
+**Seen in a game:** the header without its dot, a guest's row and your own row in bold with a dash.
+**Not tested:** chat lines in the cursor colors, also after a color is changed. The interface cannot be built outside the game, so it can only be
+checked in one.
 
 ## 1.1.10-release-candidate (pre-release)
 

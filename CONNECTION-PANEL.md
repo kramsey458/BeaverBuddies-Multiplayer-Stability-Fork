@@ -10,13 +10,13 @@ collapsed to a single line or hidden completely.
 **Collapsed** (one line): a colored dot, the number of players, and one ping.
 
 ```
-o  3 players  42 ms                                   +
+o  3 players  42 ms                                 [+]
 ```
 
 **Expanded:**
 
 ```
-Multiplayer                                 Host     -
+Multiplayer                                 Host   [-]
 o  In sync
 -------------------------------------------------------
 Kyler                                              -
@@ -29,7 +29,9 @@ Connection  Direct
 ```
 
 The dot beside the status is the only dot while the panel is expanded. A player's row is a name and a ping
-and nothing else; your own row (Kyler here) is in bold, with a dash where the ping would be.
+and nothing else; your own row (Kyler here) is in bold, with a dash where the ping would be. The collapse
+button at the right of the header, `[-]` here, is drawn in a small box so it is not mistaken for that dash, which
+sits at the same edge.
 
 | Item | Meaning |
 | --- | --- |
@@ -79,7 +81,7 @@ type in. It has a fixed, compact height (about five lines and the box), so it do
 the rest of the panel, and it appears whenever the panel is expanded, in a multiplayer game only.
 
 ```
-Multiplayer                                 Host     -
+Multiplayer                                 Host   [-]
 o  In sync
 -------------------------------------------------------
 Kyler                                              -
@@ -206,9 +208,13 @@ and every pacing text is short enough for its column (the old ones were not).
 the alerts covering its text box, and the pacing text pushing the panel wider than the game's own
 counters; the sizing checks above and the current layout are the response.
 
-**Not verified: how it looks and feels.** The panel without the dots beside the title and the players,
-whether the game's font draws your own row in bold, and chat lines in the cursor colors (also after a
-color is changed) have not been seen in the running game. The fixes themselves have not been seen in the running
+Screenshots of 1.1.10-release-candidate-2, alone and with a guest, show the header without a dot, the sync dot
+as the only dot, player rows that are a name and a ping (a guest's ping, and your own row in bold with a dash),
+and that the game's font draws bold. They also showed the collapse button's dash directly above your own row's
+dash, which is why the button is boxed.
+
+**Not verified: how it looks and feels.** The boxed collapse button, and chat lines in the cursor colors
+(also after a color is changed), have not been seen in the running game. The fixes themselves have not been seen in the running
 game: that the panel now matches the counters' width (and to what), that the chat clears the
 alerts, and that the panel really is drawn in front of them while you type. The panel's layout,
 colors, spacing and where it sits in each corner other than the top left have not been seen
