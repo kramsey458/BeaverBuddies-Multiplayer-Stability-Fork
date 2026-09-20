@@ -6,6 +6,7 @@ using BeaverBuddies.Connect;
 using BeaverBuddies.DesyncDetecter;
 using BeaverBuddies.Events;
 using BeaverBuddies.IO;
+using BeaverBuddies.Perf;
 using BeaverBuddies.Reporting;
 using HarmonyLib;
 using System;
@@ -140,6 +141,7 @@ namespace BeaverBuddies
         public void Reset()
         {
             Plugin.Log("Resetting Replay Service...");
+            PerfSession.Stop();
             IsLoaded = false;
             HasReplayFailure = false;
             IsReplayingEvents = false;
@@ -299,7 +301,9 @@ namespace BeaverBuddies
             }
 
             // Start with any events received from connected users
+            long readStarted = PerfProbe.Begin();
             List<ReplayEvent> eventsToReplay = ReadEventsFromIO(TicksSinceLoad);
+            PerfProbe.End(PerfProbe.Span.Read, readStarted);
             // Then add any from this user that have been deferred
             while (eventsToPlay.TryDequeue(out ReplayEvent replayEvent))
             {
@@ -308,6 +312,7 @@ namespace BeaverBuddies
             }
 
             int currentTick = ticksSinceLoad;
+            long replayStarted = PerfProbe.Begin();
             ReplayExecution.Run(eventsToReplay, replayEvent =>
             {
                 if (HasReplayFailure || IsDesynced || EventIO.IsNull) return false;
@@ -347,6 +352,7 @@ namespace BeaverBuddies
                 Plugin.LogError($"Failed to replay event {replayEvent?.type}: {error}");
                 AbortReplay("A multiplayer action could not be completed.");
             }, active => IsReplayingEvents = active, IsReplayingEvents);
+            PerfProbe.End(PerfProbe.Span.Replay, replayStarted);
         }
 
         public void AbortReplay(string reason)
@@ -459,17 +465,26 @@ namespace BeaverBuddies
             if (EventIO.IsNull) return;
             // Called every frame for a guest, so skip the allocations when there is nothing to send.
             if (eventsToSend.IsEmpty) return;
-            List<ReplayEvent> events = new List<ReplayEvent>();
-            while (eventsToSend.TryDequeue(out ReplayEvent replayEvent))
+            // Serializing, hashing, compressing and writing all happen below, on this thread.
+            long sendStarted = PerfProbe.Begin();
+            try
             {
-                replayEvent.ticksSinceLoad = ticksSinceLoad;
-                events.Add(replayEvent);
+                List<ReplayEvent> events = new List<ReplayEvent>();
+                while (eventsToSend.TryDequeue(out ReplayEvent replayEvent))
+                {
+                    replayEvent.ticksSinceLoad = ticksSinceLoad;
+                    events.Add(replayEvent);
+                }
+                // Don't send an empty list to save bandwidth.
+                if (events.Count == 0) return;
+                GroupedEvent group = new GroupedEvent(events);
+                group.ticksSinceLoad = ticksSinceLoad;
+                EventIO.Get().WriteEvents(group);
             }
-            // Don't send an empty list to save bandwidth.
-            if (events.Count == 0) return;
-            GroupedEvent group = new GroupedEvent(events);
-            group.ticksSinceLoad = ticksSinceLoad;
-            EventIO.Get().WriteEvents(group);
+            finally
+            {
+                PerfProbe.End(PerfProbe.Span.Send, sendStarted);
+            }
         }
 
         /**
@@ -491,6 +506,16 @@ namespace BeaverBuddies
             DesyncDetecterService.StartTick(ticksSinceLoad);
 
             IsLoaded = true;
+
+            // Does nothing unless the player turned the frame rate log on.
+            PerfSession.Start(this, _speedManager, io is ServerEventIO, SafeMapName());
+        }
+
+        // Only for the log's header, so a map that cannot be named is not worth an error.
+        private string SafeMapName()
+        {
+            try { return ServerMapName; }
+            catch (Exception) { return null; }
         }
 
         // TODO: Find a better callback way of waiting until initial game
@@ -511,7 +536,9 @@ namespace BeaverBuddies
                 Initialize();
                 waitUpdates = -1;
             }
+            long ioStarted = PerfProbe.Begin();
             io.Update();
+            PerfProbe.End(PerfProbe.Span.IoUpdate, ioStarted);
             if (!CanAct) return;
             // A session that ended without anyone saying so: a host that cancelled its rehost, or a guest whose
             // connection dropped while this game was still loading. Only a guest is told; a host chose it.
@@ -648,10 +675,12 @@ namespace BeaverBuddies
                 // capture any unsent traces and send them.
                 // Note: this will capture traces for prior ticks, but be sent with
                 // an event at the start of the *upcoming* tick.
+                long traceStarted = PerfProbe.Begin();
                 foreach (var e in DesyncDetecterService.CreateReplayEventsAndClear())
                 {
                     EnqueueEventForSending(e);
                 }
+                PerfProbe.End(PerfProbe.Span.Trace, traceStarted);
             }
 
             ticksSinceLoad++;
@@ -669,7 +698,9 @@ namespace BeaverBuddies
             // Remember DoTickIO can set EventIO to null
 
             // Log from IO
+            long tickIoStarted = PerfProbe.Begin();
             io?.Update();
+            PerfProbe.End(PerfProbe.Span.IoUpdate, tickIoStarted);
 
             // IO Complete for Tick
             if (Settings.Debug && Settings.VerboseLogging)
@@ -794,8 +825,14 @@ namespace BeaverBuddies
                 // is ready. Note that this is only a reason to stop if
                 // we're at the *very start* of a new tick - otherwise
                 // it would be overly conservative.
-                if (!replayService.IsReadyToStartTick)
+                // Asking is not free: it drains the receive queue and scans the events already held.
+                long readyStarted = PerfProbe.Begin();
+                bool ready = replayService.IsReadyToStartTick;
+                PerfProbe.End(PerfProbe.Span.WaitCheck, readyStarted);
+                if (!ready)
                 {
+                    // Nothing blocks here: the frame simply runs no ticks, which is what waiting looks like.
+                    PerfProbe.NoteWaitingForPeer();
                     // In theory the game should be paused to prevent this, but some logs
                     // suggest the client can get ahead of the server, which would
                     // trigger this warning (and now prevent the client's tick)
@@ -841,6 +878,8 @@ namespace BeaverBuddies
                     // Tick it and stop
                     HasTickedReplayService = true;
                     replayService?.DoTick();
+                    // A frame that runs no ticks is a frame spent waiting; count them to tell the two apart.
+                    PerfProbe.CountTick();
                     return true;
                 }
                 // Otherwise if we're still at the beginning
@@ -876,7 +915,9 @@ namespace BeaverBuddies
                 // it needs: at a high speed nearly a whole frame is spent here, so without this every message, in
                 // both directions, waited for the end of the frame and the ping grew with the game speed. Right
                 // after the replay service ticked, the tick's events are queued for the guests, so send them now.
+                long pumpStarted = PerfProbe.Begin();
                 Steam.SteamNet.PumpBetweenTicks(force: tickedReplayService);
+                PerfProbe.End(PerfProbe.Span.SteamPump, pumpStarted);
                 if (tickedReplayService)
                 {
                     // Refund a bucket if we ticked the ReplayService

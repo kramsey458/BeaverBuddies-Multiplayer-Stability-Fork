@@ -238,6 +238,7 @@ namespace BeaverBuddies.DesyncDetecter
             // Just always update the moisture levels at the end of the tick.
             if (GameSaverSavePatcher.IsSaving) return;
 
+            long started = BeaverBuddies.Perf.PerfProbe.Begin();
             var levels = __instance._soilMoistureSimulator.MoistureLevels;
             int hash = 13;
             foreach (var level in levels)
@@ -245,6 +246,7 @@ namespace BeaverBuddies.DesyncDetecter
                 hash = (hash * 7) + BitConverter.SingleToInt32Bits(level);
             }
             DesyncDetecterService.Trace($"Updating moisture levels with hash {hash:X8}");
+            BeaverBuddies.Perf.PerfProbe.End(BeaverBuddies.Perf.PerfProbe.Span.Trace, started);
         }
     }
 
@@ -255,6 +257,7 @@ namespace BeaverBuddies.DesyncDetecter
         {
             if (!Settings.Debug) return;
 
+            long started = BeaverBuddies.Perf.PerfProbe.Begin();
             var columns = __instance._threadSafeWaterColumns;
             WaterDiagnostics.Capture(__instance, DesyncDetecterService.CurrentTick);
             DesyncDetecterService.Trace(WaterDiagnostics.Describe(columns,
@@ -273,6 +276,7 @@ namespace BeaverBuddies.DesyncDetecter
                 hash = (hash * 7) + count;
             }
             DesyncDetecterService.Trace($"Updating water map column counts with hash {hash:X8}");
+            BeaverBuddies.Perf.PerfProbe.End(BeaverBuddies.Perf.PerfProbe.Span.Trace, started);
         }
 
         private static int GetHashCode(ReadOnlyWaterColumn waterColumn)

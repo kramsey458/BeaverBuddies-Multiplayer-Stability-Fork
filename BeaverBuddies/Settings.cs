@@ -147,6 +147,29 @@ namespace BeaverBuddies
                 ).SetLocalizedTooltip("BeaverBuddies.Settings.SilenceLogging.Tooltip")
         );
 
+        // Writes a CSV next to Player.log saying where each slow frame's time went, for working out what
+        // causes a drop in frame rate. Off unless it is being used: it costs a little on every frame.
+        public ModSetting<bool> PerformanceLogging { get; } =
+            new(false,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerformanceLogging"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerformanceLogging.Tooltip")
+        );
+
+        public ModSetting<int> PerformanceSpikeThresholdMs { get; } =
+            new(50,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerformanceSpikeThresholdMs"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerformanceSpikeThresholdMs.Tooltip")
+        );
+
+        public ModSetting<int> PerformanceSummaryTickInterval { get; } =
+            new(100,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerformanceSummaryTickInterval"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerformanceSummaryTickInterval.Tooltip")
+        );
+
         // ---- Ping Settings ----
 
         public const string DefaultPingPlayerName = "Player";
@@ -181,6 +204,17 @@ namespace BeaverBuddies
         public static bool Debug => TemporarilyDebug || (instance?.AlwaysTrace.Value ?? false);
 
         public static bool VerboseLogging => !(instance?.SilenceLogging.Value == true);
+
+        public static bool PerformanceLoggingEnabled => instance?.PerformanceLogging.Value ?? false;
+
+        /// <summary>A frame at least this long gets a row of its own. Kept sane whatever is typed in.</summary>
+        public static int PerformanceSpikeMs => Clamp(instance?.PerformanceSpikeThresholdMs.Value ?? 50, 1, 10000);
+
+        /// <summary>How often a baseline row is written, so the log is not only the spikes.</summary>
+        public static int PerformanceSummaryTicks => Clamp(instance?.PerformanceSummaryTickInterval.Value ?? 100, 1, 100000);
+
+        static int Clamp(int value, int low, int high) => value < low ? low : value > high ? high : value;
+
         public static int Port => instance?.DefaultPort.Value ?? 25565;
         public static bool EnableSteam => instance?.EnableSteamConnection.Value ?? true;
         public static bool LobbyJoinable => instance?.FriendsCanJoinSteamGame.Value ?? true;

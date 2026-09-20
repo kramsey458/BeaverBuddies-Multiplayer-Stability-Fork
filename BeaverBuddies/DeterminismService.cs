@@ -1007,6 +1007,9 @@ namespace BeaverBuddies
         {
             if (EventIO.IsNull) return;
 
+            // The per-tick order and position hash, over every entity in this bucket. Timed as one span
+            // across the buckets of a tick, because that is how it is felt.
+            long hashStarted = BeaverBuddies.Perf.PerfProbe.Begin();
             for (int i = 0; i < __instance._tickableEntities.Count; i++)
             {
                 var entity = __instance._tickableEntities.Values[i];
@@ -1094,6 +1097,7 @@ namespace BeaverBuddies
                 //    Plugin.Log($"{entity.EntityId}: {FVS(transform.position)}");
                 //}
             }
+            BeaverBuddies.Perf.PerfProbe.End(BeaverBuddies.Perf.PerfProbe.Span.Hash, hashStarted);
         }
 
         private static string FVS(Vector3 vector)

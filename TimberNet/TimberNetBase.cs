@@ -272,6 +272,12 @@ namespace TimberNet
             stream.Write(buffer, 0, buffer.Length);
         }
 
+        /// <summary>
+        /// The size of every frame written, once it is out. Set by the game so its performance log can say how
+        /// many compressed bytes a frame spent sending. Optional: nothing here depends on anyone listening.
+        /// </summary>
+        public static Action<int>? BytesWritten;
+
         protected void SendDataWithLength(ISocketStream stream, byte[] data)
         {
             // A frame includes both its header and every payload chunk. Join
@@ -292,6 +298,7 @@ namespace TimberNet
                     stream.Write(data, i, length);
                 }
             }
+            BytesWritten?.Invoke(data.Length);
         }
 
         protected void SendEvent(ISocketStream client, JObject message)

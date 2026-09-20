@@ -53,6 +53,14 @@ BeaverBuddies.Settings.AlwaysTrace,"Always Use Detailed Logging",""
 BeaverBuddies.Settings.AlwaysTrace.Tooltip,"When enabled, the game will always use detailed logging, which enables you to submit desync reports on the first occurrence without manually enabling detailed logging.
 Note that all players must have the setting enabled.
 This setting will cause some lag and is not recommended for most players.",""
+BeaverBuddies.Settings.PerformanceLogging,"Log Frame Rate Details",""
+BeaverBuddies.Settings.PerformanceLogging.Tooltip,"Writes a spreadsheet next to the player log saying where each slow frame's time went: waiting for the other player, the tick hash, sending and receiving, and garbage collections.
+It is for working out what causes a drop in frame rate. Both players should have it enabled, so the two files can be compared.
+It only observes and cannot change what either player simulates, but it does cost a little on every frame, so leave it off unless you are using it.",""
+BeaverBuddies.Settings.PerformanceSpikeThresholdMs,"Slow Frame Threshold (ms)",""
+BeaverBuddies.Settings.PerformanceSpikeThresholdMs.Tooltip,"A frame at least this long gets a line of its own in the frame rate log. 50 ms is 20 frames per second.",""
+BeaverBuddies.Settings.PerformanceSummaryTickInterval,"Frame Rate Summary Interval (ticks)",""
+BeaverBuddies.Settings.PerformanceSummaryTickInterval.Tooltip,"How often the frame rate log writes a summary line, so it records what normal looks like and not only the slow frames.",""
 BeaverBuddies.Settings.ReportingConsent,"Consent to Reporting",""
 BeaverBuddies.Settings.EnableSteamConnection,"Enable Steam Networking",""
 BeaverBuddies.Settings.EnableSteamConnection.Tooltip,"Allows players to join your games via Steam's peer-to-peer networking.

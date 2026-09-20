@@ -26,5 +26,8 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/SessionEndMessages.cs" Link="SessionEndMessages.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Perf/PerfSample.cs" Link="PerfSample.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Perf/PerfProbe.cs" Link="PerfProbe.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Perf/PerfWriter.cs" Link="PerfWriter.cs" />
   </ItemGroup>
 </Project>

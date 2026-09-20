@@ -48,6 +48,8 @@ namespace BeaverBuddies.Events
          */
         public static void SetSpeedSilentlyNow(SpeedManager speedManager, float speed)
         {
+            // Each one tells every animated building that the speed changed, and catching up changes it often.
+            BeaverBuddies.Perf.PerfProbe.CountSpeedChange();
             silently = true;
             speedManager.ChangeSpeed(speed);
             silently = false;
