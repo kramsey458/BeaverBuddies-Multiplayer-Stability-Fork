@@ -17,6 +17,7 @@ namespace BeaverBuddies.IO
         public abstract UserEventBehavior UserEventBehavior { get; }
         public bool IsOutOfEvents => NetBase == null ? true : !NetBase.ShouldTick;
         public int TicksBehind => NetBase == null ? 0 : NetBase.TicksBehind;
+        public bool IsSessionOver => NetBase == null || NetBase.IsStopped;
 
         public void Close()
         {

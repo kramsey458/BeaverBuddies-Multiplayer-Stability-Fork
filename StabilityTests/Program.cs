@@ -59,6 +59,7 @@ var tests = new (string Name, Action Run)[]
     })
 };
 tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).ToArray();
+tests = tests.Concat(SessionEndChecks.Tests()).ToArray();
 foreach (var test in tests)
 {
     try

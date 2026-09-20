@@ -36,6 +36,13 @@ namespace BeaverBuddies.IO
         int TicksBehind { get; }
 
         /**
+         * True once this session can never carry another event (the network is closed or gone), as opposed to
+         * IsOutOfEvents, which only means "wait for the next one". Left installed, an ended session makes every
+         * patched action queue for nobody and the game pause for good.
+         */
+        bool IsSessionOver { get; }
+
+        /**
          * Should return true if this IO should send hearbeats on tick
          */
         bool ShouldSendHeartbeat { get; }
@@ -66,6 +73,15 @@ namespace BeaverBuddies.IO
                 instance = null;
                 Plugin.Log("Success!");
             }
+        }
+
+        /// <summary>
+        /// Resets only if <paramref name="io"/> is still the installed one. A session that ends late must not tear
+        /// down the one that replaced it.
+        /// </summary>
+        public static void ResetIf(EventIO io)
+        {
+            if (io != null && ReferenceEquals(instance, io)) Reset();
         }
 
         public static bool ShouldPauseTicking

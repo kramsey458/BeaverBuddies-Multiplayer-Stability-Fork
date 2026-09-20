@@ -22,6 +22,9 @@ namespace BeaverBuddies.IO
 
         private MapReceived mapReceivedCallback;
         private bool FailedToConnect = false;
+        // True once the host's save arrived and the game was told to load it. Before that this is only a join
+        // attempt; after it, a game exists that belongs to this session.
+        private bool mapDelivered = false;
 
         private ClientEventIO(ISocketStream socket, MapReceived mapReceivedCallback,
             Action<string> onError)
@@ -36,17 +39,11 @@ namespace BeaverBuddies.IO
             };
             NetBase.DetailedLoggingEnabled = () => Settings.Debug && Settings.VerboseLogging;
             NetBase.OnSessionFault += reason => SingletonManager.GetSingleton<ReplayService>()?.AbortReplay(reason);
-            NetBase.OnMapReceived += mapReceivedCallback;
+            NetBase.OnMapReceived += OnMapReceivedByNet;
             ModWarnings.Clear();
             NetBase.OnPeerAdvisory += ModCompatibility.OnPeerAdvisory;
             NetBase.OnLog += Plugin.Log;
-            NetBase.OnError += (error) =>
-            {
-                Plugin.LogError(error);
-                CleanUp();
-                FailedToConnect = true;
-                if (!ReplayService.HasReplayFailure) onError(error);
-            };
+            NetBase.OnError += (error) => OnConnectionError(error, onError);
             try
             {
                 NetBase.Start();
@@ -60,11 +57,50 @@ namespace BeaverBuddies.IO
             }
         }
 
+        // Only once the game has been told to load the save: if that throws, this stays a join attempt that failed,
+        // and the error that follows is reported to whoever is joining.
+        private void OnMapReceivedByNet(byte[] mapBytes)
+        {
+            mapReceivedCallback(mapBytes);
+            mapDelivered = true;
+        }
+
+        /// <summary>
+        /// The connection failed or dropped. What that means depends on how far the join got (see
+        /// ConnectionErrorPlanner); this is reached on the update thread, from wherever the session is being updated.
+        /// </summary>
+        private void OnConnectionError(string error, Action<string> onError)
+        {
+            Plugin.LogError(error);
+            // One failure is one report: a second error queued behind the first (a save that then failed to load, say)
+            // must not show a second dialog.
+            if (FailedToConnect) return;
+            CleanUp();
+            FailedToConnect = true;
+
+            bool isCurrent = ReferenceEquals(EventIO.Get(), this);
+            switch (ConnectionErrorPlanner.Decide(isCurrent, mapDelivered, ReplayService.HasReplayFailure))
+            {
+                case ConnectionErrorPlan.ReportWhileJoining:
+                    // Nothing came of this join, so nothing should stay installed: a session that is over but still
+                    // installed turns the next game loaded from this menu into one that is paused for good.
+                    EventIO.ResetIf(this);
+                    onError(error);
+                    break;
+                case ConnectionErrorPlan.EndRunningGame:
+                    // The game's own dialog: the join attempt's belongs to a menu that no longer exists. With no
+                    // game yet (the save is still loading) the new game finds the session over and reports it itself,
+                    // see ReplayService.UpdateSingleton.
+                    SingletonManager.GetSingleton<ReplayService>()?.EndSession(SessionEndMessages.ConnectionLost(error));
+                    break;
+            }
+        }
+
         private void CleanUp()
         {
             if (NetBase == null) return;
             NetBase.Close();
-            NetBase.OnMapReceived -= mapReceivedCallback;
+            NetBase.OnMapReceived -= OnMapReceivedByNet;
             NetBase.OnLog -= Plugin.Log;
             NetBase.OnPeerAdvisory -= ModCompatibility.OnPeerAdvisory;
             NetBase = null;

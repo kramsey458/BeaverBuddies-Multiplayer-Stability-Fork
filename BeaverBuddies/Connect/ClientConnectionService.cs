@@ -101,19 +101,11 @@ namespace BeaverBuddies.Connect
             Plugin.Log("Connecting client");
             client = ClientEventIO.Create(socket, LoadMap, (error) =>
             {
-                // This callback outlives the main menu: it also reports a connection lost after the game
-                // scene has loaded, when the menu's dialog stack no longer exists. In 1.0.4 showing the
-                // dialog then threw, and the uncaught exception crashed the game.
-                try
-                {
-                    ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error);
-                }
-                catch (Exception menuDialogError)
-                {
-                    Plugin.LogWarning("Could not show the connection error in the menu (" + menuDialogError.Message +
-                                      "); showing it in the game instead.");
-                    ShowErrorInGame(error);
-                }
+                // Only reached while joining, before the host's game has loaded (see ClientEventIO): once a game
+                // exists, a lost connection is reported by that game, because this service's dialogs belong to the
+                // scene that started the join. In 1.0.4 showing one after the game loaded threw, and the uncaught
+                // exception crashed the game.
+                ShowSafely(() => ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error));
             });
             
             if (client == null)
@@ -165,22 +157,6 @@ namespace BeaverBuddies.Connect
                     ShowError("BeaverBuddies.JoinCoopGame.ConnectionFailedMessage");
                 }
             });
-        }
-
-        private static void ShowErrorInGame(string error)
-        {
-            try
-            {
-                SingletonManager.GetSingleton<DialogBoxShower>()?.Create()
-                    .SetMessage("The multiplayer connection was lost.\n\"" + error + "\"\n\n" +
-                                "Return to the main menu and join again.")
-                    .SetDefaultCancelButton().Show();
-            }
-            catch (Exception gameDialogError)
-            {
-                // Losing the message is better than losing the game.
-                Plugin.LogError("Could not show the connection error: " + gameDialogError);
-            }
         }
 
         private void ShowError(string reasonKey, string details = null)

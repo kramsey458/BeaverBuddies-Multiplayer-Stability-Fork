@@ -183,6 +183,7 @@ namespace BeaverBuddies.Connect
                         behavior.StopCoroutine(coroutine);
                     }
                     io.Close();
+                    GiveUpHosting(io);
                 });
             if (steamListener != null)
             {
@@ -196,6 +197,17 @@ namespace BeaverBuddies.Connect
             DialogBox box = boxCreator.Show();
             coroutine = behavior.StartCoroutine(UpdateDialogBox(box, io, shower._loc));
 
+        }
+
+        /// <summary>
+        /// The lobby was cancelled, so the session it would have started is over. A closed server left installed
+        /// would turn whatever is played next into a game that is paused for good, and one the menu cannot open in.
+        /// </summary>
+        private static void GiveUpHosting(ServerEventIO io)
+        {
+            // In a running game (a rehost) the replay service leaves multiplayer too; from the main menu there is none.
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            EventIO.ResetIf(io);
         }
     }
 }

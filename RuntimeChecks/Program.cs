@@ -98,6 +98,7 @@ WaterChecks.Run(assembly, Test);
 TimingChecks.Run(assembly, Test);
 DemolitionChecks.Run(assembly, Test);
 InputRecoveryChecks.Run(assembly, Test);
+MenuRecoveryChecks.Run(assembly, Test);
 ReplayEventChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);

@@ -177,6 +177,10 @@ namespace BeaverBuddies.Events
     {
         static bool Prefix()
         {
+            // After a failed multiplayer action everything else is blocked on purpose (see ReplayEvent.DoPrefix),
+            // but never the menu: it is the only way out. The message the player just closed tells them to return
+            // to the main menu, and with the menu blocked too the game could only be killed.
+            if (ReplayService.HasReplayFailure) return true;
 
             // This would make options menu unsynced and non-pausing,
             // but I think it's dangerous to open the menu outside of a synced pause.
