@@ -117,6 +117,7 @@ namespace BeaverBuddies.IO
         public bool ShouldSendHeartbeat => false;
         public UserEventBehavior UserEventBehavior => UserEventBehavior.Play;
         public bool IsOutOfEvents => false;
+        public bool IsSessionOver => false;
         public int TicksBehind => 0;
 
         private JsonSerializerSettings settings;
@@ -180,6 +181,7 @@ namespace BeaverBuddies.IO
         // Shouldn't need to record anything
         public bool RecordReplayedEvents => false;
         public bool IsOutOfEvents => events.Count == 0;
+        public bool IsSessionOver => false;
         public int TicksBehind => 0;
 
         private JsonSerializerSettings settings;

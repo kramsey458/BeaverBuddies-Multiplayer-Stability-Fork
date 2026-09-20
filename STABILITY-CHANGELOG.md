@@ -7,6 +7,53 @@ entry above the current one.
 
 ## 1.0.9-framethrottler-preview2 (pre-release)
 
+## 1.0.9-control-fix-preview (pre-release)
+
+A pre-release for testing, on top of 1.0.8. Every player should install this build.
+
+### Controls that stopped answering after a message was closed
+
+Reported after a disconnect or a resync attempt: once the message was closed, the controls did not
+work as expected, and Escape did not open the menu. Going through every way a session can end, in
+this mod and in the game's own code, found five separate causes. Each leaves the game running but
+ignoring the player. **None of them has been seen in a running game.** They come from reading the
+code, and each fix changes a decision that is checked on its own.
+
+- **After "Multiplayer has stopped", the menu could not be opened.** A multiplayer action that
+  fails to replay stops multiplayer for the rest of that game and blocks every further action, so a
+  half-applied action cannot make things worse. The block also covered the game menu: Escape and
+  the options button both open it through the same call. The message tells the player to return to
+  the main menu, so the only way out was to kill the game. The menu now opens, and everything else
+  stays blocked.
+- **A dropped connection left the dead session in place.** When a guest lost the connection during
+  a game, its network was closed but the session stayed installed. Every action, the menu included,
+  was then queued for a session that no longer existed and never played, and the game was held
+  paused. The message meant to explain it was shown through the main menu's dialogs, which no longer
+  exist once a game has loaded, and the fallback looked the dialog up where it is never registered,
+  so nothing was shown at all. The session now ends the way a desync ends it: what the player does
+  applies here again, the game stays paused, and the game itself shows the reason and the way out
+  (open the menu to save, or to return to the main menu and join again). If the connection drops
+  while the game is still loading, the message appears as soon as the game is up.
+- **A cancelled or failed join or host left a dead session in the main menu.** Cancelling the host's
+  lobby, or a join that failed after the connection was made (a host that had already started, a
+  build mismatch), left the closed session installed until the main menu was loaded again. Whatever
+  was played next from that menu, single player included, then started as a multiplayer game with
+  nobody to talk to: paused for good, and Escape did nothing. A session that ends before it has a
+  game is now cleared away, and a host who cancels a rehost from a running game goes back to
+  playing locally.
+- **Steam's overlay closing under a dialog.** While the overlay is open the game pushes an empty
+  panel that blocks input, and pops it when the overlay closes, but only if it is still on top. If a
+  dialog opened over it in between (an invite that cannot be joined, a connection error), the game
+  left it in place for good: once the dialog was closed, a panel that no key could close sat on top
+  and swallowed every key press, until the overlay was opened again. The panel is now removed as
+  soon as the dialog above it is closed.
+- **Input held when a session stops is cleared.** A desync already cleared the keys and mouse
+  buttons held when its dialog appeared, so they did not carry over once it was closed. A failed
+  action and a lost connection now do the same.
+
+## 1.0.8 (pre-release)
+
+
 A pre-release for testing. Same network format as 1.0.9-framethrottler-preview, so the two can
 play together, but only the host's build decides how the easing behaves.
 
