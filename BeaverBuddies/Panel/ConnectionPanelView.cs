@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Timberborn.CoreUI;
 using Timberborn.Localization;
@@ -25,7 +26,10 @@ namespace BeaverBuddies.Panel
         readonly ILoc loc;
         readonly VisualElement topSection, header, headerDot, body, statusDot, rows, facts, chatArea;
         readonly Label title, role, chevron, statusText, unreadBadge;
+        readonly CornerLift lift = new CornerLift();
         int shownUnread;
+        float appliedWidth = -1;
+        float? loggedWidth;
         bool chatDisabled;
 
         public VisualElement Root { get; }
@@ -62,7 +66,7 @@ namespace BeaverBuddies.Panel
             unreadBadge.style.display = DisplayStyle.None;
             header.Add(headerDot); header.Add(title); header.Add(unreadBadge); header.Add(role); header.Add(chevron);
             header.RegisterCallback<ClickEvent>(_ => HeaderClicked?.Invoke());
-            // Everything that was the panel before chat is the top section: chat is laid out to match its size.
+            // Everything that was the panel before chat is the top section.
             topSection = new VisualElement { name = "BeaverBuddiesConnectionPanelTop" };
             topSection.Add(header);
 
@@ -77,16 +81,16 @@ namespace BeaverBuddies.Panel
             topSection.Add(body);
             Root.Add(topSection);
 
-            // The chat sits below, in the same rectangle, and is exactly as tall as the section above it. It is laid
-            // out over its own area rather than inside the panel's flow, so the panel's width stays whatever the
-            // top section makes it. Chat is optional: if it cannot be built the panel is just what it was.
+            // The chat sits below, in the same rectangle, at a fixed compact height. It is laid out over its own area
+            // rather than inside the panel's flow, so the panel's width stays whatever the top section makes it. Chat
+            // is optional: if it cannot be built the panel is just what it was.
             chatArea = new VisualElement { name = "BeaverBuddiesChatArea" };
             chatArea.style.marginTop = 6;
+            chatArea.style.height = PanelLayout.ChatHeight;
             try
             {
                 Chat = new ChatView(loc, initializer);
                 chatArea.Add(Chat.Root);
-                topSection.RegisterCallback<GeometryChangedEvent>(e => chatArea.style.height = e.newRect.height);
             }
             catch (Exception error)
             {
@@ -102,8 +106,61 @@ namespace BeaverBuddies.Panel
         {
             chatDisabled = true;
             try { Chat?.ReleaseFocus(); } catch (Exception) { }
+            try { lift.Restore(); } catch (Exception) { }
             chatArea.style.display = DisplayStyle.None;
             SetUnread(0);
+        }
+
+        /// <summary>
+        /// Sets the panel's width to a measured one (the game's own panel above it), or, with null, lets it size to
+        /// its content between 210 and 300.
+        /// </summary>
+        public void SetWidth(float? width)
+        {
+            float wanted = width ?? -1;
+            if (Mathf.Approximately(wanted, appliedWidth)) return;
+            appliedWidth = wanted;
+            var s = Root.style;
+            if (wanted < 0) { s.width = StyleKeyword.Auto; s.minWidth = 210; s.maxWidth = 300; }
+            else { s.width = wanted; s.minWidth = wanted; s.maxWidth = wanted; }
+        }
+
+        /// <summary>
+        /// The width of the game's own panel this one should line up with, measured now, or null if there is none to
+        /// follow. The population panel (the beaver counters, a root element named "Counters") is preferred; failing
+        /// that, the nearest visible panel above this one in the same corner.
+        /// </summary>
+        public float? MeasureMatchedWidth()
+        {
+            VisualElement parent = Root.parent;
+            if (parent == null) return null;
+            float? population = null;
+            var above = new List<float>();
+            string seen = "";
+            int mine = parent.IndexOf(Root);
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                VisualElement sibling = parent[i];
+                if (sibling == Root || sibling.resolvedStyle.display == DisplayStyle.None) continue;
+                float width = sibling.layout.width;
+                seen += (seen.Length > 0 ? ", " : "") + sibling.name + " " + width.ToString("0.#", CultureInfo.InvariantCulture);
+                if (population == null && (sibling.name == "Counters" || sibling.ClassListContains("population-panel"))) population = width;
+                if (i < mine) above.Insert(0, width);
+            }
+            float? chosen = PanelLayout.ChooseWidth(population, above);
+            // Written once per change, so a session's log shows what the panel followed if it ever looks wrong.
+            if (chosen != null && (loggedWidth == null || Mathf.Abs(loggedWidth.Value - chosen.Value) > 1))
+            {
+                loggedWidth = chosen;
+                Plugin.Log("Connection panel width follows the panel above it: " + chosen.Value.ToString("0.#", CultureInfo.InvariantCulture) + " (panels in this corner: " + seen + ")");
+            }
+            return chosen;
+        }
+
+        /// <summary>While the chat box has the cursor, draws the panel in front of the game's alerts (see <see cref="CornerLift"/>).</summary>
+        public void SetLifted(bool lifted)
+        {
+            if (lifted) lift.Lift(Root); else lift.Restore();
         }
 
         /// <summary>How many messages from others arrived while the panel was collapsed; 0 hides the badge.</summary>
@@ -118,7 +175,7 @@ namespace BeaverBuddies.Panel
         public void SetVisible(bool visible)
         {
             // Hiding a text box that has the cursor would leave the game's hotkeys switched off.
-            if (!visible) Chat?.ReleaseFocus();
+            if (!visible) { Chat?.ReleaseFocus(); lift.Restore(); }
             Root.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
@@ -135,7 +192,7 @@ namespace BeaverBuddies.Panel
             role.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
             chevron.text = expanded ? "-" : "+";
             body.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
-            if (!expanded) Chat?.ReleaseFocus();
+            if (!expanded) { Chat?.ReleaseFocus(); lift.Restore(); }
             chatArea.style.display = expanded && !chatDisabled ? DisplayStyle.Flex : DisplayStyle.None;
             if (!expanded) return;
 
