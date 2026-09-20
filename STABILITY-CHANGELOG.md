@@ -752,7 +752,7 @@ The first official release of this fork. See `STEAM-INVITES.md`, `CONNECTION-PAN
 
 1. Fully close Timberborn on every computer.
 2. Download `BeaverBuddies-Stability-Fork-1.0.3.zip` from the
-   [latest release](https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest),
+   [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest),
    extract it, and copy the `BeaverBuddies-Stability-Fork` folder into
    `Documents/Timberborn/Mods`. If you installed an earlier download, delete its old
    `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
