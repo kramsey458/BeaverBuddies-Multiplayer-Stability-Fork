@@ -5,6 +5,70 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9-tickspeed-preview (pre-release)
+
+A pre-release for testing, on top of 1.0.8. Every player should install this build.
+
+### The ping over Steam no longer grows with the game speed
+
+Reported as a good ping at a low game speed and 200 to 300 ms at a high one.
+
+Over Steam the ping is not only the network. Steam is only served from the game thread, and the
+game thread served it once per frame. A probe passes four of those pumps on its way round: the host
+sending it, the guest receiving it, the guest sending the reply (queued just after the pump that
+delivered the probe, so it waits a whole frame) and the host receiving that. Run through the real
+transport and ping code over a fake Steam network, that comes to about a frame and a half per
+player, so the panel showed roughly the round trip on the wire plus 1.5 x (the host's frame + the
+guest's frame). The waits also delayed real traffic, not only the number: every action a guest
+made and every tick the host sent waited for the same pumps.
+
+At a low game speed a frame is short and this is a few milliseconds. At a high speed it is not.
+The game ticks as many of a tick's 129 buckets in a frame as the frame's time, multiplied by the
+game speed, asks for, so the simulation is spread over the frames it needs and a frame lasts
+roughly the non-simulation work divided by (1 - the share of the main thread the simulation
+takes). The share grows with the speed. In a host log at a true speed 7 the simulation took 51%
+of the main thread (44 ms a tick, 11.7 ticks a second) and frames were 17 to 19 ms, about twice
+what they are at speed 1. A computer that needs 90% of its main thread at that speed has frames ten
+times as long as an idle one, and a guest that is catching up (it runs up to speed 10) can need
+more than 100%. So the ping rises with the game speed, and most of all with the frame length of the
+slower computer.
+
+- The game's tick loop now lets Steam move data between the buckets of a tick, at most once every
+  millisecond, and straight after a tick's events are queued for the guests. This only moves data
+  (one native call per connection when nothing is waiting), runs on the game thread like every
+  other Steam call, and does nothing outside a Steam session. The once-per-frame pump is unchanged
+  and still does everything else: connecting, closing and failures.
+- The simulation over the fake Steam network (5 ms each way) shows the pings below, in ms. The last
+  column adds a 12 ms part of every tick that cannot be interrupted (the singletons and the wait for
+  the parallel work), which the extra pumps cannot reach.
+
+  | Host frame | Guest frame | Once per frame | Between ticks | Between ticks, 12 ms uninterruptible |
+  |---:|---:|---:|---:|---:|
+  | 8 ms | 8 ms | 35 | 32 | 31 |
+  | 17 ms | 17 ms | 58 | 18 | 20 |
+  | 17 ms | 60 ms | 123 | 17 | 19 |
+  | 17 ms | 100 ms | 177 | 17 | 19 |
+  | 100 ms | 100 ms | 323 | 13 | 18 |
+  | 200 ms | 200 ms | 713 | 13 | 17 |
+
+  What is left is the part of each frame that is not simulation (rendering, the garbage collector),
+  where nothing can be served, so it is a few milliseconds at most for a frame like the ones in the
+  host log.
+- A direct-IP connection is not affected: its data moves on its own threads, not on the frame.
+- The log now says how long data waited, once a minute while someone is connected, for example
+  `Steam link timing over 60 s: data waited for the game thread 17.3 ms on average and up to 118 ms
+  if Steam were only served once per frame (4 gaps over 50 ms); with the pumping between ticks it
+  waited 1.6 ms on average and up to 24 ms (0 gaps over 50 ms).` The first figures are what a
+  once-per-frame pump would have cost in that session and the second are what it cost, so one
+  session shows both, to read next to the ping in the panel.
+
+Tested: the transport, the between-ticks pump and the ping over fake Steam are covered by
+automated checks, including the table above, which is reproduced by
+`dotnet run --project StabilityTests -- --ping-report`. **Not verified in the game or with real
+Steam.** The explanation follows from the game's code and a host log; the guest's frame length at
+a high speed has not been measured, so it is not confirmed that this accounts for all of the 200
+to 300 ms. The timing line in Player.log on both computers is what to look at.
+
 ## 1.0.8
 
 The current release. It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were

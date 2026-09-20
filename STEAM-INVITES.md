@@ -42,6 +42,12 @@ Steamworks assembly.
   blocks (a blocked game thread would stop the pump that drains the queue) and `Read`
   blocks on a queue the pump fills. Steam's documentation does not promise these calls are
   safe from other threads, so nothing depends on it.
+- **Pumped between ticks too.** The pump runs once per frame, and also in the game's tick loop
+  between the buckets of a tick, at most once a millisecond and right after a tick's events
+  are queued for the guests. A frame at a high game speed is mostly simulation, so data
+  would otherwise wait for the end of it, in both directions, and the ping grew with the
+  speed. Only data transfer runs there (no state changes, closing or admission), on the same
+  thread as everything else. The log reports how long data waited once a minute.
 - **Connecting in the background.** The connection completes after `ConnectAsync` returns.
   The client waits for it on a worker thread (up to 45 s) before the compatibility
   handshake's own 15 s clock starts. `TimberClient.Start()` used to wait 3 s on the game

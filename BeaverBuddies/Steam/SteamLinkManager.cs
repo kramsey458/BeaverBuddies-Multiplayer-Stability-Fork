@@ -18,6 +18,16 @@ namespace BeaverBuddies.Steam
         /// </summary>
         public const double MembershipGraceSeconds = 5;
 
+        /// <summary>
+        /// How often the game lets Steam move data between ticks. Every message waits for the next pump, in both
+        /// directions, so this is added to the ping twice on each side; it is also the most that is spent on it,
+        /// because a pump with nothing to move is one native call per connection.
+        /// </summary>
+        public const double DataPumpIntervalSeconds = 0.001;
+
+        /// <summary>How much time one line of <see cref="TakeTimingReport"/> covers.</summary>
+        public const double TimingReportSeconds = 60;
+
         sealed class PendingIncoming
         {
             public ulong Connection, Remote;
@@ -34,6 +44,10 @@ namespace BeaverBuddies.Steam
         SteamLinkListener listener;
         Func<ulong, bool> isAllowed;
         ulong listen;
+        double nextDataPumpAt;
+        // The gap between frames (what waiting for the end of a frame costs) and between every kind of pump.
+        readonly PumpTiming frameTiming = new PumpTiming(), overallTiming = new PumpTiming();
+        double timingWindowStart = -1;
 
         public SteamLinkManager(ISteamLinkBackend backend, Func<double> clock, Func<ulong, string> nameOf)
         {
@@ -127,6 +141,7 @@ namespace BeaverBuddies.Steam
         public void Pump()
         {
             double now = clock();
+            RecordPump(now, true);
             for (int i = pending.Count - 1; i >= 0; i--)
             {
                 var p = pending[i];
@@ -150,6 +165,52 @@ namespace BeaverBuddies.Steam
                 if (socket.TakeAnnouncement()) listener?.Deliver(socket);
                 if (done) sockets.RemoveAt(i);
             }
+        }
+
+        /// <summary>
+        /// Lets Steam move data for the connections that are up, if a millisecond has passed since it last did. The
+        /// game calls this between the buckets of a tick, because <see cref="Pump"/> only runs once per frame and a
+        /// frame at a high game speed is mostly simulation: at speed 7 on a large colony that is tens of
+        /// milliseconds, and every message, in both directions, waited for the end of it. <paramref name="force"/>
+        /// skips the wait, for the moment a tick has just queued its events for the guests. Game thread only.
+        /// </summary>
+        public void PumpBetweenTicks(bool force)
+        {
+            if (sockets.Count == 0) return;
+            double now = clock();
+            if (!force && now < nextDataPumpAt) return;
+            RecordPump(now, false);
+            for (int i = 0; i < sockets.Count; i++) sockets[i].PumpData(now);
+        }
+
+        // Every pump, of either kind, restarts the wait for the next between-ticks pump.
+        void RecordPump(double now, bool wholeFrame)
+        {
+            nextDataPumpAt = now + DataPumpIntervalSeconds;
+            if (sockets.Count == 0)
+            {
+                // Nobody is connected, so there is nothing for a gap to delay.
+                frameTiming.Reset(); overallTiming.Reset(); timingWindowStart = -1;
+                return;
+            }
+            if (timingWindowStart < 0) timingWindowStart = now;
+            overallTiming.Record(now);
+            if (wholeFrame) frameTiming.Record(now);
+        }
+
+        /// <summary>
+        /// A line for the log, at most once per <see cref="TimingReportSeconds"/> while someone is connected, or
+        /// null. It compares the wait for a once-per-frame pump with the wait actually seen, which is the number
+        /// to look at when a ping rises with the game speed.
+        /// </summary>
+        public string TakeTimingReport()
+        {
+            double now = clock();
+            if (timingWindowStart < 0 || now - timingWindowStart < TimingReportSeconds) return null;
+            string report = PumpTiming.Describe(now - timingWindowStart, frameTiming, overallTiming);
+            frameTiming.StartNewWindow(); overallTiming.StartNewWindow();
+            timingWindowStart = now;
+            return report;
         }
 
         /// <summary>Closes everything, for when the game is exiting.</summary>

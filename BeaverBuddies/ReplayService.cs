@@ -804,7 +804,13 @@ namespace BeaverBuddies
 
             while (ShouldTick(__instance, numberOfBucketsToTick--))
             {
-                if (TickReplayServiceOrNextBucket(__instance))
+                bool tickedReplayService = TickReplayServiceOrNextBucket(__instance);
+                // Steam only moves data when this thread asks it to, and the simulation is spread over the frames
+                // it needs: at a high speed nearly a whole frame is spent here, so without this every message, in
+                // both directions, waited for the end of the frame and the ping grew with the game speed. Right
+                // after the replay service ticked, the tick's events are queued for the guests, so send them now.
+                Steam.SteamNet.PumpBetweenTicks(force: tickedReplayService);
+                if (tickedReplayService)
                 {
                     // Refund a bucket if we ticked the ReplayService
                     numberOfBucketsToTick++;

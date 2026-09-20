@@ -5,6 +5,9 @@ using BeaverBuddies.Steam;
 using Newtonsoft.Json.Linq;
 using TimberNet;
 
+// `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam depends on frame length.
+if (args.Contains("--ping-report")) { PingCadenceChecks.PrintReport(); return 0; }
+
 int failures = 0;
 var tests = new (string Name, Action Run)[]
 {
@@ -58,7 +61,7 @@ var tests = new (string Name, Action Run)[]
         finally { BeaverBuddies.IO.EventIO.IsNull = false; }
     })
 };
-tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).ToArray();
+tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(PingCadenceChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).ToArray();
 foreach (var test in tests)
 {
     try
