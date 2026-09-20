@@ -5,6 +5,61 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.0.9-perflog-preview (pre-release)
+
+A pre-release for testing, on top of 1.0.9, adding one thing: an optional log that records where each
+slow frame's time went. No gameplay change and no fix. **Not yet run in a game.** The latest stable
+release is still 1.0.9. Every player should install this build: the join check compares the mod
+build, so it will not join a session running a different one.
+
+### An optional frame rate log
+
+A recurring drop in frame rate during a co-op game can start on either computer or between them, and
+from inside the game the three look the same: this computer hitched; the other one hitched and this
+one is waiting for it; or neither hitched and both are waiting on the network. Guessing between them
+is how a session's worth of profiling gets spent on the wrong computer.
+
+**Log Frame Rate Details**, under Developer Settings and off by default, writes a spreadsheet next to
+`Player.log`, in the same `BeaverBuddiesDiagnostics` folder as the desync diagnostics. Both players
+turn it on, play, and the two files are compared afterwards.
+
+- Every row is keyed on the game tick, which is the only clock two players share; their system
+  clocks do not agree.
+- For each frame over a threshold (50 ms by default, which is 20 frames a second): how long the frame
+  took, whether it ran any ticks or spent the frame waiting for the other player, and separately the
+  time in the per-tick entity hash, the detailed-logging work, sending, receiving, replaying, the
+  network queues and the Steam pump. Alongside those, the collections since the last row and the
+  managed heap, the compressed bytes sent, the speed the game actually ran at against the speed that
+  was chosen, and whether a save was in progress.
+- A summary row every so many ticks as well, so the file records what normal looks like and not only
+  the spikes.
+- The speed columns are there because a player that falls behind runs the simulation faster to catch
+  up, which lengthens its frames until it is level again. That is a drop in frame rate with no extra
+  work behind it, and without the speed written down it is indistinguishable from one.
+- The header records every enabled mod with its version, and Harmony's view of which mod has patched
+  which method, with the priority, marking the methods that run every tick or frame. Two mods on the
+  same hot method is one of the things worth ruling out.
+- A player waiting for the other does not block: the tick loop asks whether the next tick's events
+  have arrived and, if they have not, the frame runs no ticks and ends. So waiting is recorded as
+  frames that ran nothing, not as a long wait.
+
+It only observes. It never records or replays an action, never uses the random number generator and
+never changes anything the simulation reads, so a session with it on simulates exactly what the same
+session would without it. Nothing about writing the file happens on the frame being measured: rows go
+into a buffer allocated when the session starts, and a thread of its own turns them into text and
+writes twice a second. If that thread ever fell behind, the oldest rows are dropped rather than the
+buffer growing, and the file says how many were lost.
+
+`RuntimeChecks/compare_perf_logs.py` takes both players' files. It first compares the two mod lists
+and refuses to draw conclusions if they differ, because then nothing is comparable and the difference
+is worth fixing on its own. It then lines the files up by tick and says what each slow frame was: a
+hitch here while the other player waited, a collection on both at once, both waiting with nothing to
+blame locally, the entity hash, the detailed-logging work, a save, or catching up. It ends with how
+much of each player's frame time this mod accounts for at all — if most of a slow frame is
+unattributed, the cause is the game or another mod, not this one.
+
+[PERFORMANCE-LOG.md](PERFORMANCE-LOG.md) describes the columns and how to run a session.
+
 ## 1.0.9
 
 The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
