@@ -29,9 +29,12 @@ import os
 import statistics
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import perf_details  # noqa: E402
+
 SLOTS = ["gameMs", "tebMs", "replayMs", "serMs", "hashMs", "compMs", "sendMs", "recvMs", "deserMs",
-         "steamMs", "logMs", "detailMs", "uiMs", "saveMs"]
-SIM_SLOTS = ["gameMs", "tebMs", "replayMs"]
+         "steamMs", "logMs", "detailMs", "uiMs", "saveMs", "animMs", "speedMs", "tebLookMs", "tebAnimMs", "parMs"]
+SIM_SLOTS = ["gameMs", "tebMs", "tebLookMs", "tebAnimMs", "replayMs", "parMs", "speedMs"]
 SYNC_SLOTS = ["serMs", "hashMs", "compMs", "sendMs", "recvMs", "deserMs", "steamMs"]
 SLOT_MEANING = {
     "gameMs": "the game's own ticking (and other mods' patches on it)", "tebMs": "the per-tick entity hash",
@@ -40,8 +43,13 @@ SLOT_MEANING = {
     "recvMs": "receiving on the game thread", "deserMs": "deserializing events", "steamMs": "Steam networking",
     "logMs": "log lines", "detailMs": "detailed-logging work", "uiMs": "connection panel and overlay",
     "saveMs": "saving the game", "otherMs": "outside this mod's probes",
+    "animMs": "this mod's animation update", "speedMs": "changing the game speed",
+    "tebLookMs": "the entity pass's component lookups", "tebAnimMs": "the entity pass's walker updates",
+    "parMs": "waiting for the parallel tick",
 }
-FORMAT_LINE = "BeaverBuddies frame rate log, format 1"
+FORMAT_PREFIX = "BeaverBuddies frame rate log, format "
+# Header lines of the form "# key|a|b|c" that carry information about the computer and the session (format 2).
+PIPE_KEYS = ("bootconfig", "cmdline", "milestone", "capability", "capability-final", "calibration", "sampling", "histogram", "phases", "event")
 
 # The periodic things that exist, in seconds. A rhythm is compared with these.
 KNOWN_PERIODS = [
@@ -66,6 +74,8 @@ class Log:
         self.ended = False
         self.skipped_rows = 0
         self.format_ok = False
+        self.format = ""
+        self.extras = {}
 
     @property
     def role(self):
@@ -109,14 +119,18 @@ def parse_log(path):
                     row[name] = float(value)
                 except ValueError:
                     row[name] = 0.0
+        # A log from an earlier format has fewer slots: those it lacks were not measured, which is zero here.
+        for slot in SLOTS + ["otherMs"]:
+            row.setdefault(slot, 0.0)
         log.rows.append(row)
     return log
 
 
 def _parse_comment(log, line):
     text = line[1:].strip()
-    if text == FORMAT_LINE:
+    if text.startswith(FORMAT_PREFIX):
         log.format_ok = True
+        log.format = text[len(FORMAT_PREFIX):].strip()
     elif text == "end":
         log.ended = True
     elif text.startswith("mod|"):
@@ -130,6 +144,9 @@ def _parse_comment(log, line):
                                 "priority": parts[5], "index": parts[6], "assembly": parts[9], "patch": parts[10]})
     elif text.startswith("rows dropped"):
         log.notes.append(text)
+    elif text.split("|", 1)[0] in PIPE_KEYS:
+        parts = text.split("|")
+        log.extras.setdefault(parts[0], []).append(parts[1:])
     elif ": " in text and not text.startswith(("note:", "patches-note:")):
         key, _, value = text.partition(": ")
         log.header[key.strip()] = value.strip()
@@ -240,8 +257,12 @@ def local_cause(row):
         return "sync work", "%s %.0f ms" % (SLOT_MEANING[top_sync], row[top_sync])
     if share["uiMs"] >= 0.4:
         return "panel or overlay", "%.0f ms" % row["uiMs"]
+    if share["animMs"] >= 0.4:
+        return "animation", "%.0f ms" % row["animMs"]
+    if share["parMs"] >= 0.4:
+        return "waiting for the parallel tick", "%.0f ms" % row["parMs"]
     if sim >= 0.5:
-        return "simulation", "ticking took %.0f ms for %d tick(s)" % (row["gameMs"] + row["tebMs"] + row["replayMs"], row["ticks"])
+        return "simulation", "ticking took %.0f ms for %d tick(s)" % (sum(row[s] for s in SIM_SLOTS), row["ticks"])
     if share["otherMs"] >= 0.5:
         return "outside this mod", "%.0f ms is not in any probe (drawing, other mods, the system)" % row["otherMs"]
     return "mixed", "largest is %s at %.0f ms" % (SLOT_MEANING[top], row[top])
@@ -548,6 +569,20 @@ def report(logs, args, out):
         p("   Nothing regular: the drops are not on a timer that this analysis knows about.")
     p("   (Hash interval: this mod has none. The entity hash runs every tick; whole-map hashing runs every tick only with detailed logging on.)")
     p()
+
+    profiles = {}
+    for log in logs:
+        path = perf_details.profile_path(log.path)
+        if os.path.exists(path):
+            try:
+                profiles[log.path] = perf_details.parse_profile(path)
+            except (OSError, ValueError) as error:
+                p("   (could not read %s: %s)" % (os.path.basename(path), error))
+    for title, lines in perf_details.sections(logs, profiles):
+        p("   " + title)
+        for x in lines:
+            p("   " + x)
+        p()
 
     p("6. WHAT THIS POINTS TO")
     for line in verdict(logs, results, stats, unattributed):

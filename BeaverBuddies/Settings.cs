@@ -171,6 +171,13 @@ namespace BeaverBuddies
                 ).SetLocalizedTooltip("BeaverBuddies.Settings.PerfLogSummaryTicks.Tooltip")
         );
 
+        public ModSetting<bool> PerfLogGcExperiment { get; } =
+            new(false,
+                ModSettingDescriptor.CreateLocalized(
+                    "BeaverBuddies.Settings.PerfLogGcExperiment"
+                ).SetLocalizedTooltip("BeaverBuddies.Settings.PerfLogGcExperiment.Tooltip")
+        );
+
         // ---- Ping Settings ----
 
         public const string DefaultPingPlayerName = "Player";
@@ -213,6 +220,8 @@ namespace BeaverBuddies
         public static bool RemoveSpeedLimit => instance?.RemoveLargeColonySpeedLimit.Value ?? false;
 
         public static bool PerfLogEnabled => instance?.PerfLog.Value ?? false;
+        /// <summary>Once, at a fixed tick, tries to switch the game's incremental garbage collection on if it is off, and logs the result.</summary>
+        public static bool PerfLogGcExperimentEnabled => PerfLogEnabled && (instance?.PerfLogGcExperiment.Value ?? false);
         /// <summary>Milliseconds. A frame this long or longer gets its own row in the frame rate log.</summary>
         public static int PerfLogThresholdMs => System.Math.Clamp(instance?.PerfLogThreshold.Value ?? 50, 1, 5000);
         /// <summary>Game ticks between summary rows in the frame rate log.</summary>

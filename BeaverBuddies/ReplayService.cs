@@ -234,6 +234,7 @@ namespace BeaverBuddies
         public void PostLoad()
         {
             Plugin.Log("PostLoad");
+            PerfMilestones.Mark("post-load");
             _determinismService.UnityThread = Thread.CurrentThread;
         }
 
@@ -564,6 +565,7 @@ namespace BeaverBuddies
         private void PerfFrame()
         {
             if (!PerfProbe.Enabled) return;
+            PerfSession.OnFrame(ticksSinceLoad);
             PerfProbe.OnFrame(ticksSinceLoad, _speedManager.CurrentSpeed, TargetSpeed,
                 perfTicksBehind, hostPacing.Percent, hostPacing.IsHolding, UnityEngine.Application.isFocused);
         }
@@ -861,8 +863,12 @@ namespace BeaverBuddies
                 // ticked the ReplayService...
                 if (!HasTickedReplayService)
                 {
-                    // First finish any parallel ticks
-                    ((TickableSingletonService)__instance._tickableSingletonService).FinishParallelTick();
+                    // First finish any parallel ticks. The wait, and the game's own figure for how long they took, go in the frame rate log.
+                    var singletonService = (TickableSingletonService)__instance._tickableSingletonService;
+                    long perfParallel = PerfProbe.Begin(PerfSlot.Parallel);
+                    singletonService.FinishParallelTick();
+                    PerfProbe.End(perfParallel);
+                    if (PerfProbe.Enabled) PerfProbe.NoteParallelTick(singletonService.LastParallelTickDuration.TotalMilliseconds);
 
                     // Tick it and stop
                     HasTickedReplayService = true;

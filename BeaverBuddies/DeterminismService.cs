@@ -252,14 +252,17 @@ namespace BeaverBuddies
         {
             public static EntityComponent currentlyTickingEntity = null;
 
-            static void Prefix(TickableEntity __instance)
+            static void Prefix(TickableEntity __instance, out PerfSample __state)
             {
                 currentlyTickingEntity = __instance._entityComponent;
+                // Every Nth entity is timed for the frame rate log's profile; for all the others this is one flag and a count.
+                __state = PerfProfile.BeginEntity();
             }
 
-            static void Postfix()
+            static void Postfix(TickableEntity __instance, PerfSample __state)
             {
                 currentlyTickingEntity = null;
+                if (__state.On) PerfProfile.EndEntity(__instance._originalName, __state);
             }
         }
 
@@ -343,6 +346,7 @@ namespace BeaverBuddies
     {
         static bool Prefix(float inclusiveMin, float inclusiveMax, ref float __result)
         {
+            PerfProbe.Count(PerfCounter.Rng);
             if (DeterminismService.ShouldUseNonGameRNG())
             {
                 __result = DeterminismService.Range(inclusiveMin, inclusiveMax);
@@ -363,6 +367,7 @@ namespace BeaverBuddies
     {
         static bool Prefix(int inclusiveMin, int exclusiveMax, ref int __result)
         {
+            PerfProbe.Count(PerfCounter.Rng);
             if (DeterminismService.ShouldUseNonGameRNG())
             {
                 __result = DeterminismService.Range(inclusiveMin, exclusiveMax);
@@ -383,6 +388,7 @@ namespace BeaverBuddies
     {
         static bool Prefix(ref Vector2 __result)
         {
+            PerfProbe.Count(PerfCounter.Rng);
             if (DeterminismService.ShouldUseNonGameRNG())
             {
                 __result = DeterminismService.InsideUnitCircle();
@@ -556,6 +562,7 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            PerfProbe.Count(PerfCounter.Input);
             DeterminismService.SetNonGamePatcherActive(typeof(InputPatcher), true);
             __state = true;
         }
@@ -588,6 +595,7 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            PerfProbe.Count(PerfCounter.Sound);
             DeterminismService.SetNonGamePatcherActive(typeof(SoundEmitter), true);
             __state = true;
         }
@@ -806,6 +814,7 @@ namespace BeaverBuddies
     {
         static void Prefix(out bool? __state)
         {
+            PerfProbe.Count(PerfCounter.Ticker);
             __state = DeterminismService.IsTicking;
             DeterminismService.IsTicking = true;
         }
@@ -830,6 +839,7 @@ namespace BeaverBuddies
 
         static bool Prefix(ref Guid __result)
         {
+            PerfProbe.Count(PerfCounter.Guid);
 #if NO_RANDOM
             __result = GenerateIncrementally();
 #else
@@ -877,6 +887,7 @@ namespace BeaverBuddies
     {
         static void Prefix(EntityService __instance, EntitySetup.Builder entitySetupBuilder)
         {
+            PerfProbe.Count(PerfCounter.Spawn);
             if (EventIO.IsNull || !entitySetupBuilder._id.HasValue) return;
 
             var replayService = GetSingleton<ReplayService>();
@@ -967,6 +978,7 @@ namespace BeaverBuddies
         }
 
         static float GetTime() {
+            PerfProbe.Count(PerfCounter.TimeCalls);
             // this is how we make do without original; TimberBorn doesn't use timeAsDouble.
             // as long as that holds that means we don't need to patch it.
             // therefore we can use it to reconstruct the now-inaccessible Time.time.
@@ -986,6 +998,7 @@ namespace BeaverBuddies
     {
         static bool Prefix(DayNightCycle __instance, ref float __result)
         {
+            PerfProbe.Count(PerfCounter.DayNight);
             if (EventIO.IsNull) return true;
             //Plugin.LogStackTrace();
             // Don't add the seconds passed this tick, since that's based on update
@@ -1010,6 +1023,8 @@ namespace BeaverBuddies
         {
             if (EventIO.IsNull) return;
             long perf = PerfProbe.Begin(PerfSlot.EntityHash);
+            bool perfOn = PerfProbe.Enabled;
+            int perfMovers = 0;
 
             for (int i = 0; i < __instance._tickableEntities.Count; i++)
             {
@@ -1021,8 +1036,12 @@ namespace BeaverBuddies
                 // not), and both steps below need one. Look it up once and skip everything else,
                 // instead of four component lookups for every entity on every tick.
                 // ReferenceEquals keeps the null semantics of the original "?." lookups.
+                // For the frame rate log: one lookup in sixteen is timed and scaled up, which costs far less than timing them all.
+                long perfLook = perfOn && (i & 15) == 0 ? PerfProbe.Timestamp() : 0;
                 MovementAnimator anim = entityComponent.GetComponent<MovementAnimator>();
+                if (perfLook != 0) PerfProbe.AddNested(PerfSlot.TebLookup, (PerfProbe.Timestamp() - perfLook) * 16);
                 if (ReferenceEquals(anim, null)) continue;
+                perfMovers++;
                 var pathFollower = entityComponent.GetComponent<Walker>()?.PathFollower;
                 var animatedPathFollower = anim._animatedPathFollower;
                 if (pathFollower != null && animatedPathFollower != null)
@@ -1052,7 +1071,9 @@ namespace BeaverBuddies
                         // AnimatedPathFollower), it should ensure synced rotation across clients.
                         // In between ticks, we can animate smoothly, since before each tick this
                         // will synchronize the client and server (I hope!).
+                        long perfAnimate = perfOn ? PerfProbe.Timestamp() : 0;
                         anim.UpdateTransform(Time.deltaTime * 1000);
+                        if (perfAnimate != 0) PerfProbe.AddNested(PerfSlot.TebAnimate, PerfProbe.Timestamp() - perfAnimate);
                     }
                 } catch (Exception e)
                 {
@@ -1097,6 +1118,11 @@ namespace BeaverBuddies
                 //    var transform = entity._entityComponent.TransformFast;
                 //    Plugin.Log($"{entity.EntityId}: {FVS(transform.position)}");
                 //}
+            }
+            if (perfOn)
+            {
+                PerfProbe.Count(PerfCounter.Entities, __instance._tickableEntities.Count);
+                PerfProbe.Count(PerfCounter.Movers, perfMovers);
             }
             PerfProbe.End(perf);
         }

@@ -27,6 +27,7 @@ namespace BeaverBuddies
         {
             // Reset everything before loading singletons
             SingletonManager.Reset();
+            PerfMilestones.Mark("game-context-configured");
 
             Plugin.Log($"Registering In Game Services");
 
@@ -78,6 +79,7 @@ namespace BeaverBuddies
             // so it's best to reset everything.
             SingletonManager.Reset();
             EventIO.Reset();
+            PerfMilestones.Mark("main-menu-configured");
 
             Plugin.Log($"Registering Main Menu Services");
             containerDefinition.Bind<ClientConnectionService>().AsSingleton();
@@ -117,6 +119,7 @@ namespace BeaverBuddies
         public void StartMod(IModEnvironment modEnvironment)
         {
             logger = new UnityLogger();
+            PerfMilestones.Mark("mod-started");
 
             Log($"{Name} v{Version} is loaded!");
 

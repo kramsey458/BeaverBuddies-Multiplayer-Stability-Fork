@@ -8,6 +8,8 @@ using TimberNet;
 // `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam depends on frame length.
 if (args.Contains("--ping-report")) { PingCadenceChecks.PrintReport(); return 0; }
 // `dotnet run --project StabilityTests -- --write-perf-sample <folder>` writes two example frame rate logs (a host stall the guest waits out).
+// `dotnet run --project StabilityTests -- --print-perf-columns` prints the two column headers RuntimeChecks/perf_columns.txt must contain.
+if (args.Contains("--print-perf-columns")) { Console.WriteLine(TimberNet.Perf.PerfColumns.HeaderLine()); Console.WriteLine(TimberNet.Perf.PerfProfile.Table.HeaderLine()); return 0; }
 int sampleAt = Array.IndexOf(args, "--write-perf-sample");
 if (sampleAt >= 0 && sampleAt + 1 < args.Length) { PerfLogChecks.WriteSample(args[sampleAt + 1]); return 0; }
 
@@ -64,7 +66,7 @@ var tests = new (string Name, Action Run)[]
         finally { BeaverBuddies.IO.EventIO.IsNull = false; }
     })
 };
-tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(PingCadenceChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(PanelLayoutChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(FrameRatePacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).Concat(SessionEndChecks.Tests()).Concat(PerfLogChecks.Tests()).ToArray();
+tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(PingCadenceChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(PanelLayoutChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(FrameRatePacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).Concat(SessionEndChecks.Tests()).Concat(PerfLogChecks.Tests()).Concat(PerfDiagnosticsChecks.Tests()).ToArray();
 foreach (var test in tests)
 {
     try

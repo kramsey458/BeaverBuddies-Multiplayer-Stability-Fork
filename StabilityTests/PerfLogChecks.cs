@@ -86,21 +86,67 @@ static class PerfLogChecks
         Directory.CreateDirectory(directory);
         WriteSampleLog(Path.Combine(directory, "perf-host-Example-20260101-000000.csv"), true);
         WriteSampleLog(Path.Combine(directory, "perf-guest-Example-20260101-000000.csv"), false);
-        Console.WriteLine("Wrote two example logs to " + directory);
+        Console.WriteLine("Wrote two example logs, each with a profile file, to " + directory);
     }
 
     static void WriteSampleLog(string path, bool host)
     {
         // The two computers' clocks do not agree, which is why the logs are lined up by tick.
         long now = Ms(host ? 1000000 : 7777777);
+        long bytes = 0;
         var ring = new PerfRing(PerfColumns.Count, 4096);
+        var profileRing = new PerfRing(PerfProfile.Table.Count, 4096);
         PerfProbe.TestClock = () => now;
-        PerfProbe.Start(ring, Environment.CurrentManagedThreadId, 50, 100);
+        PerfAlloc.UseTestSource(() => bytes);
+        PerfProbe.ScopePairTicks = Ms(0.0001); PerfProbe.SamplePairTicks = Ms(0.0003);
+        PerfProbe.Start(ring, Environment.CurrentManagedThreadId, 50, 100, profileRing);
+        PerfProfile.Configure(1, 1);
+        var prefabs = new[] { "BeaverAdult", "FarmHouse", "Lodge", "Tree" };
         try
         {
             int tick = 0;
             double sinceTick = 0;
             void Frame(float speed, int behind) => PerfProbe.OnFrame(tick, speed, 1f, behind, 100, false, true);
+
+            // One ordinary frame: 16 ms, a tick every sixth, drawn in about ten of them.
+            void Ordinary()
+            {
+                PerfProbe.PhaseMark(0, true); now += Ms(1); PerfProbe.PhaseMark(0, false);
+                PerfProbe.PhaseMark(5, true);
+                long sim = PerfProbe.Begin(PerfSlot.Sim);
+                sinceTick += 16;
+                if (sinceTick >= 100)
+                {
+                    sinceTick -= 100; tick++; PerfProbe.NoteTickStart(tick);
+                    for (int e = 0; e < 4; e++)
+                    {
+                        PerfSample s = PerfProfile.BeginEntity();
+                        if (s.On) { now += Ms(1 + e); bytes += (100 + 50 * e) * 1024; }
+                        PerfProfile.EndEntity(prefabs[e], s);
+                    }
+                    PerfSample g = PerfProfile.BeginSingleton();
+                    now += Ms(2); bytes += 90 * 1024;
+                    PerfProfile.EndSingleton(typeof(string), g);
+                    long teb = PerfProbe.Begin(PerfSlot.EntityHash);
+                    now += Ms(3); bytes += 20 * 1024;
+                    PerfProbe.AddNested(PerfSlot.TebLookup, Ms(0.5)); PerfProbe.AddNested(PerfSlot.TebAnimate, Ms(1));
+                    PerfProbe.End(teb);
+                    bytes += 300 * 1024;
+                    PerfProbe.Count(PerfCounter.Entities, 2000); PerfProbe.Count(PerfCounter.Movers, 400);
+                    PerfProbe.Count(PerfCounter.EntityTicks, 2000); PerfProbe.Count(PerfCounter.Rng, 900);
+                    PerfProbe.NoteParallelTick(2.5);
+                }
+                now += Ms(1);
+                PerfProbe.End(sim);
+                long anim = PerfProbe.Begin(PerfSlot.Anim); now += Ms(0.4); PerfProbe.End(anim);
+                PerfProbe.Count(PerfCounter.Anim, 500);
+                PerfProbe.PhaseMark(5, false);
+                PerfProbe.PhaseMark(7, true); now += Ms(9); PerfProbe.PhaseMark(7, false);
+                now += Ms(1.6);
+                PerfProbe.Extra[2] = 3200; PerfProbe.Extra[4] = 900; PerfProbe.Extra[7] = host ? 9 : 14; PerfProbe.Extra[10] = host ? 0 : 8;
+                Frame(1, host ? 0 : 1);
+            }
+
             Frame(1, 0);
             for (int frame = 1; frame <= 3000; frame++)
             {
@@ -112,7 +158,7 @@ static class PerfLogChecks
                         if (frame == 2100)
                         {
                             long save = PerfProbe.Begin(PerfSlot.Save);
-                            now += Ms(300);
+                            now += Ms(300); bytes += 900 * 1024;
                             PerfProbe.End(save);
                         }
                         else { GC.Collect(); now += Ms(300); }
@@ -149,44 +195,89 @@ static class PerfLogChecks
                     Frame(1, 1);
                     continue;
                 }
-                sinceTick += 16;
-                long ordinary = PerfProbe.Begin(PerfSlot.Sim);
-                if (sinceTick >= 100) { tick++; PerfProbe.NoteTickStart(tick); sinceTick -= 100; }
-                now += Ms(4);
-                PerfProbe.End(ordinary);
-                now += Ms(12);
-                Frame(1, host ? 0 : 1);
+                if (frame % 450 == 0 && frame != 900)
+                {
+                    // A collection about every 72 game seconds. The guest's pauses are long until the experiment at tick 200, and short after it.
+                    GC.Collect();
+                    now += Ms(host ? 90 : tick < 200 ? 600 : 120);
+                    Frame(1, host ? 0 : 1);
+                    continue;
+                }
+                Ordinary();
             }
         }
         finally
         {
             PerfProbe.Stop();
             PerfProbe.TestClock = null;
+            PerfProbe.ScopePairTicks = 0; PerfProbe.SamplePairTicks = 0;
+            PerfAlloc.Init();
         }
-        string build = "game=1.0.5;mod=1.0.10-perflog-preview;modBuild=" + (host ? "11111111-aaaa" : "11111111-aaaa") + ";netBuild=22222222-bbbb";
+        string build = "game=1.0.5;mod=1.0.10-perflog-preview2;modBuild=" + (host ? "11111111-aaaa" : "11111111-aaaa") + ";netBuild=22222222-bbbb";
         var header = new List<string>
         {
-            "# BeaverBuddies frame rate log, format 1",
+            "# BeaverBuddies frame rate log, format 2",
             "# role: " + (host ? "host" : "guest"),
             "# player: Example",
-            "# mod: 1.0.10-perflog-preview",
+            "# mod: 1.0.10-perflog-preview2",
             "# build: " + build,
+            "# cpu: Example CPU x" + (host ? "16 @ 4700" : "12 @ 3600") + " MHz",
+            "# display: vSyncCount=" + (host ? "0" : "1") + " targetFrameRate=-1 resolution=2560x1440 refreshHz=60.00 fullScreen=FullScreenWindow",
+            "# gc: mode=Enabled incremental=" + (host ? "True" : "False") + " timeSliceNs=3000000 maxGeneration=0",
             "# detailedLogging: off",
+            "# gcExperiment: " + (host ? "off" : "on (tick 4000)"),
             "# thresholdMs: 50",
             "# summaryTicks: 100",
             "# note: this file was made up by StabilityTests (--write-perf-sample); it is not from a game",
+            "# capability|allocSource|GC.GetTotalMemory(false)",
+            "# capability|cpuTimes|unavailable",
+            "# capability|frameTiming|off (the game's player settings leave Unity's frame timing off, or it is unavailable)",
+            "# capability-final|profilerRecorder|Draw Calls Count|never produced a value|frames=3000",
+            "# histogram|frameEdgesMs|" + string.Join(",", PerfColumns.FrameEdgesMs.Select(e => e.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+            "# milestone|mod-started|00:00:01.000|140|900",
+            "# milestone|session-start|00:02:10.000|1650|4100",
+            "# bootconfig|vr-enabled=0",
+            "# bootconfig|" + (host ? "gc-max-time-slice=3" : "hdr-display-enabled=0"),
+            "# cmdline|Timberborn.exe",
             "# mods: 3",
-            "# mod|beaverbuddies|BeaverBuddies - Stability Fork|1.0.10-perflog-preview",
+            "# mod|beaverbuddies|BeaverBuddies - Stability Fork|1.0.10-perflog-preview2",
             "# mod|harmony|Harmony|v2.4.1",
             "# mod|eMka.ModSettings|Mod Settings|v1.1.0",
         };
+        if (!host)
+        {
+            header.Add("# event|tick 200|gc-experiment|before|mode=Enabled incremental=False timeSliceNs=3000000");
+            header.Add("# event|tick 200|gc-experiment|result|the game now collects incrementally; compare the collection pauses before and after this tick");
+        }
         var writer = new PerfWriter(path, header, ring, null);
         if (!writer.Start()) throw new Exception("could not write " + path + ": " + writer.Failure);
         writer.Stop();
+
+        string profilePath = Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path) + "-profile.csv");
+        var profileWriter = new PerfWriter(profilePath, new[] { "# BeaverBuddies frame rate log profile, format 1", "# role: " + (host ? "host" : "guest") },
+            profileRing, null, PerfProfile.Table) { BeforeRows = PerfProfile.WriteNewNames };
+        if (!profileWriter.Start()) throw new Exception("could not write " + profilePath + ": " + profileWriter.Failure);
+        profileWriter.Stop();
     }
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
+        yield return ("Frame rate log: the column reference file in RuntimeChecks is what the game writes", () =>
+        {
+            string? directory = AppContext.BaseDirectory;
+            string? file = null;
+            while (directory != null && file == null)
+            {
+                string candidate = Path.Combine(directory, "RuntimeChecks", "perf_columns.txt");
+                if (File.Exists(candidate)) file = candidate;
+                directory = Path.GetDirectoryName(directory);
+            }
+            Check(file != null, "RuntimeChecks/perf_columns.txt was not found above the test binaries");
+            string[] lines = File.ReadAllLines(file!);
+            Equal(PerfColumns.HeaderLine(), lines[0]);
+            Equal(PerfProfile.Table.HeaderLine(), lines[1]);
+        });
+
         yield return ("Frame rate log: every column has a name, a kind and a way of being summarized", () =>
         {
             Equal(PerfColumns.Count, PerfColumns.Names.Length);
@@ -195,9 +286,9 @@ static class PerfLogChecks
             Equal(PerfColumns.Count, PerfColumns.Names.Distinct().Count());
             Equal(PerfColumns.Count, PerfColumns.HeaderLine().Split(',').Length);
             Equal("gameMs", PerfColumns.Names[PerfColumns.SlotBase]);
-            Equal("saveMs", PerfColumns.Names[PerfColumns.SlotBase + PerfColumns.SlotCount - 1]);
+            Equal("parMs", PerfColumns.Names[PerfColumns.SlotBase + PerfColumns.SlotCount - 1]);
             Equal("otherMs", PerfColumns.Names[PerfColumns.OtherMs]);
-            Equal("dropped", PerfColumns.Names[PerfColumns.Count - 1]);
+            Equal("dropped", PerfColumns.Names[PerfColumns.Dropped]);
             Equal(Enum.GetValues(typeof(PerfSlot)).Length, PerfColumns.SlotCount);
         });
 

@@ -10,16 +10,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import compare_perf_logs as cpl  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-COLUMNS_SOURCE = os.path.join(HERE, "..", "TimberNet", "Perf", "PerfColumns.cs")
+COLUMNS_SOURCE = os.path.join(HERE, "perf_columns.txt")
 
 
 def csharp_columns():
-    """The column names as the game writes them, read from the C# source so the two cannot drift apart."""
+    """The column names as the game writes them. perf_columns.txt is what the C# prints (StabilityTests --print-perf-columns), and a C#
+    check fails if it goes out of date, so the two cannot drift apart."""
     with open(COLUMNS_SOURCE, encoding="utf-8") as f:
-        text = f.read()
-    block = text[text.index("Names ="):]
-    block = block[:block.index("};")]
-    return re.findall(r'"([A-Za-z]+)"', block)
+        return f.readline().strip().split(",")
 
 
 COLUMNS = csharp_columns()
@@ -66,7 +64,7 @@ def classes(results):
 
 class ColumnsAgree(unittest.TestCase):
     def test_python_and_csharp_agree_on_the_slots(self):
-        slots = COLUMNS[COLUMNS.index("gameMs"):COLUMNS.index("saveMs") + 1]
+        slots = COLUMNS[COLUMNS.index("gameMs"):COLUMNS.index("parMs") + 1]
         self.assertEqual(slots, cpl.SLOTS)
         self.assertIn("otherMs", COLUMNS)
         for name in cpl.SLOT_MEANING:
@@ -302,6 +300,156 @@ class Command(unittest.TestCase):
     def test_the_report_is_plain_ascii(self):
         code, text = self.run_main(*self.sessions())
         text.encode("ascii")
+
+
+import perf_details as pd  # noqa: E402
+
+
+def v2_log(role="host", rows=(), extra=(), **kwargs):
+    text = log_text(role, list(rows), extra=list(extra), **kwargs)
+    return parse(text.replace("format 1", "format 2"), role + ".csv")
+
+
+def summary(frames=100, ticks=10, **values):
+    return line("S", 100, 1000, frames=frames, ticks=ticks, frameMs=values.pop("frameMs", 20), utcMs=1000000, **values)
+
+
+class DetailSections(unittest.TestCase):
+    def test_the_frame_histogram_names_each_bucket_by_its_edges(self):
+        edges = "4,6,8.5,11.5,14,17.5,21,25,30,35,42,50,75,100,200,400"
+        log = v2_log(rows=[summary(fh5=60, fh9=30, fh12=10)], extra=["# histogram|frameEdgesMs|" + edges])
+        lines = pd.histogram(log)
+        self.assertIn("100 frames", lines[0])
+        text = "\n".join(lines)
+        self.assertIn("14.0 to 17.5 ms", text)
+        self.assertIn("60.0%", text)
+        self.assertIn("30.0 to 35.0 ms", text)
+        self.assertIn("50.0 to 75.0 ms", text)
+
+    def test_ticks_per_frame(self):
+        log = v2_log(rows=[summary(th0=50, th1=40, th5=10)])
+        self.assertIn("0: 50.0%", pd.ticks_per_frame(log)[0])
+        self.assertIn("10+: 10.0%", pd.ticks_per_frame(log)[0])
+
+    def test_unitys_phases_and_the_share_of_the_frame_each_takes(self):
+        log = v2_log(rows=[summary(frameMs=30, plUpdate=6, plPost=18)])
+        text = "\n".join(pd.phases(log))
+        self.assertIn("plPost", text)
+        self.assertIn("60.0%", text)
+        self.assertIn("outside every phase: 6.00 ms", text)
+
+    def test_a_phase_timing_that_produced_nothing_says_so(self):
+        self.assertIn("produced nothing", pd.phases(v2_log(rows=[summary()]))[0])
+
+    def test_busy_or_waiting(self):
+        log = v2_log(rows=[summary(frameMs=30, mainCpuMs=12, procCpuMs=45, ftMain=11, ftRender=8, ftGpu=25, ftWait=14)])
+        text = "\n".join(pd.cpu(log))
+        self.assertIn("40% busy", text)
+        self.assertIn("1.5 cores", text)
+        self.assertIn("graphics card 25.0 ms", text)
+        self.assertIn("waiting to present 14.0 ms", text)
+
+    def test_allocation_per_tick_by_section_with_the_biggest_first(self):
+        log = v2_log(rows=[summary(ticks=10, gameKB=6000, serKB=1000, otherKB=500, allocKB=8000)])
+        lines = pd.allocation(log)
+        self.assertIn("750 KB/tick", lines[0])
+        self.assertTrue(lines[1].lstrip().startswith("gameKB"))
+        self.assertIn("600.0 KB/tick", lines[1])
+        self.assertIn("80.0%", lines[1])
+
+    def test_counters_and_the_entity_pass(self):
+        log = v2_log(rows=[summary(frames=100, ticks=10, entities=20000, movers=4000, entTicks=20000, nAnim=50000,
+                                   tebMs=6, tebLookMs=1, tebAnimMs=2, animMs=0.5, parTickMs=25, parMs=3)])
+        text = "\n".join(pd.counters(log) + pd.entity_pass(log))
+        self.assertIn("entities 2000", text)
+        self.assertIn("nAnim 500", text)
+        self.assertIn("2.50 ms per tick", text)
+        self.assertIn("for 2000 entities of which 400 walk", text)
+        self.assertIn("per call", text)
+
+    def test_the_log_reports_what_it_costs_itself(self):
+        self.assertIn("0.15%", pd.overhead(v2_log(rows=[summary(frameMs=20, overheadUs=20, probeUs=10)]))[0])
+
+    def test_the_two_computers_are_compared_setting_by_setting(self):
+        a = v2_log("host", extra=["# gc: incremental=True", "# bootconfig|gc-max-time-slice=3", "# bootconfig|vr=0", "# cmdline|Timberborn.exe"])
+        b = v2_log("guest", extra=["# gc: incremental=False", "# bootconfig|vr=0", "# cmdline|Timberborn.exe", "# cmdline|-force-d3d11"])
+        text = "\n".join(pd.environment([a, b]))
+        self.assertIn("gc differs", text)
+        self.assertIn("only host     gc-max-time-slice=3", text)
+        self.assertIn("only guest    -force-d3d11", text)
+        self.assertNotIn("boot.config: identical", text)
+
+    def test_heap_at_each_stage_of_loading(self):
+        log = v2_log(extra=["# milestone|mod-started|00:00:01.000|140|900", "# milestone|session-start|00:02:10.000|1650|4100"])
+        self.assertIn("session-start 1650 MB / 4100 MB", pd.milestones(log)[0])
+
+    def test_the_experiment_is_judged_by_the_pauses_either_side_of_it(self):
+        rows = [line("F", 1, 100, frameMs=600, gcDelta=1), line("F", 2, 150, frameMs=700, gcDelta=1),
+                line("F", 3, 300, frameMs=120, gcDelta=1), line("F", 4, 400, frameMs=110, gcDelta=1),
+                line("F", 5, 500, frameMs=900, gcDelta=1, saving=1)]
+        log = v2_log("guest", rows=rows, extra=["# event|tick 200|gc-experiment|before|incremental=False", "# event|tick 200|gc-experiment|result|worked"])
+        text = "\n".join(pd.events(log))
+        self.assertIn("2 before tick 200 (median 650 ms", text)
+        self.assertIn("2 after (median 115 ms", text)
+
+
+class ProfileFile(unittest.TestCase):
+    HEADER = "type,window,tick,id,calls,sampled,ms,allocKB,maxMs"
+
+    def profile(self, rows):
+        text = "\n".join(["# BeaverBuddies frame rate log profile, format 1", "# role: host",
+                          "# name|E|0|BeaverAdult|", "# name|E|1|FarmHouse|", "# name|G|2|Some.Mod.Singleton|SomeMod", self.HEADER] + rows) + "\n# end\n"
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "host-profile.csv")
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(text)
+            return pd.parse_profile(path)
+
+    def test_names_and_rows_are_read(self):
+        profile = self.profile(["E,0,100,0,400,25,50.00,800.0,3.50", "G,0,100,2,10,10,9.00,90.0,1.20"])
+        self.assertEqual(profile.names[2], ("G", "Some.Mod.Singleton", "SomeMod"))
+        self.assertEqual(len(profile.rows), 2)
+        self.assertEqual(profile.rows[0]["type"], "E")
+        self.assertAlmostEqual(profile.rows[0]["ms"], 50.0)
+
+    def test_windows_add_up_and_the_biggest_come_first(self):
+        profile = self.profile(["E,0,100,0,400,25,50.00,800.0,3.50", "E,1,200,0,400,25,70.00,1200.0,9.00",
+                                "E,0,100,1,100,6,10.00,100.0,2.00", "G,0,100,2,10,10,9.00,90.0,1.20"])
+        totals = pd.profile_totals(profile)
+        self.assertAlmostEqual(totals[("E", 0)]["ms"], 120.0)
+        self.assertAlmostEqual(totals[("E", 0)]["max"], 9.0)
+        log = v2_log(rows=[summary(frames=10, ticks=20)])
+        lines = pd.profile_lines(log, profile)
+        entities = [l for l in lines if "BeaverAdult" in l or "FarmHouse" in l]
+        self.assertTrue("BeaverAdult" in entities[0])
+        self.assertIn("6.00 ms/tick", entities[0])
+        self.assertIn("[SomeMod]", "\n".join(lines))
+
+    def test_a_profile_with_no_singleton_rows_says_the_patch_may_not_have_run(self):
+        profile = self.profile(["E,0,100,0,400,25,50.00,800.0,3.50"])
+        self.assertIn("no singletons rows", "\n".join(pd.profile_lines(v2_log(rows=[summary(ticks=20)]), profile)))
+
+    def test_the_profile_file_is_found_beside_its_log(self):
+        self.assertEqual(pd.profile_path(os.path.join("a", "perf-host-X-1.csv")), os.path.join("a", "perf-host-X-1-profile.csv"))
+
+    def test_the_whole_report_includes_the_new_sections_and_survives_old_logs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = []
+            for role in ("host", "guest"):
+                text = log_text(role, [summary(frames=100, ticks=10, plPost=9, gameKB=5000, fh5=100)], extra=["# gc: incremental=%s" % (role == "host")]).replace("format 1", "format 2")
+                path = os.path.join(directory, "perf-%s-X-1.csv" % role)
+                with open(path, "w", encoding="utf-8", newline="") as f:
+                    f.write(text)
+                paths.append(path)
+            with open(pd.profile_path(paths[0]), "w", encoding="utf-8", newline="") as f:
+                f.write("# name|E|0|BeaverAdult|\n" + self.HEADER + "\nE,0,100,0,400,25,50.00,800.0,3.50\n")
+            out = io.StringIO()
+            self.assertEqual(cpl.main(paths, out), 0)
+            text = out.getvalue()
+            for heading in ("HOW LONG FRAMES TAKE", "UNITY'S PHASES OF A FRAME", "WHAT ALLOCATES", "WHERE THE TICK GOES", "HOW THE TWO COMPUTERS DIFFER"):
+                self.assertIn(heading, text)
+            self.assertIn("BeaverAdult", text)
+            text.encode("ascii")
 
 
 if __name__ == "__main__":

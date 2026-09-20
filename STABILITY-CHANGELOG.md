@@ -5,25 +5,35 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## 1.0.10-perflog-preview (pre-release)
+## 1.0.10-perflog-preview2 (pre-release)
 
 A pre-release for testing, on top of 1.0.9. It adds no gameplay change and no fix: it only adds a way to measure where a slow frame's
-time went. **Not yet run in a game.** Every player should install this build: the join check compares the mod build, so it will not join
-a session running a different one.
+time went, and why. Every player should install this build: the join check compares the mod build, so it will not join a session running
+a different one. Only the first version of the log has been run in a game; **none of what this version adds to it has**.
 
 ### An optional frame rate log, to find what causes the drops in co-op
 
 A recurring drop in frame rate in co-op can start on either computer, or between them, and from inside the game the three look the same.
 Guessing between them is how a session of profiling gets spent on the wrong computer. **Log Frame Rate Details**, in Mod Settings under
-BeaverBuddies and off by default, writes a CSV into the `BeaverBuddiesDiagnostics` folder (next to the desync diagnostics), named for
-the player and whether they hosted. See [PERFORMANCE-LOG.md](PERFORMANCE-LOG.md) for how to record a session, where the file is, what
-to send back and what each column means.
+BeaverBuddies and off by default, writes two CSV files into the `BeaverBuddiesDiagnostics` folder (next to the desync diagnostics), named for
+the player and whether they hosted: the frame log, and a profile of which entities and singletons the tick's time and garbage go to. See
+[PERFORMANCE-LOG.md](PERFORMANCE-LOG.md) for how to record a session, where the files are, what to send back and what each column means.
 
 - Every row is keyed on the game tick, the only clock two players share.
 - For each frame over a threshold (50 ms by default): the frame time, the ticks it ran, and separately the time in the per-tick entity
-  hash, replaying, serializing, hashing, compressing, sending, receiving and deserializing events, Steam, log lines, detailed-logging
-  work, the panel, and saving, plus the rest of the frame. Alongside those: garbage collections, the managed heap, bytes and messages,
-  and the speed the game ran at against the speed that was chosen.
+  hash (split into its lookups, its walker updates and the rest), replaying, serializing, hashing, compressing, sending, receiving and
+  deserializing events, Steam, log lines, detailed-logging work, the panel, saving, this mod's animation update, changing the game speed,
+  and the game thread waiting for the parallel tick, plus the rest of the frame.
+- **Where the garbage comes from:** the kilobytes each of those sections allocates, and for every kind of entity and every singleton (which
+  names the mod it comes from) an estimate of the time and garbage per tick, from sampled calls kept inside a small measuring budget.
+- **Why a frame is slow when none of that is the cause:** the spread of all frame times (vertical sync shows as peaks at 16.7 and 33.3 ms),
+  the time in each of Unity's phases of a frame, the processor time the game thread used against the wall clock, Unity's own frame timing
+  and draw call counters where a release build provides them, and counts of the hot patches.
+- **Why two computers differ:** each header records the launch options, `boot.config`, the game's garbage collection state, the display and
+  refresh rate, the graphics API, how big the heap was while the game loaded, and what each measurement source could do.
+- **An optional experiment**, off by default and with its own setting: about 9 minutes into a session, if the game is not collecting garbage
+  incrementally, it tries to switch that on while it runs and writes down whether that worked, so the pauses before and after can be compared.
+  It changes how the game collects garbage, never what it simulates.
 - **Waiting is not a blocked wait.** A guest that has not received the next tick's events does not start the tick, and the frame is still
   drawn, so the frame rate stays high while the tick rate drops. Waits are recorded as their own rows, with how long they lasted. A
   player who has fallen behind runs the simulation faster to catch up, which lengthens frames with no extra work behind them; the speed
@@ -32,18 +42,23 @@ to send back and what each column means.
 - The header records every enabled mod with its version, and Harmony's view of which mod has patched which method, with the priority,
   for the methods that run every tick or frame.
 - `RuntimeChecks/compare_perf_logs.py` reads both players' files. It compares the two mod lists first and stops if they differ, then
-  lines the files up by tick and classifies each slow stretch: a hitch on one player with a matching wait on the other, garbage
-  collection on both, waits on both with no local cause, a wait followed by a catch-up burst, or a hitch the other player never felt.
+  lines the files up by tick and classifies each slow stretch, and reports the new figures above, how the two computers' settings differ, and
+  what the experiment did to the collection pauses.
 
-It only observes. It never records or replays an action, never uses the game's random numbers and never changes anything the simulation
-reads. With the log off, each measured point reads one static flag. With it on, the frame path allocates nothing, rows go into a buffer
-allocated when the game starts, and a thread of its own writes them twice a second; if that thread falls behind, rows are dropped and
-counted instead of the buffer growing.
+It only observes, apart from the optional experiment. It never records or replays an action, never uses the game's random numbers and never
+changes anything the simulation reads. With the log off, each measured point reads one static flag and nothing is installed. With it on, the
+frame path allocates nothing, rows go into buffers allocated when the game starts, and threads of their own write them twice a second; if one
+falls behind, rows are dropped and counted instead of the buffer growing. The parts that only exist while a log runs (a timing marker in each
+phase of Unity's frame, a patch timing each singleton, a call asking Windows for the game thread's processor time) are removed when it ends.
+The log measures its own cost when it starts and estimates it for every frame.
 
-**Tested:** 230 of 230 checks in `StabilityTests` (the timing against a fake clock, the file format in a language that writes `1,5`, the
-buffer, the writer, the patch report's logic, and that the frame path allocates nothing), and the analysis script's 33 checks. **Not
-tested:** a real game session, and the part of the patch report that reads Harmony's records, which only runs inside the game; if it
-fails there the header says `patches-unavailable` and the rest of the file is still written.
+**Tested:** 249 of 249 checks in `StabilityTests`, run three times in a row (the timing against a fake clock, allocation charged to the section that
+made it, the entity profile and its sampling, the file format in a language that writes `1,5`, the buffers, the writers, the patch report's logic, and
+that the frame path allocates nothing with everything switched on), 69 of 69 `RuntimeChecks` against the built mod, and 49 checks for the analysis
+script, which was also run on example logs written by the real writer.
+**Not tested:** any of the additions in a real game, and the parts that need one: Unity's player loop markers, profiler counters and frame timing,
+the patch timing the singletons, the garbage collection experiment, and the part of the patch report that reads Harmony's records. Each of them
+reports in the file whether it worked, and one that fails leaves the rest of the file written.
 
 ## 1.0.9
 

@@ -2,6 +2,7 @@
 
 using BeaverBuddies.IO;
 using HarmonyLib;
+using TimberNet.Perf;
 using Timberborn.CharacterMovementSystem;
 using Timberborn.EntitySystem;
 using UnityEngine;
@@ -34,6 +35,8 @@ private void Update(float deltaTime)
             if (EventIO.IsNull) return true;
             var tickProgressService = SingletonManager.GetSingleton<TickProgressService>();
             if (tickProgressService == null) return true;
+            long perf = PerfProbe.Begin(PerfSlot.Anim);
+            PerfProbe.Count(PerfCounter.Anim);
 
             //Vector3 position = Vector3.zero;
 
@@ -103,6 +106,7 @@ private void Update(float deltaTime)
             //    Plugin.Log($"XDir: {Mathf.Sign(dir.x)}, ZDir: {Mathf.Sign(dir.z)}");
             //}
 
+            PerfProbe.End(perf);
             // We've replaced the original method, so skip it
             return false;
         }

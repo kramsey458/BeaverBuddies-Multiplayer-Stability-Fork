@@ -48,12 +48,15 @@ namespace BeaverBuddies.Events
          */
         public static void SetSpeedSilentlyNow(SpeedManager speedManager, float speed)
         {
+            long perf = TimberNet.Perf.PerfProbe.Begin(TimberNet.Perf.PerfSlot.Speed);
+            TimberNet.Perf.PerfProbe.Count(TimberNet.Perf.PerfCounter.SpeedChanges);
             silently = true;
             speedManager.ChangeSpeed(speed);
             silently = false;
 
             // Have to call ChangeSpeed again to immediate update it.
             speedManager.ChangeSpeed();
+            TimberNet.Perf.PerfProbe.End(perf);
         }
 
         static bool Prefix(SpeedManager __instance, ref float speed)

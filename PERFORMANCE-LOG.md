@@ -3,8 +3,9 @@
 An optional log for finding out **what causes the drops in frame rate in co-op**. Off by default. It changes nothing about the game: it
 only writes down, for every slow frame, where the time went, so that a session played by two people can be compared afterwards.
 
-**Not yet run in a game.** It is tested (the timing, the file format, the analysis script), but no one has recorded a real session with
-it yet. If it fails to start it says so in `Player.log` and the game carries on.
+**Only run in a game once so far, with the first version of the log.** This version adds a great deal to it (see below), and none of the
+additions has been run in a game yet. If a part fails to start it says so in the file and in `Player.log`, that part stays off, and
+the game carries on.
 
 ## Why it exists
 
@@ -20,13 +21,29 @@ There is a fourth thing that looks like a frame rate drop with no extra work beh
 faster to catch up (up to 10 times), which makes each frame longer until it is level again. The log records the speed the game ran at
 next to the speed that was chosen, so that shows.
 
+## What it answers
+
+The first recording (a 35 minute co-op session) showed that the synchronisation between the players costs almost nothing, that one
+computer had far longer pauses from garbage collection than the other, and that about 600 KB of garbage is made every tick. This version
+is built to say **why**, so that a fix can be chosen:
+
+- **Where the garbage comes from:** how much each section of the tick allocates (this mod's own work, the game's singletons, and each kind
+  of entity), and how many collections there are.
+- **Why one computer's collections are so much longer:** its launch options, `boot.config`, and the game's garbage collection settings
+  are written into the header, and an optional experiment (below) tries to switch incremental collection on while the game runs.
+- **Why a computer sits at a low frame rate:** the spread of frame times (vertical sync shows as peaks at 16.7 and 33.3 ms), the time in
+  each of Unity's phases of a frame, whether the game thread is busy or waiting, and Unity's own frame timing where it is available.
+- **What this mod itself costs:** the per-tick entity pass split into its parts, the animation update this mod replaces, speed changes, and
+  every hot patch counted.
+
 ## Turn it on
 
-Every player, **before** hosting or joining: **Mod Settings → BeaverBuddies → Log Frame Rate Details.** Two numbers next to it:
+Every player, **before** hosting or joining, in **Mod Settings → BeaverBuddies**:
 
-- **Frame Rate Log: Slow Frame (ms)**, default 50. A frame this long or longer gets a row of its own.
-- **Frame Rate Log: Summary Every (ticks)**, default 100. A summary row of the ordinary frames is written this often, so the file also
-  records what normal looks like.
+- **Log Frame Rate Details**: on. Everything below depends on it.
+- **Frame Rate Log: GC Experiment**: on (see "The garbage collection experiment"). Turn it on for both players; it does nothing on a computer
+  that already collects incrementally.
+- **Frame Rate Log: Slow Frame (ms)**, default 50, and **Summary Every (ticks)**, default 100: leave them.
 
 The settings are read when a game starts. Changing them in a running game does nothing until the next one.
 
@@ -34,52 +51,66 @@ The settings are read when a game starts. Changing them in a running game does n
 
 1. **Every player installs the same build**, from the release zip (the join check compares builds, so a build you compiled yourself
    would be refused).
-2. Play the same way you normally do, for **15 to 20 minutes**. If you can, use the same save each time you compare.
-3. **Write down when you notice a drop** ("about 8 minutes in"). It is the one thing the log cannot know.
-4. Leave the game normally (menu → exit) so the file is finished. If the game crashes the file is still readable; it just has no closing
-   line.
+2. **Change nothing else.** Play the way you normally do, with the same graphics settings, mods and save you had when you saw the drops.
+   The point is to record what you have, not something tidier.
+3. Play **at least 25 minutes**. Time matters more than what you do: the experiment starts about 9 minutes in and the pauses after it need
+   time to show. Use both slower speeds and speed 7 for a good while each.
+4. **Write down when you notice a drop** ("about 8 minutes in"). It is the one thing the log cannot know.
+5. Let the game **autosave at least once**, and leave normally (menu → exit) so the files are finished. If the game crashes the files are
+   still readable; they just have no closing line.
 
-"Always Use Detailed Logging" is recorded in the file's header. Play with it the way you normally do, and say which it was: it is the
-heaviest optional work this mod does, so a session with it on and a session with it off are different experiments.
+"Always Use Detailed Logging" is recorded in the header. Play with it the way you normally do, and say which it was.
 
-## Where the file is
+## The garbage collection experiment
+
+About 9 minutes into a session (game tick 4000), if the game is **not** collecting garbage incrementally, the log tries to switch that on
+by setting Unity's incremental time slice, reads back whether the game now collects incrementally, and writes what it found into the file as
+`# event` lines. The collection pauses before and after that tick can then be compared. It changes how the game collects garbage, never
+what it simulates. If the game already collects incrementally it does nothing. It only runs if you turn on **Frame Rate Log: GC Experiment**.
+
+## Where the files are
 
 ```
 %USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddiesDiagnostics
 ```
 
-Paste that into the address bar of a File Explorer window. The file is named for the role and the player and is new for every game:
+Paste that into the address bar of a File Explorer window. There are **two files for every game**, named for the role and the player:
 
 ```
 perf-host-Player-20260920-193045.csv
-perf-guest-Player-20260920-193049.csv
+perf-host-Player-20260920-193045-profile.csv
 ```
 
-The name in the middle is the player name from Mod Settings (the Ping name, `Player` unless changed), reduced to letters, digits, `-` and
-`_`. Take the newest file. The desync diagnostics that this mod can also write are in the same folder.
+The first is the frame log; the second, ending in `-profile`, says which entities and singletons the tick's time and garbage go to. The
+name in the middle is the player name from Mod Settings (the Ping name, `Player` unless changed), reduced to letters, digits, `-` and `_`.
+Take the newest pair.
 
 ## What to send back
 
-- **The file from each player** (both, not just one).
+- **Both files from each player**: four in all, not just the frame logs.
 - **When you saw drops**, roughly, and whether it was the same for both of you.
 - Optional: each player's `Player.log` (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`).
 
-The file is plain text. It contains the list of enabled mods with versions, the game and mod build, your computer's operating system,
-processor, graphics card and memory, the player name you set, and numbers. It contains no save data, no chat and no addresses.
+The files are plain text. They contain the list of enabled mods with versions, the game and mod build, your computer's operating system,
+processor, graphics card and memory, the player name you set, the game's `boot.config` and launch options, and numbers. They contain no
+save data, no chat and no addresses.
 
-## What is in the file
+## What is in the frame log
 
 Lines starting with `#` are the **header**, and a few notes among the rows. The header records: the role, the player, the mod build, the
-game and Unity versions, the computer, the settings (including whether detailed logging was on), **every enabled mod with its version**,
-and **which mod has patched which method**, from Harmony's own records. For the methods that run every tick or frame it lists each patch
-with the mod that made it, its kind (prefix, postfix, transpiler, finalizer) and its priority, and it lists every method that more than one
-mod patches. Harmony cannot see patches made another way; the header says so.
+game and Unity versions, the computer (processor, graphics card and driver, display and refresh rate, vertical sync), the game's garbage
+collection state, the settings, **every enabled mod with its version**, **which mod has patched which method** (from Harmony's own records,
+for the methods that run every tick or frame and every method more than one mod patches; Harmony cannot see patches made another way),
+what each measurement source can do on this computer (`# capability` lines, and `# capability-final` lines at the end saying whether it
+actually produced anything), what measuring costs (`# calibration`), how big the heap was while the game was loading (`# milestone`), and the
+game's `boot.config` and launch options (`# bootconfig`, `# cmdline`).
 
 After the header comes one line of column names, then the rows. Every row has all the columns. There are three kinds:
 
 - **F**: one frame that took at least the slow-frame threshold.
 - **W**: one wait for the other player that took at least the threshold. It is keyed on the tick that ended the wait.
-- **S**: a summary of every frame since the last summary, with times as averages per frame.
+- **S**: a summary of every frame since the last summary. In S rows times and the Unity figures are **averages per frame**; allocation,
+  counts and the two histograms are **totals** over the summary's frames.
 
 **Everything is keyed on the game tick.** The two computers' clocks do not agree, so the tick is what lines two files up.
 
@@ -97,31 +128,66 @@ After the header comes one line of column names, then the rows. Every row has al
 | `behind` | How many ticks behind the newest one received (guests) |
 | `pacePct`, `hold` | The host's easing for a slow guest, in percent, and whether it is holding still for one |
 | `saving`, `focused` | 1 if a save ran in the frame; 1 if the game window was in front (a window in the background is throttled by the system) |
+
+**Where the time went** (milliseconds; exclusive, so a section inside another is taken out of the outer one and all of these plus
+`otherMs` add up to `frameMs`):
+
+| Column | Meaning |
+|---|---|
 | `gameMs` | The tick loop itself, minus everything below: the game's own ticking, and other mods' patches on it |
-| `tebMs` | The pass over every entity each tick (order and position hash, animator sync) |
+| `tebMs` | The pass over every entity each tick (order and position hash), minus the next two |
+| `tebLookMs`, `tebAnimMs` | Inside that pass: looking up each entity's animator (one lookup in sixteen is timed and scaled up), and bringing each walker's model up to date |
 | `replayMs` | Replaying the events of a tick |
 | `serMs`, `hashMs`, `compMs`, `sendMs` | Serializing an event; adding it to the event hash; JSON and gzip; writing to the connection |
 | `recvMs`, `deserMs` | The game thread's side of receiving; turning received JSON into events |
 | `steamMs` | Serving Steam networking |
 | `logMs`, `detailMs` | This mod's log lines; work that exists only with detailed logging on (traces, whole-map hashes) |
 | `uiMs`, `saveMs` | The connection panel and overlay; saving the game |
-| `otherMs` | The rest of the frame: drawing, other UI, other mods, the system. A slow frame where this is most of the time did not slow down because of this mod |
+| `animMs` | This mod's replacement of the game's per-character animation update, every frame |
+| `speedMs` | Changing the game speed (which notifies every animated building) |
+| `parMs` | The game thread waiting for the parallel part of the tick to finish |
+| `otherMs` | The rest of the frame: drawing, other UI, other mods, the system |
+
+**Garbage and memory:**
+
+| Column | Meaning |
+|---|---|
 | `gcDelta` | Garbage collections during the frame |
 | `heapMB` | Managed memory in use |
 | `allocKB` | How much `heapMB` changed since the previous frame. Negative means a collection freed memory |
+| `gameKB` … `parKB`, `otherKB` | Kilobytes allocated by each of the sections above (sections that are called too often to measure are left out and count in the one around them), and by everything outside them. Totals in `S` rows |
+| `monoHeapMB`, `monoUsedMB`, `nativeMB`, `workingMB` | Unity's managed heap reserved and in use, its total allocated memory, and the process's working set. Read only when a row is written |
+
+**Counts** (totals in `S` rows): `entities` and `movers` (visited by the entity pass; the walkers among them), `entTicks` (calls of the game's
+entity tick), `nAnim`, `nTime` (reads of `Time.time`), `nDayNight`, `nRng` (random number calls), `nGuid`, `nSpawn` (entities created),
+`nSound`, `nInput`, `nTicker` (calls of the per-frame patches) and `nSpeed` (speed changes). `parTickMs` is the game's own figure for how long
+its parallel tick took.
+
+**The computer and Unity:**
+
+| Column | Meaning |
+|---|---|
+| `mainCpuMs`, `mainMcyc`, `procCpuMs` | Processor time the game thread used (milliseconds, and millions of cycles) and the whole process used, in the frame. Windows only. The game thread's is charged in scheduler quanta, so one frame's figure is coarse and only the summary rows are exact |
+| `plTime`, `plInit`, `plEarly`, `plFixed`, `plPre`, `plUpdate`, `plLate`, `plPost` | Milliseconds in each of Unity's phases of a frame. The wait for vertical sync is in one of them (usually `plPost`) |
+| `prGcBytes`, `prGcCount`, `prDraw`, `prSetPass`, `prBatches`, `prTris` | Unity's profiler counters, where a release build has them: bytes and count of allocations, draw calls, set-pass calls, batches, triangles |
+| `ftCpu`, `ftMain`, `ftRender`, `ftGpu`, `ftWait` | Unity's frame timing, where it is enabled: the frame on the processor, the main thread, the render thread, the graphics card, and the main thread waiting to present |
+| `fh0` … `fh16` | How many frames fell in each frame-time bucket (edges in the `# histogram` header line). Vertical sync shows as peaks at 16.7 and 33.3 ms |
+| `th0` … `th5` | How many frames ran 0, 1, 2, 3-4, 5-9, and 10 or more ticks |
 | `msgOut`, `bytesOut`, `msgIn`, `bytesIn` | Messages and bytes sent and received (compressed) |
-| `probeUs` | What the log itself cost this frame, in microseconds |
+| `probeUs`, `overheadUs` | What the log cost this frame: closing the frame, and the estimated cost of the timed sections and samples in it. Both in microseconds |
 | `dropped` | Rows lost because the file writer fell behind. Should be 0 |
 
-The times are **exclusive**: a scope inside another is taken out of the outer one, so the slots never overlap. `gameMs` through `saveMs`
-and `otherMs` add up to `frameMs`.
+## What is in the profile file
 
-There is no fixed hash interval in this mod to line slow frames up with. The entity hash (`tebMs`) runs every tick, and with detailed
-logging on so do the whole-map hashes (`detailMs`).
+One row per entity kind (`E`: a prefab such as a beaver or a farm house) and per singleton (`G`) for each summary window, with `calls`, `ms`
+and `allocKB` **estimated by sampling**: only every Nth call is timed (N is chosen every window so that the timing costs at most a quarter of a
+millisecond a tick) and the result is scaled up. `sampled` says how many calls it is based on, and `maxMs` is the slowest sampled call. Names
+are given in `# name|kind|id|name|assembly` lines before the rows that use them; for a singleton the assembly names the mod it comes from.
+The entity rows add up to most of `gameMs`, and the singleton rows to the rest of the tick.
 
-## Read the two files together
+## Read the files together
 
-Python 3, nothing to install:
+Python 3, nothing to install. Give it the two frame logs; it finds each profile file beside its log:
 
 ```
 python RuntimeChecks/compare_perf_logs.py perf-host-....csv perf-guest-....csv
@@ -136,8 +202,10 @@ It does these things, in this order:
    garbage collection on both at once, waits on both with nothing slow to explain them (network or batching), a wait followed by a
    catch-up burst, a hitch the other player never noticed, or a wait on one player with no hitch on the other.
 4. Says where the time went in slow frames, and how much of it was outside every probe in this mod.
-5. Looks for a rhythm in the slow frames and compares it with the periodic things that exist (a 1 Hz status message, a 10 Hz cursor
-   message, the save, garbage collection).
+5. Looks for a rhythm in the slow frames and compares it with the periodic things that exist.
+6. Shows the spread of frame times, Unity's phases, whether the game thread was busy or waiting, what allocates and how much, the per-tick
+   counts, the profile (which entities and singletons the tick's time and garbage go to), what each computer could measure, how the two
+   computers' settings differ, and what the garbage collection experiment did to the pauses.
 
 It ends with what the numbers point to. These are pointers, not proofs. `--all` lists every episode, `--events-csv file` writes them out,
 and it also reads a single file. To see what a report looks like without playing:
@@ -147,21 +215,27 @@ dotnet run --project StabilityTests -- --write-perf-sample some-folder
 python RuntimeChecks/compare_perf_logs.py some-folder/perf-host-Example-20260101-000000.csv some-folder/perf-guest-Example-20260101-000000.csv
 ```
 
-Those two files are made up by a script and are not from a game.
+Those files are made up by a script and are not from a game.
 
 ## What it does to the game
 
 It only observes. It never records or replays an action, never uses the game's random numbers, never touches the event hash and never
-changes anything the simulation reads, so a session with it on simulates exactly what the same session would without it.
+changes anything the simulation reads, so a session with it on simulates exactly what the same session would without it. The one optional
+thing that changes anything is the garbage collection experiment, which changes how the game collects garbage and nothing else.
 
-- **Off (the default):** every measured point starts by reading one static flag. Nothing is allocated.
-- **On:** times are read from a clock into arrays allocated when the game starts, and rows go into a fixed buffer of about 2.7 MB. A
-  thread of its own turns them into text and writes them twice a second, so no disk work happens on the frame being measured. If that
-  thread ever falls behind, new rows are dropped and counted (`dropped`) instead of the buffer growing. The per-frame path allocates
-  nothing (a test checks this). `probeUs` records what the log costs, so the file shows whether it is a problem of its own making.
+- **Off (the default):** every measured point starts by reading one static flag, and nothing is allocated or installed.
+- **On:** times are read from a clock into arrays allocated when the game starts, and rows go into fixed buffers. A thread of its own turns
+  them into text and writes them twice a second, so no disk work happens on the frame being measured. If that thread ever falls behind, new
+  rows are dropped and counted (`dropped`) instead of the buffer growing. The per-frame path allocates nothing (a test checks this).
+- **While a log runs**, and only then, it also puts a timing marker at the start and end of each phase of Unity's frame, times each
+  singleton's tick with a patch made for the purpose, and asks Windows how much processor time the game thread used. The markers and the
+  patch are removed when the log ends.
+- **What measuring costs** is measured when the log starts (`# calibration`), estimated for every frame (`overheadUs`) and written in the
+  header, so the file shows whether it is a problem of its own making. The timing of entities is sampled and kept inside a budget of about a
+  quarter of a millisecond a tick.
 - Only the game thread is timed. Work on other threads (receiving and decompressing on the network thread, for example) is not, though
   the messages and bytes are counted.
-- If anything inside the log fails it switches itself off and the game carries on.
+- If anything inside the log fails it switches itself off (or, for an optional source, just that source), and the game carries on.
 
 ## Build and test
 
@@ -174,8 +248,12 @@ python -m unittest discover -s RuntimeChecks -p "test_perf_logs.py"
 Pass `BeaverBuddiesModsPath`, or the build writes into your real `Mods` folder. To compare a build with someone else's, both must use the
 same compiled files: the join check compares the module ID of each build, and any rebuild gets a new one.
 
+`RuntimeChecks/perf_columns.txt` lists the columns the game writes. The tests check it against the code, and the Python tests read it, so the two
+cannot drift apart. If you change the columns, regenerate it with `dotnet run --project StabilityTests -- --print-perf-columns > RuntimeChecks/perf_columns.txt`.
+
 ## Removing it
 
-The timing lives in `TimberNet/Perf/` and the session and header in `BeaverBuddies/Perf/`. The rest is paired `PerfProbe.Begin` and
-`PerfProbe.End` calls, and a few `PerfProbe` counters, at the measured points: search for `PerfProbe` and `PerfSession`. Deleting the two
-folders and those lines, and the three settings in `Settings.cs`, removes it.
+The timing lives in `TimberNet/Perf/` and the session, header and Unity-specific parts in `BeaverBuddies/Perf/`. The rest is paired
+`PerfProbe.Begin` and `PerfProbe.End` calls, a few `PerfProbe.Count` calls, and the per-entity hook in the entity tick patch, at the measured
+points: search for `PerfProbe`, `PerfProfile`, `PerfMilestones` and `PerfSession`. Deleting the two folders and those lines, and the four
+settings in `Settings.cs`, removes it.
