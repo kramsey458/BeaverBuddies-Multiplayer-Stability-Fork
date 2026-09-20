@@ -6,9 +6,6 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
-> [!NOTE]
-> **Release candidate.** `1.1.10-release-candidate-3` is a pre-release that makes this mod's pass over every entity on each tick cheaper (see [Performance](#how-this-fork-improves-on-the-original)), gives the connection panel a plainer look, and draws chat in the color of each player's cursor (see [the connection panel](#the-connection-panel) and the [changelog](STABILITY-CHANGELOG.md)). **Only a short two-player session has been played with it, and the saving from the entity pass has not been measured.** The current release is 1.0.9. The candidate is a separate download on the [Releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases) (the one marked Pre-release), installed the same way, and every player must run the same build.
-
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
 ## Highlights
@@ -29,10 +26,10 @@ This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thoma
 
 **You need:** Timberborn (this release is built and tested against **1.1.2.4**), with the **Harmony** and **Mod Settings** mods enabled. Every player must run the same game version too.
 
-1. Download `BeaverBuddies-Stability-Fork-1.0.9.zip` from the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest).
+1. Download `BeaverBuddies-Stability-Fork-1.1.10.zip` from the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest).
 2. **Close Timberborn.**
 3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`. If you installed an earlier download, delete its old `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
-4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.0.9) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
+4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.1.10) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
 5. **Every player must install the exact same download** and restart the game. This is the most common cause of trouble; see [Things to know](#things-to-know-before-you-play).
 
 This fork is distributed through GitHub Releases only. The Steam Workshop and mod.io pages linked further down belong to the original project.
@@ -69,7 +66,7 @@ A small panel appears in the top-left corner during a multiplayer game.
 
 <img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, two players with one at 21 ms, tick rate 10.7 ticks per second, speed 6.3x, the host pacing lines, a Steam connection and a chat box.">
 
-*The panel as the host sees it during a Steam co-op session, in 1.0.9. In 1.1.10-release-candidate-3 the dots by the title and by each player, and the "You / Host" tag, are gone (your own row is bold with a dash for its ping), the collapse button is boxed, and chat is drawn in each player's cursor color. The screenshot has not been retaken.*
+*The panel as the host sees it during a Steam co-op session, in 1.0.9. In 1.1.10 the dots by the title and by each player, and the "You / Host" tag, are gone (your own row is bold with a dash for its ping), the collapse button is boxed, and chat is drawn in each player's cursor color. The screenshot has not been retaken.*
 
 | It shows | Meaning |
 | --- | --- |
@@ -145,7 +142,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 ## Testing and verification
 
-The 1.1.10-release-candidate-2 validation run passed **282 checks**: **210** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
+The 1.1.10 validation run passed **282 checks**: **210** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
 
 These checks cannot start Unity or prove full multiplayer determinism, and they need the game installed locally (no proprietary game files are included in this repository). See [StabilityTests/README.md](StabilityTests/README.md) for how to run them. The maintainer's real playtests, described above, are what confirm behavior in the live game.
 

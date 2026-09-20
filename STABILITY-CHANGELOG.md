@@ -5,56 +5,15 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## 1.1.10-release-candidate-3 (pre-release)
+## 1.1.10
 
-A pre-release for testing, on top of 1.1.10-release-candidate-2, which it contains in full. It changes one thing: how the collapse button
-on the connection panel looks. Every player should install this build: the join check compares the mod build, so it will not join a session
-running a different one. **It has not been seen in a game.**
+The current release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
+cheaper pass over every entity on each tick, a plainer connection panel, and chat drawn in the color of each player's cursor. Every player
+should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
+over the network.
 
-### The collapse button has a box around it
-
-In 1.1.10-release-candidate-2 the button that collapses the panel (a small "-", or "+" while collapsed) sat at the right edge of the header,
-directly above the "-" that stands for your own ping, and the two looked alike. The button now has a thin box around it so it reads as a
-button. It does what it did before, and clicking the title still collapses and expands the panel. Nothing else changes.
-
-**Tested:** 210 of 210 checks in `StabilityTests`, 69 of 69 `RuntimeChecks` against the built mod, and the 3 Python checks; none of them can draw the
-panel. **Not tested:** how the box looks in a game.
-
-## 1.1.10-release-candidate-2 (pre-release)
-
-A pre-release for testing, on top of 1.1.10-release-candidate, which is in turn on top of 1.0.9. It contains everything in the release candidate
-(the cheaper pass over every entity on each tick). What it adds changes how the connection panel looks and what color chat is drawn in, and
-nothing else: no gameplay change, no fix, nothing new sent over the network. Every player should install this build: the join check compares the
-mod build, so it will not join a session running a different one. **The panel changes have been seen in a game (screenshots of a host, alone and with a guest); the chat colors have not.**
-
-### A plainer connection panel
-
-- **One dot.** While the panel is expanded, the dot beside the sync status (green, yellow or red with the status) is the only one: the dot beside
-  the title and the dots beside each player are gone. A collapsed panel is one line with no status row, so it keeps its own dot.
-- **A player's row is a name and a ping.** The "You" and "Host" tags are gone. The host reads each guest's ping. A guest reads its own ping to the
-  host on the host's row, and the ping the host measured for every other guest. Over 80 ms the number is yellow and over 160 ms red, and "No
-  response" is red.
-- **Your own row is bold, with a dash where the ping would be**, since you have no ping to yourself.
-
-### Chat takes the cursor colors
-
-A chat line, name and message, is drawn in the color you see on that player's cursor: the color they chose (their Ping Color), or the one you set
-for them under Options, Player cursors. Change that color and the lines already written change with it, within a moment. Your own lines use your
-Ping Color. A player who has left, or whose cursor is off, keeps the color you saved for them, else the one their messages carried. A color too dark
-to read on the panel is lightened, as before. Before, only the name was colored, and always in the color the player chose for themselves.
-
-**Tested:** 210 of 210 checks in `StabilityTests` (among them the rows without tags, the ping on every row, a line in one color that no message can
-add markup to, and the color saved for a player who is not connected), 69 of 69 `RuntimeChecks` against the built mod, and the 3 Python checks.
-**Seen in a game:** the header without its dot, a guest's row and your own row in bold with a dash.
-**Not tested:** chat lines in the cursor colors, also after a color is changed. The interface cannot be built outside the game, so it can only be
-checked in one.
-
-## 1.1.10-release-candidate (pre-release)
-
-A pre-release for testing, on top of 1.0.9, which is still the current release. It changes one thing:
-how much work this mod does on every tick of a co-op game. **It has not been played yet.** Every
-player should install this build: the join check compares the mod build, so it will not join a
-session with a different one.
+The fork owner played 1.1.10-release-candidate-3 in multiplayer, which is this build's code with only the version changed, and reported that it
+works.
 
 ### The pass over every entity on each tick is cheaper
 
@@ -83,7 +42,7 @@ and about 3.4 ms was the loop and the hashing together.
 
 Expected effect: roughly 3 to 6 ms less on each tick, between about 8% and 17% of the guest's tick
 in that recording. That is an estimate from the measurements above (how much of the
-loop and hashing time was the hashing is not known); it has not been measured with this build.
+loop and hashing time was the hashing is not known); it has not been measured.
 
 What it does not fix: in the same recording the guest's frame rate fell from 23 to 8.5 frames a
 second over about seven minutes at speed 7, and an earlier recording of the host showed the same
@@ -92,20 +51,40 @@ and 34 ms on the guest), which is not code of this mod, and what runs there is n
 recording so far started fast and slowed down over a session at a high speed, and a restart
 started fast again. This release does not change that.
 
+### A plainer connection panel
+
+- **One dot.** While the panel is expanded, the dot beside the sync status (green, yellow or red with the status) is the only one: the dot beside
+  the title and the dots beside each player are gone. A collapsed panel is one line with no status row, so it keeps its own dot.
+- **A player's row is a name and a ping.** The "You" and "Host" tags are gone. The host reads each guest's ping. A guest reads its own ping to the
+  host on the host's row, and the ping the host measured for every other guest. Over 80 ms the number is yellow and over 160 ms red, and "No
+  response" is red.
+- **Your own row is bold, with a dash where the ping would be**, since you have no ping to yourself.
+- **The collapse button has a box around it** (a small "-", or "+" while collapsed), so it is not mistaken for that dash, which sits at the same
+  edge of the panel. It does what it did before, and clicking the title still collapses and expands the panel.
+
+Screenshots of a host, alone and with a guest, showed the header without its dot, the sync dot as the only one, a guest's row and your own row in
+bold with a dash, and that the game's font draws bold. They also showed the collapse button's dash directly above your own row's dash, which is
+why the button is boxed.
+
+### Chat takes the cursor colors
+
+A chat line, name and message, is drawn in the color you see on that player's cursor: the color they chose (their Ping Color), or the one you set
+for them under Options, Player cursors. Change that color and the lines already written change with it, within a moment. Your own lines use your
+Ping Color. A player who has left, or whose cursor is off, keeps the color you saved for them, else the one their messages carried. A color too dark
+to read on the panel is lightened, as before. Before, only the name was colored, and always in the color the player chose for themselves.
+
 ### Validation
 
-- Release Steam and non-Steam builds succeed with no warnings. 208 StabilityTests (9 new, for the
-  memory of which entities walk, including one that adds and removes entities at random in a real
-  sorted list, the game's own container for a bucket, and checks every answer), 69 RuntimeChecks
-  against the built mod and 3 Python checks pass.
-- **Not tested: the pass itself has not run in the game.** It works on Unity's entities, which the
-  checks cannot create, so the memory is checked on its own with stand-ins and the patch is covered
-  only by the build and by the runtime checks loading the mod. How much it saves in a real colony
-  is not known.
+- Release Steam and non-Steam builds succeed with no warnings. 210 StabilityTests (9 new for the memory of which entities walk, and 2 for the
+  panel and the chat colors), 69 RuntimeChecks against the built mod and 3 Python checks pass. None of them can draw the panel.
+- **Played:** the fork owner played 1.1.10-release-candidate-3 in multiplayer and reported that it works.
+- **Not checked:** no screenshot was taken of the boxed collapse button or of chat lines in the cursor colors (also after a color is changed). How
+  much the entity pass saves in a large colony has not been measured, and the pass works on Unity's entities, which the checks cannot create, so it
+  is covered by its own checks with stand-ins, the build and the runtime checks loading the mod.
 
 ## 1.0.9
 
-The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
+It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
 fix for controls that stopped answering, the frame rate easing, and the compact chat and panel
 layout. Every player should install this build: guests now send the host one more number than
 before (their frame rate), and the join check compares the mod build, so it will not join a session

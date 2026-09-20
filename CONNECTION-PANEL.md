@@ -211,10 +211,11 @@ counters; the sizing checks above and the current layout are the response.
 Screenshots of 1.1.10-release-candidate-2, alone and with a guest, show the header without a dot, the sync dot
 as the only dot, player rows that are a name and a ping (a guest's ping, and your own row in bold with a dash),
 and that the game's font draws bold. They also showed the collapse button's dash directly above your own row's
-dash, which is why the button is boxed.
+dash, which is why the button is boxed. The fork owner then played 1.1.10-release-candidate-3, which has the boxed button, and reported that
+it works.
 
-**Not verified: how it looks and feels.** The boxed collapse button, and chat lines in the cursor colors
-(also after a color is changed), have not been seen in the running game. The fixes themselves have not been seen in the running
+**Not verified: how it looks and feels.** No screenshot was taken of the boxed collapse button or of chat lines in the cursor colors
+(also after a color is changed); the fork owner played the build that has them and reported that it works. The fixes themselves have not been seen in the running
 game: that the panel now matches the counters' width (and to what), that the chat clears the
 alerts, and that the panel really is drawn in front of them while you type. The panel's layout,
 colors, spacing and where it sits in each corner other than the top left have not been seen
