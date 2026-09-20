@@ -48,6 +48,11 @@ Steamworks assembly.
   would otherwise wait for the end of it, in both directions, and the ping grew with the
   speed. Only data transfer runs there (no state changes, closing or admission), on the same
   thread as everything else. The log reports how long data waited once a minute.
+- **The overlay and dialogs.** While Steam's overlay is open the game pushes an empty panel that
+  blocks input, and pops it when the overlay closes, but only if it is still on top. If a dialog
+  opened over it in between (an invite that cannot be joined, a connection error), the panel used
+  to stay for good and swallow every key press. It is now removed as soon as the dialog above it is
+  closed.
 - **Connecting in the background.** The connection completes after `ConnectAsync` returns.
   The client waits for it on a worker thread (up to 45 s) before the compatibility
   handshake's own 15 s clock starts. `TimberClient.Start()` used to wait 3 s on the game
@@ -81,10 +86,12 @@ scripted session (about 60 events each way, one of 220 KB, plus cursor traffic) 
 a direct connection and over Steam under stress, and both peers must end with identical
 events and state hashes. Corrupting a single byte in the Steam path makes these fail.
 
-**Not verified: the real Steam client.** The thin layer that calls Steam
-(`SteamLinkBackend`, `SteamNet`, `SteamListener`, `SteamOverlayConnectionService`) compiles
-against the game's real Steamworks assembly but has not been run against Steam, because
-that needs two Steam accounts. Treat the first two-account session as the real test.
+**Confirmed with a real Steam friend** in playtests between the maintainer and a friend,
+including a session at a true speed 7 with the ping under 100 ms. The automated checks cannot
+run Steam itself: the thin layer that calls Steam (`SteamLinkBackend`, `SteamNet`,
+`SteamListener`, `SteamOverlayConnectionService`) compiles against the game's real Steamworks
+assembly and is exercised only in the game, which needs two Steam accounts. The overlay panel
+fix and the pumping between ticks are covered by checks on their decisions, not by a Steam session.
 
 ## Two-account playtest
 

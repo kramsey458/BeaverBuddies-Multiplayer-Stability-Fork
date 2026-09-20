@@ -5,180 +5,18 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## 1.0.9-framethrottler-preview2 (pre-release)
+## 1.0.9
 
-## 1.0.9-control-fix-preview (pre-release)
-
-A pre-release for testing, on top of 1.0.8. Every player should install this build.
-
-### Controls that stopped answering after a message was closed
-
-Reported after a disconnect or a resync attempt: once the message was closed, the controls did not
-work as expected, and Escape did not open the menu. Going through every way a session can end, in
-this mod and in the game's own code, found five separate causes. Each leaves the game running but
-ignoring the player. **None of them has been seen in a running game.** They come from reading the
-code, and each fix changes a decision that is checked on its own.
-
-- **After "Multiplayer has stopped", the menu could not be opened.** A multiplayer action that
-  fails to replay stops multiplayer for the rest of that game and blocks every further action, so a
-  half-applied action cannot make things worse. The block also covered the game menu: Escape and
-  the options button both open it through the same call. The message tells the player to return to
-  the main menu, so the only way out was to kill the game. The menu now opens, and everything else
-  stays blocked.
-- **A dropped connection left the dead session in place.** When a guest lost the connection during
-  a game, its network was closed but the session stayed installed. Every action, the menu included,
-  was then queued for a session that no longer existed and never played, and the game was held
-  paused. The message meant to explain it was shown through the main menu's dialogs, which no longer
-  exist once a game has loaded, and the fallback looked the dialog up where it is never registered,
-  so nothing was shown at all. The session now ends the way a desync ends it: what the player does
-  applies here again, the game stays paused, and the game itself shows the reason and the way out
-  (open the menu to save, or to return to the main menu and join again). If the connection drops
-  while the game is still loading, the message appears as soon as the game is up.
-- **A cancelled or failed join or host left a dead session in the main menu.** Cancelling the host's
-  lobby, or a join that failed after the connection was made (a host that had already started, a
-  build mismatch), left the closed session installed until the main menu was loaded again. Whatever
-  was played next from that menu, single player included, then started as a multiplayer game with
-  nobody to talk to: paused for good, and Escape did nothing. A session that ends before it has a
-  game is now cleared away, and a host who cancels a rehost from a running game goes back to
-  playing locally.
-- **Steam's overlay closing under a dialog.** While the overlay is open the game pushes an empty
-  panel that blocks input, and pops it when the overlay closes, but only if it is still on top. If a
-  dialog opened over it in between (an invite that cannot be joined, a connection error), the game
-  left it in place for good: once the dialog was closed, a panel that no key could close sat on top
-  and swallowed every key press, until the overlay was opened again. The panel is now removed as
-  soon as the dialog above it is closed.
-- **Input held when a session stops is cleared.** A desync already cleared the keys and mouse
-  buttons held when its dialog appeared, so they did not carry over once it was closed. A failed
-  action and a lost connection now do the same.
-
-## 1.0.8 (pre-release)
-
-
-A pre-release for testing. Same network format as 1.0.9-framethrottler-preview, so the two can
-play together, but only the host's build decides how the easing behaves.
-
-### The frame rate easing no longer see-saws
-
-- Played once with the floor at 20 fps: no desync, and the guest's average frame rate went from
-  5 to 11 fps (1.0.8, same colony, true speed 7) to 21 to 27 fps. But the host changed speed 68
-  times in seven minutes, between 60% and 95%, and never settled. Two causes. The guest's
-  one-second frame rates are noisy (anything from 2 to 59 fps within a few seconds, because a
-  garbage collection or an autosave takes most of one second), and three bad seconds in a row
-  were enough for a drop. And after every drop the host climbed straight back, 5% every three
-  seconds, into the speed that had just caused the trouble.
-- The rule now looks at the middle value of the guest's last five reports, which one or two bad
-  seconds cannot move. Below the floor: drop 10% and start a fresh set of five reports, so the
-  next decision only sees frame rates from after the drop.
-- Speeding back up takes six good reports in a row instead of three.
-- The percentage the host had to drop from is remembered. It does not climb back to it for a
-  minute of play, then tries once; if that fails again from the same percentage the wait
-  doubles, up to four minutes. Changing the floor, switching it off, or the guest leaving
-  forgets it.
-- The line in `Player.log` also gives the middle value the decision was made on.
-- In a model of a guest that is fine up to 80% and collapses above it, the host stays between
-  75% and 85% and tries the higher speed at most six times in eighteen minutes; the first
-  version tried every twenty seconds.
-
-### Validation
-
-- Release Steam and non-Steam builds succeed with no warnings. 177 StabilityTests, 64
-  RuntimeChecks against the built mod and 2 Python checks pass.
-- Not yet played in a multiplayer session.
-
-## 1.0.9-chatbox-fix-preview (pre-release)
-
-A pre-release for testing, on top of everything in 1.0.9-framethrottler-preview (and so in 1.0.8).
-Every player should install this build: the game warns when mod versions differ, and mixed versions
-are untested. Nothing here touches the network or the simulation.
-
-### The chat and the panel are smaller, line up with the game's panels, and stay in front
-
-From a screenshot of 1.0.9-framethrottler-preview: the chat was as tall as the whole top of the
-panel, so with everything the host sees it ran down to the bottom of the screen and the game's
-alerts ("Nothing to do in range") were drawn over its text box; and the pacing lines were long
-enough to push the panel to its widest, wider than the game's beaver counters above it.
-
-- **A compact chat.** The chat has a fixed height (150 interface units, about five lines and the
-  box to type in) instead of matching the section above it, so it no longer grows with the rest
-  of the panel.
-- **The panel is as wide as the beaver counters above it.** Its width is now measured from the
-  game's own population panel (a root element named `Counters`) in the same corner each time the
-  panel refreshes, so it lines up with it at any UI scale. Without those counters it follows the
-  nearest visible panel above it; with nothing to follow it sizes to its text as before. A width
-  outside 180 to 520 is never followed. Each change is written to `Player.log` with the widths of
-  the panels in that corner, so a session shows what it followed if it ever looks wrong.
-- **Shorter words.** The pacing text is what made the panel wide, and three labels wrapped onto two
-  lines. **Slowest guest behind** is now **Guest behind**, **Easing off for guests** is **Easing
-  off**, **Slowest guest fps** is **Guest fps**; the values read "75% of speed", "75% (frame rate)"
-  and "waiting for a guest". A new check keeps every label within its column and every pacing text
-  within 20 characters, and it fails on the old strings.
-- **In front of the alerts while you type.** While the cursor is in the chat box, the panel's
-  corner of the game's interface is drawn in front of the other corners, where the alerts are, and
-  it goes back to its place when the cursor leaves (or the chat is hidden, collapsed or reset).
-  The game defines each corner as ignoring the pointer, so this changes only what is drawn on
-  top. If the game ever stopped positioning its corners on their own, it is left alone and a line
-  says so in `Player.log`.
-
-Not verified: none of this has been seen in the game. The decisions (which width to follow, the
-height, the string lengths) are covered by checks; the measuring, the drawing order and how it
-looks are not, and are the things to look at first.
-
-
-## 1.0.9-framethrottler-preview (pre-release)
-
-A pre-release for testing, on top of everything in 1.0.8. Every player should install this build:
-guests send the host one more number than before, and a 1.0.8 host ignores replies that carry it
-(it would lose its ping and lag figures for that guest).
-
-### The host can ease off for a guest's frame rate
-
-- With the large colony speed limit removed, a slower computer can keep up with the simulation
-  and still have a bad time: in a real session a guest stayed within a few ticks of the host at
-  a true speed 7 while drawing 13 to 14 frames a second, because the simulation took about 63%
-  of every second on that computer. The existing easing only looks at how many ticks behind a
-  guest is, so it never reacted.
-- New host choice, **Ease off below**: Off (the default), 20, 30, 45 or 60 fps. It is a line in
-  the connection panel that the host clicks to pick the next value, and the same setting is in
-  the mod settings. Only the host's value is ever used, and it can be changed at any time during
-  a session.
-- Guests report their frames per second in the reply they already send to the host's ping
-  probe, about once a second. A guest reports nothing while its game window is in the
-  background, where the system throttles it and the figure says nothing about the computer, and
-  the host forgets a guest's figure as soon as a reply arrives without one.
-- While the slowest guest stays below the floor for three reports in a row, the host drops 10%
-  of the chosen speed, down to 30%. It climbs back 5% once the guest has been clear of the floor
-  by some headroom (a quarter of the floor, at least 5 fps) for three reports. In between it
-  holds, which keeps it from see-sawing, because easing off is exactly what raises the guest's
-  frame rate. A paused game and speed 1 are never eased, and switching the choice off or the
-  guest leaving restores full speed at once.
-- It combines with the existing easing by taking the lower of the two percentages, never both
-  multiplied, and the hold for a guest far behind still wins. The panel says which one is
-  holding the host back: **Easing off for guests** reads "N% of chosen speed (guest frame
-  rate)" when it is this one. The host also sees **Slowest guest fps**. Each change is written
-  to `Player.log`.
-- In the test model of a guest that draws 15 fps at a true speed 7, a floor of 30 brings it back
-  above 30 fps with the host settled at 50% of the chosen speed and no further changes; a fast
-  guest is never slowed at any floor; and full speed returns when the guest's load drops.
-- Like the other pacing, this changes how fast the host works through ticks, never which tick
-  anything happens on, so it cannot change what anyone simulates.
-
-### Validation
-
-- Release Steam and non-Steam builds succeed with no warnings. 176 StabilityTests (fifteen new in
-  `FrameRatePacingChecks`: the frame rate meter, the reply format and its limits, the rule step
-  by step, how it combines with lag easing, the model above, a real host and guest session in
-  which the host reads the guest's frame rate and forgets it when the guest stops reporting, and
-  the panel), 64 RuntimeChecks against the built mod and 2 Python checks pass.
-- Not yet played in a multiplayer session. The clickable line in the panel is new and has not
-  been seen in the game.
-
-## 1.0.9-tickspeed-preview (pre-release)
-
-A pre-release for testing, on top of 1.0.8. Every player should install this build.
+The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
+fix for controls that stopped answering, the frame rate easing, and the compact chat and panel
+layout. Every player should install this build: guests now send the host one more number than
+before (their frame rate), and the join check compares the mod build, so it will not join a session
+with an earlier version.
 
 ### The ping over Steam no longer grows with the game speed
 
-Reported as a good ping at a low game speed and 200 to 300 ms at a high one.
+Reported as a good ping at a low game speed and 200 to 300 ms at a high one. **The fork owner ran a
+session at 11.7 ticks a second (a true speed 7) with the ping under 100 ms.**
 
 Over Steam the ping is not only the network. Steam is only served from the game thread, and the
 game thread served it once per frame. A probe passes four of those pumps on its way round: the host
@@ -229,18 +67,143 @@ slower computer.
   once-per-frame pump would have cost in that session and the second are what it cost, so one
   session shows both, to read next to the ping in the panel.
 
-Tested: the transport, the between-ticks pump and the ping over fake Steam are covered by
-automated checks, including the table above, which is reproduced by
-`dotnet run --project StabilityTests -- --ping-report`. **Not verified in the game or with real
-Steam.** The explanation follows from the game's code and a host log; the guest's frame length at
-a high speed has not been measured, so it is not confirmed that this accounts for all of the 200
-to 300 ms. The timing line in Player.log on both computers is what to look at.
+Not confirmed: the guest's frame length at a high speed has never been measured, so it is not known
+that this accounts for all of the 200 to 300 ms that was seen. The timing line in `Player.log` on
+both computers is what to look at if the ping is still high.
 
+### Controls that stopped answering after a message was closed
+
+Reported after a disconnect or a resync attempt: once the message was closed, the controls did not
+work as expected, and Escape did not open the menu. Going through every way a session can end, in
+this mod and in the game's own code, found five separate causes. Each leaves the game running but
+ignoring the player. **The fork owner confirmed that the controls work after a disconnect.** Which of
+the five that covered was not recorded, and the rest have not been seen in a running game: they come
+from reading the code, and each fix changes a decision that is checked on its own.
+
+- **After "Multiplayer has stopped", the menu could not be opened.** A multiplayer action that
+  fails to replay stops multiplayer for the rest of that game and blocks every further action, so a
+  half-applied action cannot make things worse. The block also covered the game menu: Escape and
+  the options button both open it through the same call. The message tells the player to return to
+  the main menu, so the only way out was to kill the game. The menu now opens, and everything else
+  stays blocked.
+- **A dropped connection left the dead session in place.** When a guest lost the connection during
+  a game, its network was closed but the session stayed installed. Every action, the menu included,
+  was then queued for a session that no longer existed and never played, and the game was held
+  paused. The message meant to explain it was shown through the main menu's dialogs, which no longer
+  exist once a game has loaded, and the fallback looked the dialog up where it is never registered,
+  so nothing was shown at all. The session now ends the way a desync ends it: what the player does
+  applies here again, the game stays paused, and the game itself shows the reason and the way out
+  (open the menu to save, or to return to the main menu and join again). If the connection drops
+  while the game is still loading, the message appears as soon as the game is up.
+- **A cancelled or failed join or host left a dead session in the main menu.** Cancelling the host's
+  lobby, or a join that failed after the connection was made (a host that had already started, a
+  build mismatch), left the closed session installed until the main menu was loaded again. Whatever
+  was played next from that menu, single player included, then started as a multiplayer game with
+  nobody to talk to: paused for good, and Escape did nothing. A session that ends before it has a
+  game is now cleared away, and a host who cancels a rehost from a running game goes back to
+  playing locally.
+- **Steam's overlay closing under a dialog.** While the overlay is open the game pushes an empty
+  panel that blocks input, and pops it when the overlay closes, but only if it is still on top. If a
+  dialog opened over it in between (an invite that cannot be joined, a connection error), the game
+  left it in place for good: once the dialog was closed, a panel that no key could close sat on top
+  and swallowed every key press, until the overlay was opened again. The panel is now removed as
+  soon as the dialog above it is closed.
+- **Input held when a session stops is cleared.** A desync already cleared the keys and mouse
+  buttons held when its dialog appeared, so they did not carry over once it was closed. A failed
+  action and a lost connection now do the same.
+
+### The host can ease off for a guest's frame rate
+
+- With the large colony speed limit removed, a slower computer can keep up with the simulation
+  and still have a bad time: in a real session a guest stayed within a few ticks of the host at
+  a true speed 7 while drawing 13 to 14 frames a second, because the simulation took about 63%
+  of every second on that computer. The existing easing only looks at how many ticks behind a
+  guest is, so it never reacted.
+- New host choice, **Ease off below**: Off (the default), 20, 30, 45 or 60 fps. It is a line in
+  the connection panel that the host clicks to pick the next value, and the same setting is in
+  the mod settings. Only the host's value is ever used, and it can be changed at any time during
+  a session.
+- Guests report their frames per second in the reply they already send to the host's ping
+  probe, about once a second. A guest reports nothing while its game window is in the
+  background, where the system throttles it and the figure says nothing about the computer, and
+  the host forgets a guest's figure as soon as a reply arrives without one.
+- **The rule looks at the middle value of the slowest guest's last five reports**, which one or two
+  bad seconds cannot move: a guest's one-second frame rates are noisy (anything from 2 to 59 fps
+  within a few seconds, because a garbage collection or an autosave takes most of one second).
+  Below the floor, the host drops 10% of the chosen speed, down to 30%, and waits for five fresh
+  reports, so the next decision only sees frame rates from after the drop. It climbs back 5% after
+  six reports in a row that are clear of the floor by some headroom (a quarter of the floor, at
+  least 5 fps). In between it holds, which keeps it from see-sawing, because easing off is exactly
+  what raises the guest's frame rate. A paused game and speed 1 are never eased, and switching the
+  choice off or the guest leaving restores full speed at once.
+- The percentage the host had to drop from is remembered. It does not climb back to it for a
+  minute of play, then tries once; if that fails again from the same percentage the wait doubles,
+  up to four minutes. Changing the floor, switching it off, or the guest leaving forgets it.
+- It combines with the existing easing by taking the lower of the two percentages, never both
+  multiplied, and the hold for a guest far behind still wins. The panel says which one is
+  holding the host back: **Easing off** reads "75% (frame rate)" when it is this one. The host
+  also sees **Guest fps**. Each change is written to `Player.log`, with the middle value the
+  decision was made on.
+- In a model of a guest that is fine up to 80% of the chosen speed and collapses above it, the
+  host stays between 75% and 85% and tries the higher speed at most six times in eighteen minutes;
+  a model of a guest that draws 15 fps at a true speed 7 is brought back above 30 fps with the host
+  settled at 50% of the chosen speed, and a fast guest is never slowed at any floor.
+- Like the other pacing, this changes how fast the host works through ticks, never which tick
+  anything happens on, so it cannot change what anyone simulates.
+- **Played once, with an earlier version of the rule** and the floor at 20 fps: no desync, and the
+  guest's average frame rate went from 5 to 11 fps (1.0.8, same colony, true speed 7) to 21 to 27
+  fps. But the host changed speed 68 times in seven minutes, between 60% and 95%, and never
+  settled, because that version dropped after three bad seconds and climbed straight back. The rule
+  above is the one that replaced it, and **it has not been played in a multiplayer session**. The
+  clickable line in the panel has not been seen in the game.
+
+### The chat and the panel are smaller, line up with the game's panels, and stay in front
+
+From a screenshot with the frame rate easing lines showing: the chat was as tall as the whole top
+of the panel, so with everything the host sees it ran down to the bottom of the screen and the
+game's alerts ("Nothing to do in range") were drawn over its text box; and the pacing lines were
+long enough to push the panel to its widest, wider than the game's beaver counters above it.
+
+- **A compact chat.** The chat has a fixed height (150 interface units, about five lines and the
+  box to type in) instead of matching the section above it, so it no longer grows with the rest
+  of the panel.
+- **The panel is as wide as the beaver counters above it.** Its width is measured from the
+  game's own population panel (a root element named `Counters`) in the same corner each time the
+  panel refreshes, so it lines up with it at any UI scale. Without those counters it follows the
+  nearest visible panel above it; with nothing to follow it sizes to its text. A width
+  outside 180 to 520 is never followed. Each change is written to `Player.log` with the widths of
+  the panels in that corner, so a session shows what it followed if it ever looks wrong.
+- **Short labels.** The pacing text is what made the panel wide, and labels wrapped onto two
+  lines. The labels are **Guest behind**, **Easing off** and **Guest fps**; the values read "75% of
+  speed", "75% (frame rate)" and "waiting for a guest". A check keeps every label within its
+  column and every pacing text within 20 characters.
+- **In front of the alerts while you type.** While the cursor is in the chat box, the panel's
+  corner of the game's interface is drawn in front of the other corners, where the alerts are, and
+  it goes back to its place when the cursor leaves (or the chat is hidden, collapsed or reset).
+  The game defines each corner as ignoring the pointer, so this changes only what is drawn on
+  top. If the game ever stopped positioning its corners on their own, it is left alone and a line
+  says so in `Player.log`.
+
+Not verified: none of this has been seen in the game. The decisions (which width to follow, the
+height, the string lengths) are covered by checks; the measuring, the drawing order and how it
+looks are not, and are the things to look at first.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 199 StabilityTests (38 new since
+  1.0.8: 16 for the frame rate easing, 6 for the panel layout and label lengths, 5 for the Steam
+  pumping and the ping, 11 for ending a session), 69 RuntimeChecks against the built mod (5 new,
+  for the menu) and 3 Python checks pass (the water snapshot comparison, and the walker trace
+  comparison's self-test).
+- The four changes were built and tested on their own first and are combined here; the combined
+  build was checked by the same suites, which is what carries the interactions between them
+  (they meet in `ReplayService`, the connection panel and the tests). **The combined build has not
+  been played as a whole.** What was seen in the game is said in each section above.
 
 ## 1.0.8
 
-The current release. It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were
-never full releases themselves. Every player should install this build.
+It contains everything in the 1.0.4 to 1.0.7 pre-releases below, which were never full releases
+themselves. Every player should install this build.
 
 The fork owner played this build in multiplayer at a true speed 7 (large colony speed limit
 removed), the configuration in which 1.0.7 desynced within minutes both times it was tried, and

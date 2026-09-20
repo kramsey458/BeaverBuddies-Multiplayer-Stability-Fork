@@ -125,13 +125,14 @@ wraps to the panel's width and can never make the panel wider.
 ## How ping is measured
 
 Once a second the host sends each guest a tiny probe, and the guest answers on its network
-thread, not its game thread. Over Steam, data still only moves while a player's game thread
-is serving Steam, so the number is the network plus a short wait at each end. That wait is
-the gap between two pumps: at most a millisecond during the simulation, and the length of the
-non-simulation part of a frame outside it. Serving Steam only once per frame made it grow
-with the game speed, because at a high speed most of a frame is simulation; a direct
-connection has no such wait. The host smooths the results (so a single spike does not jump around) and publishes a
-short roster that every guest receives. Names come from the same **Ping Display Name**
+thread, not its game thread. The reply also carries the guest's current tick and frame rate,
+which is where **Guest behind** and **Guest fps** come from. Over Steam, data still only moves
+while a player's game thread is serving Steam, so the number is the network plus a short wait
+at each end. That wait is the gap between two pumps: at most a millisecond during the
+simulation, and the length of the non-simulation part of a frame outside it. Serving Steam
+only once per frame made it grow with the game speed, because at a high speed most of a frame
+is simulation; a direct connection has no such wait. The host smooths the results (so a
+single spike does not jump around) and publishes a short roster that every guest receives. Names come from the same **Ping Display Name**
 players already use for cursors and pings; if a player has activity indicators turned off,
 they appear as "Player N".
 
@@ -147,7 +148,7 @@ panel carries on.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (182 checks) covers:
+`dotnet run --project StabilityTests` (199 checks) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
@@ -162,10 +163,14 @@ panel carries on.
   numbers formatted the same in every culture, and that every string the panel asks for
   exists in the English file.
 
-The ping over Steam has checks (1.0.9-tickspeed-preview) for the between-ticks pump (once a millisecond at most,
-only for a connection that is up, never for one being closed), the timing line, and the ping
-as a function of both players' frame length over a fake Steam network, with and without that
-pump (`dotnet run --project StabilityTests -- --ping-report` prints the table).
+The ping over Steam has checks for the between-ticks pump (once a millisecond at most, only
+for a connection that is up, never for one being closed), the timing line, and the ping as a
+function of both players' frame length over a fake Steam network, with and without that pump
+(`dotnet run --project StabilityTests -- --ping-report` prints the table). The host's frame rate
+easing has checks for the frame rate meter, the reply format and its limits, the rule step by
+step, how it combines with the lag easing, a real host and guest session in which the host
+reads the guest's frame rate and forgets it when the guest stops reporting, and the panel's
+lines.
 
 The chat adds checks (1.0.7) for:
 
@@ -181,15 +186,15 @@ The chat adds checks (1.0.7) for:
 - how a line is written (only the name is colored, no message can add markup, dark colors are
   lightened), the English strings and the chat key binding's blueprint.
 
-The panel's sizing (1.0.9-chatbox-fix-preview) adds checks for the width it follows (the
+The panel's sizing adds checks for the width it follows (the
 population panel first, then the nearest panel above, never a width that is not believable, and
 its own text width when there is nothing to follow), for the chat's height, and that every label
 and every pacing text is short enough for its column (the old ones were not).
 
-**Seen so far:** a screenshot of 1.0.9-framethrottler-preview showed the panel and chat drawing
+**Seen so far:** a screenshot from before the sizing changes showed the panel and chat drawing
 (an empty log and the box to type in). It also showed the chat as tall as the top of the panel,
 the alerts covering its text box, and the pacing text pushing the panel wider than the game's own
-counters; the sizing checks above and the changes in 1.0.9-chatbox-fix-preview are the response.
+counters; the sizing checks above and the current layout are the response.
 
 **Not verified: how it looks and feels.** The fixes themselves have not been seen in the running
 game: that the panel now matches the counters' width (and to what), that the chat clears the

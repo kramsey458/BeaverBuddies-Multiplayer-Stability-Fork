@@ -2,29 +2,32 @@
 
 Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game connection panel**, and a long list of crash and desync fixes.
 
-**Latest release: [1.0.8](https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest)** · built for Timberborn **1.1.2.4** · tested on Windows with the Steam version of the game · GPL-3.0
+**Latest release: [1.0.9](https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest)** · built for Timberborn **1.1.2.4** · tested on Windows with the Steam version of the game · GPL-3.0
 
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
 ## Highlights
 
 - **Steam invites work.** Invite a Steam friend from Steam's own overlay and they join with a click: no Hamachi, no port forwarding. Confirmed in real playtests with a friend over Steam. Direct IP still works, and you can offer both at once.
-- **A connection panel in the game.** See who is connected, each player's ping, whether you are in sync, the tick rate and more, in a small panel you can collapse or hide.
+- **A connection panel in the game.** See who is connected, each player's ping, whether you are in sync, the tick rate and more, in a small panel you can collapse or hide, with a chat box below it.
+- **A low ping at a high game speed.** Over Steam, data used to wait for the end of every frame, and at a high game speed a frame is mostly simulation, so the ping climbed with the speed. The mod now lets Steam move data between the ticks of a frame. In a playtest at a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms (details in [CONNECTION-PANEL.md](CONNECTION-PANEL.md)).
+- **The host can ease off for a slow guest.** The host picks a frame rate floor (Off, 20, 30, 45 or 60 fps) in the connection panel; while a guest stays below it the host slows the game a little, and speeds back up by itself. It only changes how fast the host works through ticks, never what happens in them. The current rule has not been played yet.
+- **Controls and the menu come back after a session ends.** After a disconnect, a failed action or a cancelled join, the game no longer keeps ignoring the player (Escape opens the menu again). Confirmed after a disconnect; the other cases are tested only.
 - **See what your teammates are doing.** Colored, translucent cursors, selection outlines, and "Viewing / Editing" labels on buildings, with per-player cursor color, size and transparency.
 - **Fewer crashes and desyncs.** Specific, documented fixes for water, animation, random numbers, saving, demolition and input problems (details [below](#how-this-fork-improves-on-the-original)). This reduces known causes; it is **not** a guarantee that a desync can never happen.
 - **Mismatched builds are caught early.** Joining with a different build is refused before the save is sent, with a message that says what to do, instead of failing halfway through.
 - **Mismatched mods are flagged.** When someone joins, both players are warned if their lists of mods differ, naming the mods that are on only one computer or at different versions, so a mismatched mod is caught in the lobby instead of as a desync later. It is a warning, not a block.
 - **Failures are explained.** A failed connection or multiplayer action ends with a plain-language reason (including Steam's own error code) instead of a silent hang.
-- **Tested.** 182 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
+- **Tested.** 271 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
 
 ## Install
 
 **You need:** Timberborn (this release is built and tested against **1.1.2.4**), with the **Harmony** and **Mod Settings** mods enabled. Every player must run the same game version too.
 
-1. Download `BeaverBuddies-Stability-Fork-1.0.8.zip` from the [latest release](https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest).
+1. Download `BeaverBuddies-Stability-Fork-1.0.9.zip` from the [latest release](https://github.com/kramsey458/BeaverBuddies-Stability-Fork/releases/latest).
 2. **Close Timberborn.**
 3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`. If you installed an earlier download, delete its old `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
-4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.0.8) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
+4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.0.9) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
 5. **Every player must install the exact same download** and restart the game. This is the most common cause of trouble; see [Things to know](#things-to-know-before-you-play).
 
 This fork is distributed through GitHub Releases only. The Steam Workshop and mod.io pages linked further down belong to the original project.
@@ -66,6 +69,7 @@ A small panel appears in the top-left corner during a multiplayer game.
 | **Sync status** | In sync, Catching up, Waiting for host, Connection unstable, Out of sync, or Disconnected. |
 | **Tick rate and speed** | Simulation ticks per second right now, and the game speed or Paused. |
 | **Behind host** | Guests only: how many ticks this game is behind the host (0 or 1 is normal). |
+| **Pacing lines** | Host only: **Guest behind**, **Easing off** and **Guest fps**, and the clickable **Ease off below** (Off, 20, 30, 45 or 60 fps), which sets when the host slows the game for a guest whose frame rate is low. |
 | **Connection** | Direct or Steam. |
 
 - **Collapse it** by clicking its title; it shrinks to one line and remembers your choice.
@@ -73,11 +77,11 @@ A small panel appears in the top-left corner during a multiplayer game.
 - **Optional key:** bind **Toggle connection panel** under Options → Bindings → BeaverBuddies. It is unbound until you choose a key.
 - **Chat:** below the panel, in the same box, type a message and press Enter. Everyone in the game sees it in the same order, and a player who joins later is sent the whole conversation. Bind **Chat: start typing** in the same place to jump into the box from the keyboard (also unbound until you choose a key). Chat lasts for the session and is not saved with the game.
 
-Ping is measured by the network layer (a tiny probe once a second), so it means the same thing over Steam, Hamachi and direct IP, and it never touches the game simulation. Full details: [CONNECTION-PANEL.md](CONNECTION-PANEL.md).
+Ping is measured by the network layer (a tiny probe once a second, answered on the guest's network thread), so it means the same thing over Steam, Hamachi and direct IP, and it never touches the game simulation. Over Steam it also includes the short wait for each game to serve Steam, which the mod keeps to a few milliseconds while the game is ticking, however fast it runs. Full details: [CONNECTION-PANEL.md](CONNECTION-PANEL.md).
 
 ## How this fork improves on the original
 
-The comparison below is against the original project's `v1.1` branch at the point this fork branched (commit `a13b1f2`, 24 August 2026). Since then the fork has changed 78 files (about 8,000 lines added). As of September 2026 the original's `v1.1` branch has not moved since that commit, so this comparison is current.
+The comparison below is against the original project's `v1.1` branch at the point this fork branched (commit `a13b1f2`, 24 August 2026). Since then the fork has changed 128 files (about 15,700 lines added, tests and documentation included). As of September 2026 the original's `v1.1` branch has not moved since that commit, so this comparison is current.
 
 Each item says how well it is confirmed: **confirmed** means the maintainer verified it in a real multiplayer playtest; **tested** means it is covered by automated regression checks but has not been confirmed in a live session.
 
@@ -87,6 +91,9 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **Steam packet handling made robust.** A comment in the original's Steam read routine says it "will fail" if Steam merges several messages into one packet, and it logs "This is probably a bug!" when bytes are left over. The rebuilt transport keeps unread data between reads, checks read ranges and wakes blocked readers when a connection closes. It is tested with messages split mid-event and with a 220 KB event. Each network frame is also written under a lock, so a header and its payload can never be interleaved. *Tested.*
 - **Mismatched builds refused up front.** The original only warned about a version mismatch after the save had loaded. The fork checks the game version and the exact mod build before the save is transferred, with a time limit and a clear message. *Tested.*
 - **A failed multiplayer action stops safely.** Replay stops after a failed action, pending actions are discarded, the session pauses and peers are told, so two games do not quietly drift apart. Connection cleanup bugs were fixed at the same time. *Tested.*
+- **The ping over Steam stays low at a high game speed.** Steam used to be served once per frame, and a ping probe waits for that at four points, so at a high speed (long frames) the ping grew with the frame length on both computers. Steam is now also served between the ticks of a frame; a simulation with the real transport shows 100 ms frames on both sides going from 323 ms to 13 ms. *Confirmed: in a playtest at a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms. The guest's frame length was never measured, so the cause is inferred from the game's code and a host log.*
+- **A session that ends leaves the game working.** A lost connection, a failed action, a cancelled host or join and Steam's overlay closing under a dialog each used to leave the game running but ignoring the player, sometimes with no way to open the menu. The game now ends the session cleanly, says why, and keeps the menu and controls working. *Tested; the maintainer confirmed that the controls work after a disconnect, and the other cases have not been seen in the game.*
+- **The host can ease off for a guest's frame rate.** A guest that keeps up in ticks but draws a few frames a second is now something the host can react to, using the middle of the guest's last five frame rate reports, dropping 10% at a time and remembering the speed that caused trouble. *Tested; an earlier version of the rule was played once (it worked but changed speed too often), the current rule has not been played.*
 
 **Desyncs and determinism**
 
@@ -96,7 +103,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **Random-number bookkeeping made safe.** Nested random-number scopes are counted correctly and restored even when an error interrupts them. *Tested.*
 - **Equal-distance demolition jobs chosen deterministically**, by persistent target IDs. *Tested; not yet confirmed in a playtest.*
 - **Entity ID collisions handled explicitly.** A regenerated ID is now applied, and the game fails with a clear error if no unique ID can be found. *Tested.*
-- **Stuck-controls recovery.** Input state is reset after a desync and when a multiplayer game loads. This is a targeted recovery measure: its root cause was not proven and the original report has not been confirmed fixed. *Tested with a mocked device reset.*
+- **Stuck-controls recovery.** Input state is reset after a desync, a failed action, a lost connection and when a multiplayer game loads. *Tested with a mocked device reset.*
 
 **Crashes**
 
@@ -107,6 +114,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 - **Player activity.** Other players' cursors, selection outlines, and Viewing / Editing labels, plus a **Player cursors** dialog (Options menu) for each player's color, size and transparency. See [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md). *Confirmed.*
 - **Steam invites and the connection panel**, described above. *Confirmed.*
+- **A compact chat and a panel that lines up with the game's own.** The chat has a fixed, short height, the panel is as wide as the game's beaver counters, and it is drawn in front of the game's alerts while you type. *Tested; how it looks has not been seen in the game.*
 
 **Performance.** Fewer allocations from diagnostics, faster handling of the event backlog, one JSON parse per network message instead of two, and routine logging skipped unless needed. In synthetic tests, 4,000 ordered event inserts went from about 439 ms to under 1 ms, and 16 diagnostic captures stopped allocating about 85 MB. These are not frame-rate measurements. *Confirmed to play well in a two-player playtest.*
 
@@ -126,7 +134,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 ## Testing and verification
 
-The 1.0.8 validation run passed **228 checks**: **161** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement, the panel, the guest catch-up rule, the mod list warning, the host's speed limit choice and pacing, guarded message handlers, the chat box and the walker trace), **64** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
+The 1.0.9 validation run passed **271 checks**: **199** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box and the walker trace), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
 
 These checks cannot start Unity or prove full multiplayer determinism, and they need the game installed locally (no proprietary game files are included in this repository). See [StabilityTests/README.md](StabilityTests/README.md) for how to run them. The maintainer's real playtests, described above, are what confirm behavior in the live game.
 
