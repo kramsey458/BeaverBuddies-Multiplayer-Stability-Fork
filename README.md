@@ -64,7 +64,7 @@ Steam friend invites are a first-class way to play, alongside direct IP.
 
 A small panel appears in the top-left corner during a multiplayer game.
 
-<img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, two players with one at 21 ms, tick rate 10.7 ticks per second, speed 6.3x, the host pacing lines, a Steam connection and a chat box.">
+<img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, the host's own row in bold with a dash and one guest at 19 ms, tick rate 11.7 ticks per second, speed 7x, the host pacing lines, a Steam connection and a chat with two colored lines.">
 
 *The panel as the host sees it during a Steam co-op session.*
 
