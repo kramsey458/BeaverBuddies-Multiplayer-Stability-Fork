@@ -82,8 +82,10 @@ namespace BeaverBuddies.Panel
 
     public sealed class PanelRow
     {
-        public string Name = "", Tag = "", PingText = "";
+        public string Name = "", PingText = "";
         public Quality Quality;
+        /// <summary>Your own row. It is drawn in bold, and its ping is a dash: you have no ping to yourself.</summary>
+        public bool IsYou;
     }
 
     /// <summary>The finished text and states the view shows. No layout, no colors: just what to say.</summary>
@@ -113,6 +115,9 @@ namespace BeaverBuddies.Panel
         /// <summary>A guest this many ticks behind the host is shown as catching up.</summary>
         public const int CatchingUpTicks = 3;
 
+        /// <summary>Shown as the ping on your own row.</summary>
+        public const string YourPingText = "-";
+
         /// <param name="t">Translates a key with format arguments (the game's localization).</param>
         public static PanelModel Build(PanelInputs input, Func<string, object[], string> t)
         {
@@ -132,18 +137,29 @@ namespace BeaverBuddies.Panel
             else model.Status = StatusKind.InSync;
             model.StatusText = t(StatusKey(model.Status), new object[] { input.TicksBehind });
 
+            // Every row but your own is a ping and nothing else. The host measures each guest. A guest measures only the
+            // host, so the host's row shows the guest's own ping to it, and the other guests show the ping the host
+            // measured for them. Your own row has nothing to measure.
+            var you = input.Players.FirstOrDefault(p => p.IsYou);
             foreach (var player in OrderedPlayers(input.Players))
             {
-                // The host has no ping to itself, and a guest's ping is to the host, so neither has one to show.
-                bool noPing = player.IsHost || (input.IsHost && player.IsYou);
-                model.Rows.Add(new PanelRow
+                var row = new PanelRow { Name = player.Name, IsYou = player.IsYou };
+                if (player.IsYou)
                 {
-                    Name = player.Name,
-                    Tag = Tag(player, t),
-                    PingText = noPing ? "" : PingText(player.RttMs, player.SilenceSeconds, t),
-                    // These rows are present, so they read as healthy unless the host has gone quiet.
-                    Quality = noPing ? (player.IsHost && hostSilent ? Quality.Silent : Quality.Good) : Classify(player),
-                });
+                    row.PingText = YourPingText;
+                    row.Quality = Quality.Good;
+                }
+                else if (player.IsHost)
+                {
+                    row.PingText = PingText(you?.RttMs, input.HostSilenceSeconds, t);
+                    row.Quality = PingQuality.Classify(you?.RttMs, input.HostSilenceSeconds);
+                }
+                else
+                {
+                    row.PingText = PingText(player.RttMs, player.SilenceSeconds, t);
+                    row.Quality = Classify(player);
+                }
+                model.Rows.Add(row);
             }
 
             // The pill shows one number: the worst ping the host sees, or this guest's own ping.
@@ -202,14 +218,6 @@ namespace BeaverBuddies.Panel
 
         static IEnumerable<PanelPlayer> OrderedPlayers(IEnumerable<PanelPlayer> players) =>
             players.OrderBy(p => p.IsHost ? 0 : 1).ThenBy(p => p.Id);
-
-        static string Tag(PanelPlayer p, Func<string, object[], string> t)
-        {
-            var tags = new List<string>();
-            if (p.IsYou) tags.Add(t("BeaverBuddies.Panel.You", Array.Empty<object>()));
-            if (p.IsHost) tags.Add(t("BeaverBuddies.Panel.Host", Array.Empty<object>()));
-            return string.Join(" / ", tags);
-        }
 
         static string PingText(double? rtt, double? silence, Func<string, object[], string> t)
         {

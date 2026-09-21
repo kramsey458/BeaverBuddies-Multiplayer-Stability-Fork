@@ -35,8 +35,8 @@ player who is sharing activity gets a card with:
 | Size | 50%–300% | 100% |
 | Transparency | 0%–90% | 50% |
 
-The color also applies to that player's name label and their selection outline, so a
-player always looks like one consistent color. The swatch in each card previews the
+The color also applies to that player's name label, their selection outline and their chat
+lines in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
 color and transparency live, and **Reset** returns that player to the defaults.
 
 These are **display-only, local choices**. They are never sent over the network, so

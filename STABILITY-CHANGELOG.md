@@ -5,9 +5,85 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.10
+
+The current release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
+cheaper pass over every entity on each tick, a plainer connection panel, and chat drawn in the color of each player's cursor. Every player
+should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
+over the network.
+
+The fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
+
+### The pass over every entity on each tick is cheaper
+
+Before each batch of entities ticks, this mod visits every entity in it to keep the animation of the
+ones that walk (the beavers and bots: 361 of the 11,464 entities in the colony below) in step
+between the players. To find them it looked up a component on every entity, on every tick, and it
+also folded every entity into two hashes that only the detailed log ever prints.
+
+Measured in a two-player recording of a large colony (speed 7, 11.7 ticks a second), that pass took
+7.1 ms a tick on the host and 7.4 ms on the guest, about a fifth of the guest's 36 ms tick. About
+3.2 to 3.5 ms of it was that component lookup (estimated from a sample of one lookup in sixteen)
+and about 3.4 ms was the loop and the hashing together.
+
+- The pass now remembers, for each position in a bucket, whether the entity there has the walking
+  component, and only asks the game again when a different entity turns up at that position.
+  Adding or removing an entity shifts the positions after it, and those are asked again; nothing
+  has to be invalidated, and a stale answer cannot be reused because an answer is only trusted for
+  the very same entity object. This relies on an entity not gaining or losing that component once
+  it is ticking. The walkers themselves are handled exactly as before.
+- The two hashes ("Order hash" and "Move hash" in the detailed log's line for each tick) are now
+  only kept while detailed logging is on, which is when they are printed, and nothing else read
+  them. They start from zero when detailed logging turns on, including when a desync turns it on, so
+  both players' lines agree from the first one. Their values are therefore not comparable with a log
+  written by an earlier build.
+- Nothing that is simulated, sent or saved changes.
+
+Expected effect: roughly 3 to 6 ms less on each tick, between about 8% and 17% of the guest's tick
+in that recording. That is an estimate from the measurements above (how much of the
+loop and hashing time was the hashing is not known); it has not been measured.
+
+What it does not fix: in the same recording the guest's frame rate fell from 23 to 8.5 frames a
+second over about seven minutes at speed 7, and an earlier recording of the host showed the same
+kind of slowing (from 80 to 29 frames a second). Most of that time was spent in Unity's late-update phase (about 20 ms a tick on the host
+and 34 ms on the guest), which is not code of this mod, and what runs there is not known. Every
+recording so far started fast and slowed down over a session at a high speed, and a restart
+started fast again. This release does not change that.
+
+### A plainer connection panel
+
+- **One dot.** While the panel is expanded, the dot beside the sync status (green, yellow or red with the status) is the only one: the dot beside
+  the title and the dots beside each player are gone. A collapsed panel is one line with no status row, so it keeps its own dot.
+- **A player's row is a name and a ping.** The "You" and "Host" tags are gone. The host reads each guest's ping. A guest reads its own ping to the
+  host on the host's row, and the ping the host measured for every other guest. Over 80 ms the number is yellow and over 160 ms red, and "No
+  response" is red.
+- **Your own row is bold, with a dash where the ping would be**, since you have no ping to yourself.
+- **The collapse button has a box around it** (a small "-", or "+" while collapsed), so it is not mistaken for that dash, which sits at the same
+  edge of the panel. It does what it did before, and clicking the title still collapses and expands the panel.
+
+Screenshots of a host, alone and with a guest, showed the header without its dot, the sync dot as the only one, a guest's row and your own row in
+bold with a dash, the boxed collapse button, whole chat lines in each player's color (one yellow, one pink), and that the game's font draws bold.
+Before the box was added, the collapse button's dash sat directly above your own row's dash, which is why the button is boxed.
+
+### Chat takes the cursor colors
+
+A chat line, name and message, is drawn in the color you see on that player's cursor: the color they chose (their Ping Color), or the one you set
+for them under Options, Player cursors. Change that color and the lines already written change with it, within a moment. Your own lines use your
+Ping Color. A player who has left, or whose cursor is off, keeps the color you saved for them, else the one their messages carried. A color too dark
+to read on the panel is lightened, as before. Before, only the name was colored, and always in the color the player chose for themselves.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 210 StabilityTests (9 new for the memory of which entities walk, and 2 for the
+  panel and the chat colors), 69 RuntimeChecks against the built mod and 3 Python checks pass. None of them can draw the panel.
+- **Played:** the fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
+- **Not checked:** how much time the entity pass saves has not been measured, and lines already written changing color after a cursor color is
+  changed has not been checked. The pass works on Unity's entities, which the checks cannot create, so it is covered by its own checks with stand-ins,
+  the build and the runtime checks loading the mod, and by that play.
+
 ## 1.0.9
 
-The current release. It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
+It contains everything from the four 1.0.9 pre-releases: the Steam ping fix, the
 fix for controls that stopped answering, the frame rate easing, and the compact chat and panel
 layout. Every player should install this build: guests now send the host one more number than
 before (their frame rate), and the join check compares the mod build, so it will not join a session

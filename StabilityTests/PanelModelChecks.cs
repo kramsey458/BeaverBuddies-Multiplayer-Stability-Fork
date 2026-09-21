@@ -11,7 +11,7 @@ static class PanelModelChecks
     // The English strings the panel ships with.
     static readonly Dictionary<string, string> English = new()
     {
-        ["BeaverBuddies.Panel.Host"] = "Host", ["BeaverBuddies.Panel.Guest"] = "Guest", ["BeaverBuddies.Panel.You"] = "You",
+        ["BeaverBuddies.Panel.Host"] = "Host", ["BeaverBuddies.Panel.Guest"] = "Guest",
         ["BeaverBuddies.Panel.PlayersOne"] = "{0} player", ["BeaverBuddies.Panel.PlayersMany"] = "{0} players",
         ["BeaverBuddies.Panel.PingValue"] = "{0} ms", ["BeaverBuddies.Panel.Measuring"] = "...", ["BeaverBuddies.Panel.NoResponse"] = "No response",
         ["BeaverBuddies.Panel.StatusInSync"] = "In sync", ["BeaverBuddies.Panel.StatusCatchingUp"] = "Catching up ({0} ticks behind)",
@@ -101,7 +101,9 @@ static class PanelModelChecks
             Equal("Host", model.Role);
             Equal("3 players  190 ms", model.Summary); Equal(Quality.Poor, model.SummaryQuality);
             Equal("Kyler,Sarah,Bob", string.Join(",", model.Rows.Select(r => r.Name)));     // you first, then by id
-            Equal("You / Host", model.Rows[0].Tag); Equal("", model.Rows[0].PingText);
+            // Your own row is a dash, every other row a ping, and no row says who is you or the host.
+            Equal("-", model.Rows[0].PingText); Check(model.Rows[0].IsYou);
+            Check(!model.Rows[1].IsYou && !model.Rows[2].IsYou, "only your own row is yours");
             Equal("42 ms", model.Rows[1].PingText); Equal(Quality.Good, model.Rows[1].Quality);
             Equal("190 ms", model.Rows[2].PingText); Equal(Quality.Poor, model.Rows[2].Quality);
             Check(model.BehindText == null, "the host has no 'behind' figure");
@@ -114,8 +116,10 @@ static class PanelModelChecks
             Equal("Guest", model.Role);
             Equal("3 players  55 ms", model.Summary); Equal(Quality.Good, model.SummaryQuality);
             Equal("Kyler,Sarah,Me", string.Join(",", model.Rows.Select(r => r.Name)));
-            Equal("Host", model.Rows[0].Tag); Equal("", model.Rows[0].PingText);
-            Equal("You", model.Rows[2].Tag); Equal("55 ms", model.Rows[2].PingText);
+            // The host's row shows this guest's ping to the host, your own row a dash, another guest the ping the host measured.
+            Equal("55 ms", model.Rows[0].PingText); Check(!model.Rows[0].IsYou);
+            Equal("30 ms", model.Rows[1].PingText);
+            Equal("-", model.Rows[2].PingText); Check(model.Rows[2].IsYou);
             Equal("0 ticks", model.BehindText);
             Equal("Steam", model.LinkText);                    // a guest sees how they themselves are connected
         });
@@ -154,6 +158,24 @@ static class PanelModelChecks
             input.HostSilenceSeconds = 8;
             var model = PanelModelBuilder.Build(input, T);
             Equal(StatusKind.Unstable, model.Status); Equal(Quality.Silent, model.Rows[0].Quality);
+        });
+        yield return ("A guest reads its own ping on the host's row, and never has one on its own row", () =>
+        {
+            // Before the host's first update there is nothing to show: a placeholder, not a number.
+            var early = GuestView(0);
+            early.Players.Add(P(2, "Me", you: true));
+            var model = PanelModelBuilder.Build(early, T);
+            Equal("...", model.Rows[0].PingText); Equal(Quality.Unknown, model.Rows[0].Quality);
+            Equal("-", model.Rows[1].PingText);
+            // A slow link colors the host's row, and a silent host reads as no response there.
+            var slow = GuestView(0, P(2, "Me", you: true, rtt: 200, silence: .1));
+            model = PanelModelBuilder.Build(slow, T);
+            Equal("200 ms", model.Rows[0].PingText); Equal(Quality.Poor, model.Rows[0].Quality);
+            Equal(Quality.Good, model.Rows[1].Quality);              // a dash is never a warning
+            slow.HostSilenceSeconds = 8;
+            model = PanelModelBuilder.Build(slow, T);
+            Equal("No response", model.Rows[0].PingText); Equal(Quality.Silent, model.Rows[0].Quality);
+            Equal("-", model.Rows[1].PingText);
         });
         yield return ("A disconnected session says so on the pill", () =>
         {

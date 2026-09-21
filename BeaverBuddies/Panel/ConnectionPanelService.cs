@@ -43,6 +43,8 @@ namespace BeaverBuddies.Panel
         // Chat: the session the chat belongs to, how far messages have been counted, and what is unread.
         TimberNetBase chatNet;
         int countedSequence, unread, myPlayerId;
+        // Whether myPlayerId has been read from the connection yet (a guest is told its number a moment after joining).
+        bool myPlayerIdKnown;
         float lastChatSend;
         PanelCorner placedIn = (PanelCorner)(-1);
         PanelDisplayMode lastVisibleMode = PanelDisplayMode.Expanded;
@@ -61,7 +63,7 @@ namespace BeaverBuddies.Panel
                 view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
                 view.FpsFloorClicked += OnFpsFloorClicked;
-                if (view.Chat != null) view.Chat.Submit = OnChatSubmit;
+                if (view.Chat != null) { view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf; }
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
                 loaded = true;
@@ -167,6 +169,7 @@ namespace BeaverBuddies.Panel
             var model = PanelModelBuilder.Build(Collect(net, replay, now), Translate);
             view.Show(model, mode == PanelDisplayMode.Expanded);
             view.SetVisible(true);
+            if (mode == PanelDisplayMode.Expanded) RefreshChatColors();
         }
 
         // ---- chat ----
@@ -174,7 +177,7 @@ namespace BeaverBuddies.Panel
         // A new session (or none) starts an empty chat; the messages themselves live with the network session.
         void StartChatSession(TimberNetBase net)
         {
-            chatNet = net; countedSequence = 0; unread = 0; lastChatSend = -100;
+            chatNet = net; countedSequence = 0; unread = 0; lastChatSend = -100; myPlayerIdKnown = false;
             if (view.Chat == null || chatFailed) return;
             try { view.Chat.ReleaseFocus(); view.Chat.Clear(); view.SetUnread(0); }
             catch (Exception error) { DisableChat(error); }
@@ -212,6 +215,26 @@ namespace BeaverBuddies.Panel
                 }
                 view.SetUnread(expanded ? 0 : unread);
             }
+            catch (Exception error) { DisableChat(error); }
+        }
+
+        // Chat follows the cursor colors: what you see on a player's cursor is the color of what they say. That is the
+        // color they chose for themselves, or the one you set for them in the player cursors settings.
+        string ChatColorOf(ChatMessage message)
+        {
+            // Nobody sets a color for their own cursor: others see your Ping Color.
+            if (myPlayerIdKnown && message.PlayerId == myPlayerId) return ColorUtility.ToHtmlStringRGB(Settings.PingColorValue);
+            var activity = SingletonManager.GetSingleton<PlayerActivityService>();
+            if (activity != null && activity.TryGetCursorColor(message.PlayerId, out Color cursor)) return ColorUtility.ToHtmlStringRGB(cursor);
+            // No cursor for them now (they left, or player activity is off): the color you saved for them, if any,
+            // else the one they sent with the message.
+            return PlayerActivityService.Preferences.SavedColorFor(message.Name, message.PlayerId) ?? message.Color;
+        }
+
+        void RefreshChatColors()
+        {
+            if (view.Chat == null || chatFailed) return;
+            try { view.Chat.RefreshColors(); }
             catch (Exception error) { DisableChat(error); }
         }
 
@@ -257,6 +280,7 @@ namespace BeaverBuddies.Panel
             var io = EventIO.Get();
             NetworkStatus status = net.GetNetworkStatus();
             myPlayerId = status.IsHost ? 0 : status.YourPlayerId;
+            myPlayerIdKnown = myPlayerId >= 0;
 
             // A guest is only "waiting" if it has been out of events for a while, not between ticks.
             bool outOfEvents = !status.IsHost && io != null && io.IsOutOfEvents;

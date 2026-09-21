@@ -18,6 +18,8 @@ namespace BeaverBuddies.Panel
         internal static readonly Color Ink = new Color(.95f, .91f, .82f);
         internal static readonly Color Muted = new Color(.72f, .68f, .60f);
         internal static readonly Color Rule = new Color(1f, 1f, 1f, .12f);
+        static readonly Color ButtonInk = new Color(.85f, .81f, .73f);
+        static readonly Color ButtonRule = new Color(1f, 1f, 1f, .4f);
         static readonly Color Good = new Color(.42f, .80f, .47f);
         static readonly Color Fair = new Color(.96f, .76f, .26f);
         static readonly Color Bad = new Color(.93f, .36f, .32f);
@@ -59,8 +61,14 @@ namespace BeaverBuddies.Panel
             headerDot = Dot(10);
             title = Text("", 14, Ink, bold: true); title.style.flexGrow = 1; title.style.flexShrink = 1;
             role = Text("", 11, Muted); role.style.marginLeft = 8;
-            chevron = Text("-", 16, Muted, bold: true); chevron.style.marginLeft = 8; chevron.style.width = 14;
+            // The collapse button has a box around it, so it is not mistaken for the dash that stands for your own ping
+            // in the rows below, which is drawn at the same edge.
+            chevron = Text("-", 13, ButtonInk, bold: true);
+            chevron.style.width = 16; chevron.style.height = 16; chevron.style.flexShrink = 0;
+            chevron.style.marginTop = 0; chevron.style.marginBottom = 0; chevron.style.marginRight = 0; chevron.style.marginLeft = 8;
+            chevron.style.paddingTop = 0; chevron.style.paddingBottom = 0; chevron.style.paddingLeft = 0; chevron.style.paddingRight = 0;
             chevron.style.unityTextAlign = TextAnchor.MiddleCenter;
+            Border(chevron, 1, ButtonRule, 3);
             // Shown only while the panel is collapsed, so new messages are not missed.
             unreadBadge = Text("", 11, Fair, bold: true); unreadBadge.style.marginLeft = 8;
             unreadBadge.style.display = DisplayStyle.None;
@@ -187,6 +195,8 @@ namespace BeaverBuddies.Panel
         {
             Color headline = ColorOf(model);
             headerDot.style.backgroundColor = headline;
+            // Expanded, the dot by the sync status is the only one. Collapsed there is no sync line, so the header keeps its own.
+            headerDot.style.display = expanded ? DisplayStyle.None : DisplayStyle.Flex;
             title.text = expanded ? loc.T("BeaverBuddies.Panel.Title") : model.Summary;
             role.text = expanded ? model.Role : "";
             role.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
@@ -216,13 +226,12 @@ namespace BeaverBuddies.Panel
 
         VisualElement PlayerRow(PanelRow row)
         {
+            // A name and a ping, nothing else. Your own row is bold and its ping is a dash.
             var line = Horizontal(); line.style.alignItems = Align.Center; line.style.marginTop = 3;
-            var dot = Dot(8); dot.style.backgroundColor = QualityColor(row.Quality);
-            var name = Text(row.Name, 13, Ink); name.style.flexGrow = 1; name.style.flexShrink = 1;
-            var tag = Text(row.Tag, 11, Muted); tag.style.marginLeft = 6;
-            var ping = Text(row.PingText, 13, PingColor(row.Quality));
+            var name = Text(row.Name, 13, Ink, bold: row.IsYou); name.style.flexGrow = 1; name.style.flexShrink = 1;
+            var ping = Text(row.PingText, 13, PingColor(row.Quality), bold: row.IsYou);
             ping.style.marginLeft = 10; ping.style.minWidth = 52; ping.style.unityTextAlign = TextAnchor.MiddleRight;
-            line.Add(dot); line.Add(name); line.Add(tag); line.Add(ping);
+            line.Add(name); line.Add(ping);
             return line;
         }
 
