@@ -105,15 +105,18 @@ Sarah: on it
   range") at the bottom of the screen, and a tall panel can reach them. While the cursor is in
   the chat box, the panel is drawn in front of them so they cannot cover what you are typing, and
   it goes back when the cursor leaves. This only changes what is drawn on top.
-- **Who said what:** each line reads `Name: message`, all of it in the color you see on that
-  player's cursor: the color they chose (their **Ping Color**), or the one you set for them under
-  Options, **Player cursors**. Change that color and the lines already written change with it, within a
-  moment. Your own lines use your **Ping Color**. A player who has left, or whose cursor is off, keeps the
-  color you saved for them, else the one their messages carried. A very dark color is lightened so it can
-  be read on the dark panel. Names are the same **Ping Display Name** as cursors and pings. Chat lines
-  have no "(Host)" or "(P2)" tag, so two players who both keep the default name and color look alike:
-  set your own **Ping Display Name** and **Ping Color** in Mod Settings, or give one of them another
-  color under **Player cursors**.
+- **Who said what:** each line reads `Name: message`, with the name in the color you see on that
+  player's cursor and the message in the panel's normal text color. The color is the one they chose (their
+  **Ping Color**), or the one you set for them under Options, **Player cursors**. Change it and the names
+  already written change with it, within a moment. A player who has not chosen a color (**Ping Color** is
+  still the default yellow) gets a color of their own by player number, so two players are not both yellow:
+  the host is orange, and the guests are blue, green, pink, purple, teal, red and lime as they join (past
+  eight the colors repeat). A player who leaves and joins again gets a new number, and so a new color. Your
+  own name uses your **Ping Color**, or the color for your player number while it is still the default. A
+  player who has left, or whose cursor is off, keeps the color you saved for them, else the one their
+  messages carried. A very dark color is lightened so it can be read on the dark panel. Names are the same
+  **Ping Display Name** as cursors and pings. Chat lines have no "(Host)" or "(P2)" tag, so two players who
+  both keep the default name are told apart by their colors.
 - **One order for everyone.** The host numbers every message and sends it to every player,
   the sender included, so everyone sees the same conversation in the same order. Your own
   message appears when the host has it, normally at once.
@@ -158,7 +161,7 @@ panel carries on.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (210 checks) covers:
+`dotnet run --project StabilityTests` (215 checks) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
@@ -194,9 +197,11 @@ The chat adds checks (1.0.7) for:
   leaves, and a guest that joins receiving the whole history in order after its save, state and
   init event, with a message sent during the join arriving exactly once, also while two guests
   join during a burst of messages;
-- how a line is written (all of it in the sender's color, no message can add markup, dark colors are
-  lightened), the color saved for a player who is not connected, the English strings and the chat key
-  binding's blueprint.
+- how a line is written (only the name is colored, no message can add markup, dark colors are
+  lightened), the color saved for a player who is not connected, the default color of each player
+  (every player number up to eight gets a different one and none is yellow, a chosen color is kept and
+  only the default yellow is replaced, numbers past the palette start over), the English strings and the
+  chat key binding's blueprint.
 
 The panel's sizing adds checks for the width it follows (the
 population panel first, then the nearest panel above, never a width that is not believable, and
@@ -209,11 +214,12 @@ the alerts covering its text box, and the pacing text pushing the panel wider th
 counters; the sizing checks above and the current layout are the response.
 
 Screenshots of the panel in real sessions, alone and with a guest, show the header without a dot, the sync dot as the only dot, player rows that
-are a name and a ping (a guest's ping, and your own row in bold with a dash), the boxed collapse button, whole chat lines in each player's color
-(one yellow, one pink), and that the game's font draws bold. Before the box was added, the collapse button's dash sat directly above your own
+are a name and a ping (a guest's ping, and your own row in bold with a dash), the boxed collapse button, chat lines in each player's color (in
+1.1.10 the whole line, one yellow and one pink; since 1.1.11 the name only), and that the game's font draws bold. Before the box was added, the collapse button's dash sat directly above your own
 row's dash, which is why the button is boxed.
 
 **Played:** the fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
+1.1.11, which only changes the colors on top of it, was played too and works without issues.
 
 **Not checked one by one.** That play was not a checklist, so these have not been confirmed individually: that the panel matches the counters'
 width (and to what), that the chat clears the alerts, that the panel is drawn in front of them while you type, where the panel sits in each corner
