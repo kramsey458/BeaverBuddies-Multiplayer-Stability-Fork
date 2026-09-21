@@ -295,3 +295,6 @@ details.q .answer > :last-child { margin-bottom: 0; }
   .btn-row .btn { flex: 1 1 100%; justify-content: center; }
   .nav { scrollbar-width: thin; }
 }
+
+/* Release script: a note on text that was written for an older release */
+.pinned-note { font-size: .9rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: .5rem; margin: .8rem 0 0; }

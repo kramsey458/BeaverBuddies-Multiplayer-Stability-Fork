@@ -6,6 +6,9 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
+> [!NOTE]
+> **1.1.10 is stable and working.** It has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. That is a record of what has been played, not a guarantee: see [Things to know](#things-to-know-before-you-play) for what has not been tried.
+
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
 ## Highlights
