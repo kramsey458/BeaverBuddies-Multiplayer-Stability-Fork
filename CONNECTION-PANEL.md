@@ -208,24 +208,20 @@ and every pacing text is short enough for its column (the old ones were not).
 the alerts covering its text box, and the pacing text pushing the panel wider than the game's own
 counters; the sizing checks above and the current layout are the response.
 
-Screenshots of 1.1.10-release-candidate-2, alone and with a guest, show the header without a dot, the sync dot
-as the only dot, player rows that are a name and a ping (a guest's ping, and your own row in bold with a dash),
-and that the game's font draws bold. They also showed the collapse button's dash directly above your own row's
-dash, which is why the button is boxed. The fork owner then played 1.1.10-release-candidate-3, which has the boxed button, and reported that
-it works.
+Screenshots of the panel in real sessions, alone and with a guest, show the header without a dot, the sync dot as the only dot, player rows that
+are a name and a ping (a guest's ping, and your own row in bold with a dash), the boxed collapse button, whole chat lines in each player's color
+(one yellow, one pink), and that the game's font draws bold. Before the box was added, the collapse button's dash sat directly above your own
+row's dash, which is why the button is boxed.
 
-**Not verified: how it looks and feels.** No screenshot was taken of the boxed collapse button or of chat lines in the cursor colors
-(also after a color is changed); the fork owner played the build that has them and reported that it works. The fixes themselves have not been seen in the running
-game: that the panel now matches the counters' width (and to what), that the chat clears the
-alerts, and that the panel really is drawn in front of them while you type. The panel's layout,
-colors, spacing and where it sits in each corner other than the top left have not been seen
-either, nor have the controls (click to collapse, the settings, the optional keys). For the chat
-that also means: how the messages look, that
-the box takes and gives back the keyboard as described (Enter, Esc, a click on the game, the
-optional key), that the game's hotkeys really stay off while you type and come back after, how a
-long message wraps, whether the log follows new messages and lets you scroll up, and that the
-mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming
-while the pointer is over its interface, which this relies on).
+**Played:** the fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
+
+**Not checked one by one.** That play was not a checklist, so these have not been confirmed individually: that the panel matches the counters'
+width (and to what), that the chat clears the alerts, that the panel is drawn in front of them while you type, where the panel sits in each corner
+other than the top left, the settings and the optional keys, and that lines already written change color after a cursor color is changed. For
+the chat that also means: that the box takes and gives back the keyboard as described (Enter, Esc, a click on the game, the optional key), that
+the game's hotkeys really stay off while you type and come back after, how a long message wraps, whether the log follows new messages and lets
+you scroll up, and that the mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming while the pointer is
+over its interface, which this relies on).
 
 ## Known limits
 

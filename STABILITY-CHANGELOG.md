@@ -12,8 +12,7 @@ cheaper pass over every entity on each tick, a plainer connection panel, and cha
 should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
 over the network.
 
-The fork owner played 1.1.10-release-candidate-3 in multiplayer, which is this build's code with only the version changed, and reported that it
-works.
+The fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
 
 ### The pass over every entity on each tick is cheaper
 
@@ -63,8 +62,8 @@ started fast again. This release does not change that.
   edge of the panel. It does what it did before, and clicking the title still collapses and expands the panel.
 
 Screenshots of a host, alone and with a guest, showed the header without its dot, the sync dot as the only one, a guest's row and your own row in
-bold with a dash, and that the game's font draws bold. They also showed the collapse button's dash directly above your own row's dash, which is
-why the button is boxed.
+bold with a dash, the boxed collapse button, whole chat lines in each player's color (one yellow, one pink), and that the game's font draws bold.
+Before the box was added, the collapse button's dash sat directly above your own row's dash, which is why the button is boxed.
 
 ### Chat takes the cursor colors
 
@@ -77,10 +76,10 @@ to read on the panel is lightened, as before. Before, only the name was colored,
 
 - Release Steam and non-Steam builds succeed with no warnings. 210 StabilityTests (9 new for the memory of which entities walk, and 2 for the
   panel and the chat colors), 69 RuntimeChecks against the built mod and 3 Python checks pass. None of them can draw the panel.
-- **Played:** the fork owner played 1.1.10-release-candidate-3 in multiplayer and reported that it works.
-- **Not checked:** no screenshot was taken of the boxed collapse button or of chat lines in the cursor colors (also after a color is changed). How
-  much the entity pass saves in a large colony has not been measured, and the pass works on Unity's entities, which the checks cannot create, so it
-  is covered by its own checks with stand-ins, the build and the runtime checks loading the mod.
+- **Played:** the fork owner played 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and reported that it worked very well.
+- **Not checked:** how much time the entity pass saves has not been measured, and lines already written changing color after a cursor color is
+  changed has not been checked. The pass works on Unity's entities, which the checks cannot create, so it is covered by its own checks with stand-ins,
+  the build and the runtime checks loading the mod, and by that play.
 
 ## 1.0.9
 
