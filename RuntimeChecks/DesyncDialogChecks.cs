@@ -23,6 +23,26 @@ internal static class DesyncDialogChecks
             if (dialog.Values.Any(members => members.Any(m => m is MethodBase method && method.DeclaringType?.FullName == service &&
                     method.Name == "ConnectOrShowFailureMessage" && method.GetParameters().Length == 0)))
                 throw new Exception("A guest's Reconnect still dials the saved address whatever the route");
+
+            // Asking is not enough: what the plan answers has to decide. The sentence is added only on the branch
+            // taken when AsksToEnableLogging is true, and the report button only after a test of the key it chose.
+            var code = dialog.Keys.ToDictionary(method => method, IlScan.Instructions);
+            const string sentence = "BeaverBuddies.ClientDesynced.NeedToEnableTracing";
+            var sentences = code.SelectMany(pair => pair.Value.Where(i => i.Text == sentence).Select(i => (Method: pair.Key, At: i.Offset))).ToArray();
+            if (sentences.Length != 1) throw new Exception($"The dialog names the Enable Logging sentence {sentences.Length} times, expected once");
+            var body = code[sentences[0].Method];
+            int ask = body.FindIndex(i => i.Calls && i.Is(plan, "AsksToEnableLogging"));
+            if (ask < 0 || ask + 1 >= body.Count || !body[ask + 1].BranchesIfFalse ||
+                !(body[ask].Offset < sentences[0].At && sentences[0].At < body[ask + 1].Target))
+                throw new Exception("The Enable Logging sentence is not added only when DesyncDialogPlan.AsksToEnableLogging is true");
+            var reportButton = code.SelectMany(pair => pair.Value.Where(i => i.Calls && i.Member?.Name == "SetInfoButton")
+                .Select(i => (Method: pair.Key, At: i.Offset))).ToArray();
+            foreach (var (method, at) in reportButton)
+            {
+                int key = code[method].FindIndex(i => i.Calls && i.Is(plan, "ReportButtonKey"));
+                if (key < 0 || !code[method].Skip(key).Any(i => i.BranchesIfFalse && i.Offset < at && at < i.Target))
+                    throw new Exception("The report button is added whatever DesyncDialogPlan.ReportButtonKey says");
+            }
         });
 
         test("Joining records how the guest joined, and Reconnect follows DesyncDialogPlan", () =>
@@ -39,6 +59,14 @@ internal static class DesyncDialogChecks
                 ?? throw new Exception("ClientConnectionService has no Reconnect"));
             if (!IlScan.Names(reconnect, plan, "Reconnect")) throw new Exception("Reconnect does not ask DesyncDialogPlan.Reconnect");
             if (!IlScan.Names(reconnect, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("Reconnect never joins the host's Steam lobby");
+            // A direct guest dials the address the plan chose (the one it typed), never the one in the settings.
+            var steps = IlScan.Instructions(type.GetMethod("Reconnect", all, Type.EmptyTypes)!);
+            if (steps.Any(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") && ((MethodBase)i.Member!).GetParameters().Length == 0))
+                throw new Exception("Reconnect dials the saved address instead of the one the guest joined with");
+            int dial = steps.FindIndex(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") &&
+                ((MethodBase)i.Member!).GetParameters().Length == 1);
+            if (dial < 1 || !(steps[dial - 1].Loads && steps[dial - 1].Is("BeaverBuddies.Connect.ReconnectPlan", "Address")))
+                throw new Exception("Reconnect does not dial ReconnectPlan.Address");
         });
     }
 }
