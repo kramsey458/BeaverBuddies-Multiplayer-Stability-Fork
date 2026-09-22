@@ -37,6 +37,15 @@ ordering fix, and checks water diagnostic snapshots and field hashes:
 dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory
 ```
 
+RuntimeChecks also checks which types a multiplayer frame may create. Frames are read with
+Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to create, and the
+`ReplayEventBinder` only lets actions and what they carry through. A frame that names any other type
+(a harmless sentinel stands in for a dangerous one), or a list, array or map of it, is refused before
+anything is created. Every action the mod sends reads back unchanged, with every field filled in, and
+is written exactly as it is without the binder, so the event hash does not change. Actions from
+another mod's assembly loaded from bytes (standing in for MixedStorage's `StorageAllocationEvent`)
+pass, with the classes they declare.
+
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.
