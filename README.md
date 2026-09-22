@@ -50,7 +50,7 @@ This fork is distributed through GitHub Releases only. The Steam Workshop and mo
 
 Guests receive a copy of the host's save (kept under **Online Games**). Nobody can join after the host chooses **Start Game**.
 
-**If a desync happens:** the host chooses **Save and Rehost**. Steam guests accept a fresh invite; direct-IP guests reconnect.
+**If a desync happens:** the host chooses **Save and Rehost**, then guests choose **Reconnect (wait for Rehost)**, which joins the way they joined before: a direct-IP guest redials the address it used, and a Steam guest joins the host's new Steam lobby if Steam shows it (the host has **Allow Friends to Join Directly via Steam** on). Otherwise a Steam guest accepts a fresh invite.
 
 ## Steam invites
 
@@ -104,6 +104,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **A session that ends leaves the game working.** A lost connection, a failed action, a cancelled host or join and Steam's overlay closing under a dialog each used to leave the game running but ignoring the player, sometimes with no way to open the menu. The game now ends the session cleanly, says why, and keeps the menu and controls working. *Tested; the maintainer confirmed that the controls work after a disconnect, and the other cases have not been seen in the game.*
 - **The host can ease off for a guest's frame rate.** A guest that keeps up in ticks but draws a few frames a second is now something the host can react to, using the middle of the guest's last five frame rate reports, dropping 10% at a time and remembering the speed that caused trouble. *Tested; an earlier version of the rule was played once (it worked but changed speed too often), the current rule has not been played.*
 - **Direct connections send at once.** Over a direct (IP) connection each tick's events and the ping probes are small writes, and the system could hold each one back until the one before it was acknowledged (Nagle's algorithm), which can add up to about 200 ms; Steam connections already sent them at once, and now direct ones do too. The host also paused its game thread about 31 ms for every 32 KB of a tick's events beyond the first; now only the save sent to a joining player is paced, on that player's own connection thread. *Tested (real sockets over loopback, and the transport with a large event); not yet played.*
+- **The desync dialog fits public builds and Steam guests.** It asked every player to press Enable Logging, a button that only builds with a report upload token have (public builds have none), and a Steam guest's **Reconnect (wait for Rehost)** dialled the direct-IP address in the settings (127.0.0.1 unless changed). The sentence now appears only with the button, and Reconnect joins the way the guest joined. *Tested (the dialog's decisions, and that the compiled dialog and reconnect use them); not yet played.*
 
 **Desyncs and determinism**
 

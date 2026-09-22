@@ -26,6 +26,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/PanelLayout.cs" Link="PanelLayout.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ModListComparison.cs" Link="ModListComparison.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/SessionEndMessages.cs" Link="SessionEndMessages.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/DesyncDialogPlan.cs" Link="DesyncDialogPlan.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
   </ItemGroup>

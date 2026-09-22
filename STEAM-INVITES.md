@@ -114,7 +114,9 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
 
 - Both players must be online in Steam, and the friend must own Timberborn.
 - Joining after **Start Game** is not possible (as before). After a desync, the host uses
-  **Save and rehost** and Steam guests accept a fresh invite.
+  **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the host's new
+  lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the guest
+  is told to accept a fresh invite.
 - The **Invite Friends** button does nothing for the first moment after hosting starts,
   until the lobby exists; click it again.
 - New strings are English only; other languages fall back to English.

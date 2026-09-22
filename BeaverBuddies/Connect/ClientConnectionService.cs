@@ -27,6 +27,10 @@ namespace BeaverBuddies.Connect
         private ClientEventIO client;
         private Settings _settings;
 
+        // How this player last joined a host, for the desync dialog's reconnect (see Reconnect). Static because it
+        // must outlive the scene that joined: the join loads the host's game, which has a new instance of this service.
+        private static JoinRoute lastJoin;
+
         public ClientConnectionService(
             GameSceneLoader gameSceneLoader,
             GameSaveRepository gameSaveRepository,
@@ -51,11 +55,14 @@ namespace BeaverBuddies.Connect
                 Plugin.LogError("Steam networking is not ready, so the host could not be reached.");
                 return false;
             }
-            return TryToConnect(socket);
+            if (!TryToConnect(socket)) return false;
+            lastJoin = JoinRoute.ViaSteam(friendID.m_SteamID);
+            return true;
         }
 
         public bool TryToConnect(string address)
         {
+            string typed = address;
             int port = _settings.DefaultPort.Value;
             Plugin.Log("Try to resolve address: " + address);
             // Parse address and port
@@ -93,7 +100,9 @@ namespace BeaverBuddies.Connect
                 }
             }
 
-            return TryToConnect(new TCPClientWrapper(address, port));
+            if (!TryToConnect(new TCPClientWrapper(address, port))) return false;
+            lastJoin = JoinRoute.ViaAddress(typed);
+            return true;
         }
 
         private bool TryToConnect(ISocketStream socket)
@@ -126,6 +135,64 @@ namespace BeaverBuddies.Connect
         public void ConnectOrShowFailureMessage(string address)
         {
             TryToConnect(address);
+        }
+
+        /// <summary>
+        /// A guest's "Reconnect (wait for Rehost)" after a desync: joins the host again the way it joined before. It
+        /// used to dial the address in the settings whatever the route, so a guest who had joined over Steam dialled
+        /// 127.0.0.1 (the default) or a stale address. See DesyncDialogPlan.Reconnect.
+        /// </summary>
+        public void Reconnect()
+        {
+            ReconnectPlan plan = DesyncDialogPlan.Reconnect(lastJoin, _settings.ClientConnectionAddress.Value, FindHostLobby);
+            Plugin.Log($"Reconnecting after a desync; joined by {lastJoin?.ToString() ?? "an unknown route"}: {plan.Step}");
+            switch (plan.Step)
+            {
+                case ReconnectStep.JoinSteamLobby:
+                    try
+                    {
+                        // Entering the lobby connects to the host, as accepting an invite does
+                        // (SteamOverlayConnectionService.OnLobbyEntered, which also refuses a lobby whose game has started).
+                        SteamMatchmaking.JoinLobby(new CSteamID(plan.Lobby));
+                    }
+                    catch (Exception error)
+                    {
+                        Plugin.LogWarning("Could not join the host's Steam lobby: " + error.Message);
+                        ShowWaitForSteamInvite();
+                    }
+                    break;
+                case ReconnectStep.WaitForSteamInvite:
+                    ShowWaitForSteamInvite();
+                    break;
+                default:
+                    ConnectOrShowFailureMessage(plan.Address);
+                    break;
+            }
+        }
+
+        private void ShowWaitForSteamInvite()
+        {
+            ShowSafely(() => _dialogBoxShower.Create()
+                .SetLocalizedMessage("BeaverBuddies.ClientDesynced.WaitForSteamInvite")
+                .Show());
+        }
+
+        // The Steam lobby the host is in, when Steam shows it to this player: the host's lobby is friends-only when it
+        // has "Allow Friends to Join Directly via Steam" on, and then its friends see it; an invite-only lobby is not.
+        private static ulong? FindHostLobby(ulong host)
+        {
+            try
+            {
+                if (SteamFriends.GetFriendGamePlayed(new CSteamID(host), out FriendGameInfo_t game) && game.m_steamIDLobby.IsValid())
+                {
+                    return game.m_steamIDLobby.m_SteamID;
+                }
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("Could not look up the host's Steam lobby: " + error.Message);
+            }
+            return null;
         }
 
         /// <summary>Shows the standard "could not join" dialog with a specific reason.</summary>

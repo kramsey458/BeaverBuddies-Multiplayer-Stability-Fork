@@ -187,31 +187,26 @@ namespace BeaverBuddies.Events
                 }
                 else
                 {
+                    // The same way this guest joined: over Steam through the host's lobby, or to the address it typed.
                     context.GetSingleton<ClientConnectionService>()
-                    ?.ConnectOrShowFailureMessage();
+                    ?.Reconnect();
                 }
             };
 
 
             string reconnectText = isHost ? _loc.T("BeaverBuddies.ClientDesynced.SaveAndRehostButton") : _loc.T("BeaverBuddies.ClientDesynced.WaitForRehostButton");
             string reconnectMessage = _loc.T("BeaverBuddies.ClientDesynced.Message");
-            string bugReportMessageKey;
-            if (Settings.Debug)
-            {
-                bugReportMessageKey = "BeaverBuddies.ClientDesynced.PostBugReportButton";
-            }
-            else
+            // The report button needs an upload token, which public builds do not have, and the sentence that asks
+            // every player to press Enable Logging is only added when that button is there (see DesyncDialogPlan).
+            string bugReportMessageKey = DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken);
+            if (DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken))
             {
                 reconnectMessage += "\n\n" + _loc.T("BeaverBuddies.ClientDesynced.NeedToEnableTracing");
-                bugReportMessageKey = "BeaverBuddies.ClientDesynced.EnableTracing";
             }
 
-
-
             var builder = shower.Create().SetMessage(reconnectMessage);
-            if (reportingService.HasAccessToken)
+            if (bugReportMessageKey != null)
             {
-                // Only show the bug report button if we have the ability to post it
                 builder.SetInfoButton(bugReportAction, _loc.T(bugReportMessageKey));
             }
             DialogBox box = builder.SetConfirmButton(reconnectAction, reconnectText)

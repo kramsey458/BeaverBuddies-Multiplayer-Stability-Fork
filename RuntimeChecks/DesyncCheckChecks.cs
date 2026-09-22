@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 
 // The always-on desync check in the compiled mod: what the heartbeat carries on the wire, and where the tick
@@ -65,7 +64,7 @@ internal static class DesyncCheckChecks
             var members = new[] { replayService }.Concat(replayService.GetNestedTypes(all))
                 .SelectMany(type => type.GetMethods(all | BindingFlags.DeclaredOnly))
                 .Where(method => method.GetMethodBody() != null)
-                .ToDictionary(method => (MethodBase)method, Members);
+                .ToDictionary(method => (MethodBase)method, IlScan.Members);
             bool Names(MethodBase method, string declaringType, string name) =>
                 members[method].Any(m => m.DeclaringType?.FullName == declaringType && m.Name == name);
             MethodBase[] Naming(string declaringType, string name) =>
@@ -96,46 +95,5 @@ internal static class DesyncCheckChecks
                 if (!members.Values.Any(list => list.Any(m => m is FieldInfo f && f.DeclaringType?.FullName == type && f.Name == field)))
                     throw new Exception($"ReplayService never sets {field}, so the host sends nothing to compare");
         });
-    }
-
-    private static readonly Dictionary<ushort, OpCode> opcodes = typeof(OpCodes)
-        .GetFields(BindingFlags.Public | BindingFlags.Static)
-        .Select(f => (OpCode)f.GetValue(null)!).ToDictionary(o => (ushort)o.Value);
-
-    // The methods and fields a method's instructions name: what it calls, and what fields it reads and writes.
-    private static List<MemberInfo> Members(MethodBase method)
-    {
-        byte[] body = method.GetMethodBody()!.GetILAsByteArray()!;
-        Type[]? typeArguments = method.DeclaringType?.IsGenericType == true ? method.DeclaringType.GetGenericArguments() : null;
-        Type[]? methodArguments = method.IsGenericMethod ? method.GetGenericArguments() : null;
-        var members = new List<MemberInfo>();
-        for (int at = 0; at < body.Length;)
-        {
-            ushort value = body[at++];
-            if (value == 0xfe) value = (ushort)(0xfe00 | body[at++]);
-            OpCode op = opcodes[value];
-            switch (op.OperandType)
-            {
-                case OperandType.InlineNone: break;
-                case OperandType.ShortInlineBrTarget: case OperandType.ShortInlineI: case OperandType.ShortInlineVar: at += 1; break;
-                case OperandType.InlineVar: at += 2; break;
-                case OperandType.InlineI8: case OperandType.InlineR: at += 8; break;
-                case OperandType.InlineSwitch: at += 4 + 4 * BitConverter.ToInt32(body, at); break;
-                case OperandType.InlineMethod:
-                case OperandType.InlineField:
-                    int token = BitConverter.ToInt32(body, at); at += 4;
-                    try
-                    {
-                        members.Add(op.OperandType == OperandType.InlineMethod
-                            ? method.Module.ResolveMethod(token, typeArguments, methodArguments)!
-                            : method.Module.ResolveField(token, typeArguments, methodArguments)!);
-                    }
-                    // Something in an assembly this program does not load: not what is looked for here.
-                    catch (Exception e) when (e is TypeLoadException || e is FileNotFoundException || e is ArgumentException) { }
-                    break;
-                default: at += 4; break;
-            }
-        }
-        return members;
     }
 }
