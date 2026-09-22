@@ -242,8 +242,8 @@ other than the top left, the settings and the optional keys, and that lines alre
 the chat that also means: that the box takes and gives back the keyboard as described (Enter, Esc, a click on the game, the optional key), that
 the game's hotkeys really stay off while you type and come back after, how a long message wraps, whether the log follows new messages and lets
 you scroll up, and that the mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming while the pointer is
-over its interface, which this relies on). The speed boost row and the **You, in the chat** card work in the BeaverBuddies MultiColony
-mod, where they were written, as the user reports; they have not been played in this fork's build yet.
+over its interface, which this relies on). The speed boost row and the **You, in the chat** card were played in 1.1.13, which the fork owner reports is
+stable and working; the checks listed above were not gone through one by one for them either.
 
 ## Known limits
 

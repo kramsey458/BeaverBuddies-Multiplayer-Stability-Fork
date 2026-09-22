@@ -5,13 +5,15 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## 1.1.13-preview1 (pre-release)
+## 1.1.13
 
-A preview on top of 1.1.12 with two chat features taken from the BeaverBuddies MultiColony mod: a speed boost at the
-top of the chat, and a color of your choice for your own name in the chat. The speed boost adds a network message,
+The current release, on top of 1.1.12: two chat features taken from the BeaverBuddies MultiColony mod, a speed boost at
+the top of the chat and a color of your choice for your own name in the chat. The speed boost adds a network message,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
 
-**Not played in this fork yet.** The user reports both work without problems in the BeaverBuddies MultiColony mod, where they were written; this build of the Stability Fork has not been played yet. Everything below is also covered by automated checks.
+**Played.** The maintainer played 1.1.13 and reports that it is stable and working. It includes everything in 1.1.12,
+so that was played too, although the particular situations the 1.1.12 fixes are for were not set up on purpose.
+Everything below is also covered by automated checks.
 
 ### A speed boost, from the chat box
 
