@@ -104,9 +104,6 @@
     <None Update="thumbnail.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-    <None Update="workshop_data.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
     <None Update="Localizations\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="KeyBindings\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="KeyBindingGroups\*" CopyToOutputDirectory="PreserveNewest" />
@@ -141,7 +138,7 @@
       <LocalizationFileToCopy Include="$(ProjectDir)$(OutDir)Localizations\*" />
       <KeyBindingFileToCopy Include="$(ProjectDir)$(OutDir)KeyBindings\*" />
       <KeyBindingGroupFileToCopy Include="$(ProjectDir)$(OutDir)KeyBindingGroups\*" />
-      <RootDirFilesToCopy Include="$(ProjectDir)thumbnail.png; $(ProjectDir)workshop_data.json" />
+      <RootDirFilesToCopy Include="$(ProjectDir)thumbnail.png" />
     </ItemGroup>
     <!-- Clear VersionOutputPath Directory & Copy Output files inside -->
     <RemoveDir Directories="$(VersionOutputPath)" />
@@ -151,6 +148,18 @@
     <Copy SourceFiles="@(KeyBindingFileToCopy)" DestinationFolder="$(VersionOutputPath)\KeyBindings" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(KeyBindingGroupFileToCopy)" DestinationFolder="$(VersionOutputPath)\KeyBindingGroups" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(RootDirFilesToCopy)" DestinationFolder="$(BeaverBuddiesModsPath)" SkipUnchangedFiles="true" />
+    <!-- This fork is not on the Steam Workshop. Earlier builds also copied the original project's
+         workshop_data.json here, which points the game's Workshop uploader at thomaswp's item: remove that copy.
+         A workshop_data.json the uploader wrote for an item of your own is kept: only a file whose ItemId is
+         exactly the original project's item is removed. -->
+    <PropertyGroup>
+      <UpstreamWorkshopItemId>3293380223</UpstreamWorkshopItemId>
+      <WorkshopDataPath>$(BeaverBuddiesModsPath)workshop_data.json</WorkshopDataPath>
+    </PropertyGroup>
+    <ReadLinesFromFile File="$(WorkshopDataPath)" Condition="Exists('$(WorkshopDataPath)')">
+      <Output TaskParameter="Lines" PropertyName="WorkshopDataText" />
+    </ReadLinesFromFile>
+    <Delete Files="$(WorkshopDataPath)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(WorkshopDataText)', '&quot;ItemId&quot;\s*:\s*&quot;?$(UpstreamWorkshopItemId)\b'))" />
   </Target>
 
 </Project>
