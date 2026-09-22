@@ -14,7 +14,9 @@ namespace TimberNet
 
             using (var output = new MemoryStream())
             {
-                using (var gzip = new GZipStream(output, CompressionLevel.Optimal))
+                // Fastest: on a large action (a dragged area, a long demolition list) Optimal took several times as long,
+                // on the host's game thread, for a frame at most a tenth smaller. Any gzip reader reads either.
+                using (var gzip = new GZipStream(output, CompressionLevel.Fastest))
                 {
                     gzip.Write(inputBytes, 0, inputBytes.Length);
                 }

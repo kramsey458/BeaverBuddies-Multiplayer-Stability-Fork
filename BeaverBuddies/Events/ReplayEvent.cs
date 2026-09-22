@@ -13,6 +13,16 @@ namespace BeaverBuddies.Events
         T GetSingleton<T>();
     }
 
+    /// <summary>
+    /// A replayed action names something this game does not have (a building from a mod only another player runs), found
+    /// before any of the action was played. A guest that meets one leaves quietly (ReplayService): it can no longer keep
+    /// up with the host, but nothing has gone wrong for anyone else.
+    /// </summary>
+    public class MissingContentException : Exception
+    {
+        public MissingContentException(string message) : base(message) { }
+    }
+
     public abstract class ReplayEvent : IComparable<ReplayEvent>
     {
         public static readonly string LocalPlayerID = GuidPatcher.RealNewGuid().ToString();
@@ -88,11 +98,16 @@ namespace BeaverBuddies.Events
 
         protected BuildingSpec GetBuilding(IReplayContext context, string buildingName)
         {
-            var result = context.GetSingleton<BuildingService>().GetBuildingTemplate(buildingName);
+            BuildingSpec result = null;
+            // The game throws for a name it does not know. The host refuses a guest's action naming a building the host
+            // does not have (ReplayService.NamesMissingBuilding), so only a guest meets one here: the host used a building from
+            // a mod this guest does not run. It is the first thing a replay asks, before anything of the action is played,
+            // so this guest can leave without harm to anyone (MissingContentException; ReplayService).
+            try { result = context.GetSingleton<BuildingService>()?.GetBuildingTemplate(buildingName); }
+            catch (ArgumentException) { }
             if (result == null)
-            {
-                Plugin.LogWarning($"Could not find building prefab: {buildingName}");
-            }
+                throw new MissingContentException($"The host used the building {buildingName}, which this game does not have " +
+                    "(it comes from a mod that is not installed here).");
             return result;
         }
 
@@ -135,6 +150,8 @@ namespace BeaverBuddies.Events
             // This handles nested calls (e.g., Replay() calls Unlock() which triggers this prefix again)
             if (ReplayService.HasReplayFailure) return false;
             if (ReplayService.IsReplayingEvents) return true;
+            // The simulation itself calling the method (RunAsSimulation), the same on every computer: not a click.
+            if (simulationCalls > 0) return true;
 
             // If the replay service is not available, just use default behavior
             ReplayService replayService = GetReplayServiceIfReady();
@@ -153,6 +170,24 @@ namespace BeaverBuddies.Events
             // Return based on the EventIO's desired behavior
             return EventIO.ShouldPlayPatchedEvents;
         }
+
+        // Game code that calls a method players' clicks are recorded from, from inside the simulation itself (a
+        // spring-return lever switching itself off in the tick): the call runs at once on every computer, as in single
+        // player, instead of each computer taking it for a click of its own and sending it to the host. Only for calls
+        // every computer makes at the same point of the same tick; see Fixes/TickTimingFixes. Main thread only.
+        private static int simulationCalls;
+
+        /// <summary>Runs <paramref name="action"/> as the simulation's own call: recording prefixes let it through.</summary>
+        public static void RunAsSimulation(Action action)
+        {
+            EnterSimulationCall();
+            try { action(); }
+            finally { ExitSimulationCall(); }
+        }
+
+        public static void EnterSimulationCall() => simulationCalls++;
+
+        public static void ExitSimulationCall() => simulationCalls = Math.Max(0, simulationCalls - 1);
 
         public static bool DoEntityPrefix(BaseComponent component, Func<string, ReplayEvent> doRecord)
         {

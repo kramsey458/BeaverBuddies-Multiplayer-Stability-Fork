@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TimberNet
 {
-    public class TCPClientWrapper : ISocketStream, ITransportInfo
+    public class TCPClientWrapper : ISocketStream, ITransportInfo, IBlockingWrites
     {
         public readonly string? address;
         public readonly int port;

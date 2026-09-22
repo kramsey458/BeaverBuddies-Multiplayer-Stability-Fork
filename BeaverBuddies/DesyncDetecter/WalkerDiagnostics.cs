@@ -70,7 +70,7 @@ namespace BeaverBuddies.DesyncDetecter
             {
                 string directory = Path.Combine(Application.persistentDataPath, "BeaverBuddiesDiagnostics");
                 Directory.CreateDirectory(directory);
-                string path = Path.Combine(directory, $"walkers-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}-{Guid.NewGuid():N}.tsv");
+                string path = Path.Combine(directory, $"walkers-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}-{GuidPatcher.RealNewGuid():N}.tsv");
                 using (var writer = new StreamWriter(path)) trace.Write(writer);
                 written = true;
                 trace.Clear();

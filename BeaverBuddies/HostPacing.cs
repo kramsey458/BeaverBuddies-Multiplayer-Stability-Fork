@@ -52,9 +52,18 @@ namespace BeaverBuddies
         // True while the host holds still for a guest that is very far behind.
         public bool IsHolding { get; private set; }
 
-        // One status sample. worstGuestTicksBehind is null when no guest has reported a tick.
-        public void Sample(int? worstGuestTicksBehind, bool running)
+        // The thresholds above are ticks at a true speed 7. With a speed boost a tick is shorter, and a guest that keeps up
+        // runs more ticks behind for the same time on the network (at speed 30 with 150 ms of ping, 12 to 16 ticks): a
+        // host that had eased once never climbed back. Above speed 7 they scale with the speed, so they count the same
+        // stretch of time.
+        public static int Scaled(int ticks, float speed) => speed > 7 ? (int)Math.Round(ticks * speed / 7f) : ticks;
+
+        // One status sample. worstGuestTicksBehind is null when no guest has reported a tick. speed is the speed the
+        // players chose (with its boost).
+        public void Sample(int? worstGuestTicksBehind, bool running, float speed = 7)
         {
+            int highTicks = Scaled(HighTicks, speed), lowTicks = Scaled(LowTicks, speed);
+            int stopTicks = Scaled(StopTicks, speed), resumeTicks = Scaled(ResumeTicks, speed);
             if (worstGuestTicksBehind == null)
             {
                 // Nobody to wait for.
@@ -64,8 +73,8 @@ namespace BeaverBuddies
                 _samplesNotGaining = 0;
                 return;
             }
-            if (worstGuestTicksBehind.Value > StopTicks) IsHolding = true;
-            else if (worstGuestTicksBehind.Value <= ResumeTicks) IsHolding = false;
+            if (worstGuestTicksBehind.Value > stopTicks) IsHolding = true;
+            else if (worstGuestTicksBehind.Value <= resumeTicks) IsHolding = false;
             if (!running)
             {
                 // Paused: the guest catches up on its own, and lag while paused says nothing about its speed.
@@ -81,7 +90,7 @@ namespace BeaverBuddies
                 _samplesNotGaining = 0;
                 return;
             }
-            if (behind > HighTicks)
+            if (behind > highTicks)
             {
                 bool gaining = _previousBehind >= 0 && behind < _previousBehind;
                 _samplesNotGaining = gaining || _previousBehind < 0 ? 0 : _samplesNotGaining + 1;
@@ -94,7 +103,7 @@ namespace BeaverBuddies
             else
             {
                 _samplesNotGaining = 0;
-                if (behind <= LowTicks)
+                if (behind <= lowTicks)
                 {
                     Percent = Math.Min(100, Percent + UpStepPercent);
                 }

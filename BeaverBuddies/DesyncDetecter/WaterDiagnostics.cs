@@ -118,7 +118,7 @@ namespace BeaverBuddies.DesyncDetecter
         internal static string WriteArchive(string directory)
         {
                 Directory.CreateDirectory(directory);
-                string path = Path.Combine(directory, $"water-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}-{Guid.NewGuid():N}.zip");
+                string path = Path.Combine(directory, $"water-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}-{GuidPatcher.RealNewGuid():N}.zip");
                 using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
                 {
                     int ordinal = 0;

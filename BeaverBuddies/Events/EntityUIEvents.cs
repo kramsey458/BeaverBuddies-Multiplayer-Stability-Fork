@@ -1149,15 +1149,46 @@ namespace BeaverBuddies.Events
     class WonderActivatedEvent : ReplayEvent
     {
         public string entityID;
+        /// <summary>
+        /// Whether the wonder could be activated when the host played this: written by the host (the event is sent on after
+        /// it is played) and followed by guests. The game's check asks whether the wonder is still animating, which is
+        /// animation state, advanced on each computer's own frames: a click just after a wonder switched off could find
+        /// it done on one computer and still turning on another. Null until the host has played it.
+        /// </summary>
+        public bool? activated;
 
         public override void Replay(IReplayContext context)
         {
-            GetComponent<Wonder>(context, entityID)?.Activate();
+            Wonder wonder = GetComponent<Wonder>(context, entityID);
+            if (wonder == null) return;
+            if (!activated.HasValue || !(IO.EventIO.Get() is IO.ClientEventIO)) activated = wonder.CanBeActivated();
+            if (!activated.Value) return;
+            WonderActivationFollowsHostPatcher.HostSaidYes = true;
+            try { wonder.Activate(); }
+            finally { WonderActivationFollowsHostPatcher.HostSaidYes = false; }
         }
 
         public override string ToActionString()
         {
             return $"Activating wonder {entityID}";
+        }
+    }
+
+    /// <summary>
+    /// While a WonderActivatedEvent the host said yes to is played, the wonder may be activated whatever this computer's
+    /// own check says (see WonderActivatedEvent.activated). Replaces the answer, so it runs last.
+    /// </summary>
+    [HarmonyPatch(typeof(Wonder), nameof(Wonder.CanBeActivated))]
+    static class WonderActivationFollowsHostPatcher
+    {
+        internal static bool HostSaidYes;
+
+        [HarmonyPriority(HarmonyLib.Priority.Last)]
+        static bool Prefix(ref bool __result)
+        {
+            if (!HostSaidYes) return true;
+            __result = true;
+            return false;
         }
     }
 

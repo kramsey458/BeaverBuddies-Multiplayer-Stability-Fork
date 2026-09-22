@@ -36,12 +36,19 @@ namespace BeaverBuddies.Events
                 Plugin.LogError($"No MethodInfo for: {methodKey}. Cannot replay this event.");
                 return;
             }
-            if (methodInfo.GetParameters().Length != arguments.Length)
+            if (arguments == null || methodInfo.GetParameters().Length != arguments.Length)
             {
-                Plugin.LogError($"Argument count mismatch for {methodKey}. Expected {methodInfo.GetParameters().Length}, got {arguments.Length}. Cannot replay this event.");
+                Plugin.LogError($"Argument count mismatch for {methodKey}. Expected {methodInfo.GetParameters().Length}, got {arguments?.Length}. Cannot replay this event.");
                 return;
             }
             object componentObj = GetComponentForType(methodInfo.DeclaringType, entityID, context);
+            // The building was demolished (or never had this part) between the click and this tick: skipped, the same on
+            // every computer. Calling the setter on nothing threw, and a throw here ends the session for everyone.
+            if (componentObj == null)
+            {
+                Plugin.LogWarning($"Skipped {methodKey}: entity {entityID} is gone");
+                return;
+            }
             object[] deserialized = Deserialize(arguments, context, methodInfo);
             methodInfo.Invoke(componentObj, deserialized);
         }
