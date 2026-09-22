@@ -77,6 +77,8 @@ namespace BeaverBuddies.Events
             var blockObject = gameObject.GetComponentSlow<BlockObject>();
             blockObject.MarkAsPreviewAndInitialize();
             blockObject.Reposition(placement);
+            // Every computer runs this, so a check that reads this computer's hovered previews could split the
+            // players: the district-join check passes during a replay (Fixes/DistrictPreviewsReplayFix.cs).
             bool isValid = blockObject.IsValid();
             UnityEngine.Object.Destroy(gameObject);
             return isValid;
