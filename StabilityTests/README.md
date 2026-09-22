@@ -47,6 +47,16 @@ timing transpiler. It reproduces frame-rate-dependent output before the patch
 and checks matching ramp values after it. This tests the real ramp arithmetic
 and emitted patch, but not Harmony installation inside Unity or depth sensing.
 
+RuntimeChecks also runs the game's own planting levelling (TerrainAreaService,
+TerrainPicker and GridTraversal) over a small made-up terrain seen through two
+layer views. A mark or unmark is recorded through the mod's own planting
+prefix, sent through the network JSON settings, and played through the event's
+Replay and the game's MarkArea / UnmarkArea on a computer with the other view;
+the tiles it acts on must be the ones the marking player levelled. Harmony is
+not installed: the checks run the mod's prefixes on the levelling the way
+Harmony would, so a live two-player game with different layer views is still
+the final check.
+
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 
 ```
