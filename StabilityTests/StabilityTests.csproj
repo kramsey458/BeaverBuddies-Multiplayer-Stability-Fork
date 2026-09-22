@@ -28,4 +28,8 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The checkout the tests were built against: the Workshop checks run this checkout's PostBuild step. -->
+    <AssemblyMetadata Include="SourceRoot" Value="$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(SourceRoot)'))" />
+  </ItemGroup>
 </Project>

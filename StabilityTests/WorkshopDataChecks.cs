@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using Newtonsoft.Json.Linq;
 
 // What a build leaves in the mod folder for Timberborn's Workshop uploader. The uploader reads workshop_data.json
@@ -41,9 +42,12 @@ static class WorkshopDataChecks
     // configuration has no build output, so nothing but the root files is copied.
     static void PostBuild(ScratchDocuments docs)
     {
-        string root = AppContext.BaseDirectory;
-        while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root)!;
-        Check(root != null, "could not find the repository root");
+        // The checkout the tests were built against (StabilityTests.csproj records it), so that
+        // `-p:SourceRoot=<another checkout>` runs that checkout's PostBuild step rather than this one's.
+        string root = typeof(WorkshopDataChecks).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "SourceRoot")?.Value;
+        Check(root != null && File.Exists(Path.Combine(root, "BeaverBuddies", "BeaverBuddies.csproj")),
+            $"could not find BeaverBuddies/BeaverBuddies.csproj under the source root '{root}'");
         var start = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = root, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,

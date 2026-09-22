@@ -39,6 +39,7 @@ fake Steam network with a fixed delay and takes about a minute and a half.
 
 To compare against another checkout:
 `dotnet run --project StabilityTests -p:SourceRoot=/absolute/path/to/checkout`
+The Workshop checks then run that checkout's PostBuild step too.
 
 The separate RuntimeChecks executable tests the actual compiled mod's RNG
 wrappers and save flags using the installed game's managed assemblies. It also
