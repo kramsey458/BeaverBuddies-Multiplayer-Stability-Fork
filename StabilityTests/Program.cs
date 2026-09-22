@@ -61,7 +61,7 @@ var tests = new (string Name, Action Run)[]
         finally { BeaverBuddies.IO.EventIO.IsNull = false; }
     })
 };
-tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(PingCadenceChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(PanelLayoutChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(FrameRatePacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).Concat(SessionEndChecks.Tests()).Concat(EntitySlotCacheChecks.Tests()).Concat(DesyncCheckChecks.Tests()).ToArray();
+tests = tests.Concat(Preview5Checks.Tests()).Concat(PerformanceChecks.Tests()).Concat(ActivityTransportChecks.Tests()).Concat(CursorPreferencesChecks.Tests()).Concat(SteamLinkChecks.Tests()).Concat(PingCadenceChecks.Tests()).Concat(NetworkStatusChecks.Tests()).Concat(PanelModelChecks.Tests()).Concat(PanelLayoutChecks.Tests()).Concat(CatchUpSpeedChecks.Tests()).Concat(HostPacingChecks.Tests()).Concat(FrameRatePacingChecks.Tests()).Concat(ModWarningChecks.Tests()).Concat(ChatChecks.Tests()).Concat(SessionEndChecks.Tests()).Concat(EntitySlotCacheChecks.Tests()).Concat(DesyncCheckChecks.Tests()).Concat(DirectTcpChecks.Tests()).ToArray();
 foreach (var test in tests)
 {
     try

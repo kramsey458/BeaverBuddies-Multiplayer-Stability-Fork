@@ -370,7 +370,8 @@ namespace TimberNet
             StartQueuing(client);
 
             Log($"Sending map with length {mapBytes.Length}");
-            SendDataWithLength(client, mapBytes);
+            // The one paced frame: this runs on the joining guest's own thread, never the game thread.
+            SendDataWithLength(client, mapBytes, paced: true);
 
             Log($"Sent map with length {mapBytes.Length} and Hash: {GetHashCode(mapBytes).ToString("X8")}");
         }
