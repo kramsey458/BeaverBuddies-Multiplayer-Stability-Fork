@@ -185,8 +185,8 @@ namespace BeaverBuddies.Steam
                 }
                 if (SteamMatchmaking.GetLobbyData(lobby, SteamListener.OpenKey) == "0")
                 {
-                    // An old invite: the host already started, so nobody can join until they rehost.
-                    Plugin.Log("The host has already started the game; not connecting.");
+                    // An old invite: the host already started or changed the game, so nobody can join until they rehost.
+                    Plugin.Log("The host has already started or changed the game; not connecting.");
                     SteamMatchmaking.LeaveLobby(lobby);
                     _clientConnectionService.ShowJoinError("BeaverBuddies.JoinCoopGame.Error.HostStarted");
                     return;

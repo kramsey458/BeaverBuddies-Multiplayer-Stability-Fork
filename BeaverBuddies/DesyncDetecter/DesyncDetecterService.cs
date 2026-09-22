@@ -28,6 +28,8 @@ namespace BeaverBuddies.DesyncDetecter
     [Serializable]
     public class TraceLoggedForTickEvent : ReplayEvent
     {
+        public override bool ChangesGame() => false;
+
         // tick refers to the tick for which these traces are captures
         // while ReplayEvent.ticksSinceLoad is the timing of when the
         // event was actually sent, which is usually 1 tick later

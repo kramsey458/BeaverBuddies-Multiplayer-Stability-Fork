@@ -32,6 +32,16 @@ namespace BeaverBuddies.Events
 
         public abstract void Replay(IReplayContext context);
 
+        /// <summary>
+        /// Whether playing this changes what a save would hold. A player who joins is sent the save the host loaded
+        /// and only what is played after they connected, so once an action that changes the game has been played
+        /// before the first tick, nobody else can join (see ReplayService.CloseJoiningIfGameChanged). False only for
+        /// events a player joining later can do without: heartbeats, the speed, the host's greeting (sent to every
+        /// guest as it joins), desync reports and traces, pings. Any other event, another mod's included, keeps true.
+        /// A method, not a property: properties are written into the event's JSON, and the JSON is hashed.
+        /// </summary>
+        public virtual bool ChangesGame() => true;
+
         public override string ToString()
         {
             return type;

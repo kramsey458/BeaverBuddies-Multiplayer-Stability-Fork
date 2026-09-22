@@ -131,3 +131,15 @@ Ticker.TickOnce, that the prefix is `[HarmonyPriority(Priority.Last)]`, that
 the game scene binds the notice, and that the notice text is in the built
 English localization. Harmony is not installed, so pressing the key in a live
 co-op game is still the final check.
+
+Joining closes once the host has played an action that changes the game before the first tick,
+because a player who joins gets the save the host loaded and only what is played after it
+connected. StabilityTests runs the real server and client: a guest whose build check is running, or
+whose save is being prepared, when joining closes is refused with the host's reason and never sent
+the save, while a guest already admitted still gets what the host plays next. RuntimeChecks checks,
+against the compiled mod, that every ReplayEvent type is in a table of events that change the game
+or not (a new type fails until it is added; a type from another assembly counts as changing it),
+that such an action at tick 0 closes joining with its own reason and one that does not change the
+game, or one at a later tick, does not, that the replay loop closes joining after playing the action
+and before queueing it to be sent, and that ChangesGame() added no field, property or JSON key
+(those of ReplayEvent and of every event that overrides it are pinned, so a wire change fails).
