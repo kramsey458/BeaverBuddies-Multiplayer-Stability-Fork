@@ -18,6 +18,7 @@ internal static class DevModeWarningChecks
         var notificationsType = Assembly.Load("Timberborn.QuickNotificationSystem")
             .GetType("Timberborn.QuickNotificationSystem.QuickNotificationService", true);
         var locType = Assembly.Load("Timberborn.Localization").GetType("Timberborn.Localization.ILoc", true);
+        var eventBusType = Assembly.Load("Timberborn.SingletonSystem").GetType("Timberborn.SingletonSystem.EventBus", true);
         var eventIo = mod.GetType("BeaverBuddies.IO.EventIO", true);
         var session = eventIo.GetField("instance", All);
         var singletons = (IDictionary)mod.GetType("BeaverBuddies.SingletonManager", true).GetField("map", All).GetValue(null);
@@ -32,6 +33,9 @@ internal static class DevModeWarningChecks
         var alerts = new List<(string text, bool warning)>();
         Action<object, object> onAlert = (sender, args) => alerts.Add(
             ((string)args.GetType().GetProperty("Text").GetValue(args), (bool)args.GetType().GetProperty("IsWarning").GetValue(args)));
+
+        // The game's own event bus and dev mode manager of the game being run, wired to each other and to the notice.
+        object bus = null, manager = null;
 
         // Builds the notice on a game with dev mode on or off, in a co-op game or single player, with or without the
         // mod's localization, and runs one step of its life on it.
@@ -49,13 +53,14 @@ internal static class DevModeWarningChecks
                 session.SetValue(null, coop ? DispatchProxy.Create(eventIo, typeof(DevKeySessionProxy)) : null);
                 singletons.Remove(localizationType);
                 if (localized) Activator.CreateInstance(localizationType, DispatchProxy.Create(locType, typeof(DevModeLocProxy)));
-                var manager = Activator.CreateInstance(managerType, new object[] { null });
+                bus = Activator.CreateInstance(eventBusType);
+                manager = Activator.CreateInstance(managerType, bus);
                 managerType.GetField("<Enabled>k__BackingField", All).SetValue(manager, devMode);
                 var notifications = Activator.CreateInstance(notificationsType);
                 var alertSent = notificationsType.GetEvent("AlertSent");
                 alertSent.AddEventHandler(notifications, Delegate.CreateDelegate(alertSent.EventHandlerType, onAlert.Target, onAlert.Method));
                 var type = NoticeType();
-                run(Activator.CreateInstance(type, null, manager, notifications), type);
+                run(Activator.CreateInstance(type, bus, manager, notifications), type);
             }
             finally
             {
@@ -63,6 +68,7 @@ internal static class DevModeWarningChecks
                 if (hadLocalization) singletons[localizationType] = previousLocalization;
                 session.SetValue(null, previousSession);
                 pluginLogger.SetValue(null, previousLogger);
+                bus = manager = null;
             }
         }
         void PostLoad(object notice, Type type) => type.GetMethod("PostLoad").Invoke(notice, null);
@@ -75,8 +81,34 @@ internal static class DevModeWarningChecks
             Require(alerts[0].text == DevModeLocProxy.Echo(NoticeKey), $"the notice {when} shows '{alerts[0].text}'");
         }
 
+        test("Dev mode notice: shown each time the game turns dev mode on in a co-op game, through its own event bus", () =>
+        {
+            // The only way the notice shows in the game today: every scene starts with dev mode off, and the player turns
+            // it on with the ToggleDevMode key (DevModeManager posts DevModeToggledEvent on the scene's event bus).
+            Game(coop: true, devMode: false, localized: true, (notice, type) =>
+            {
+                Require(type.GetInterfaces().Any(i => i.FullName == "Timberborn.SingletonSystem.ILoadableSingleton"),
+                    "the notice is not an ILoadableSingleton, so the game never runs its Load and it never listens for dev mode");
+                Require(type.GetInterfaces().Any(i => i.FullName == "Timberborn.SingletonSystem.IPostLoadableSingleton"),
+                    "the notice is not an IPostLoadableSingleton");
+                // The game's order: every singleton's Load, then every PostLoad (the event bus is one of them).
+                type.GetMethod("Load").Invoke(notice, null);
+                eventBusType.GetMethod("PostLoad").Invoke(bus, null);
+                type.GetMethod("PostLoad").Invoke(notice, null);
+                Require(alerts.Count == 0, "a co-op game that loaded with dev mode off showed the notice");
+                // EnableSilently is Enable without its Unity log line.
+                managerType.GetMethod("EnableSilently", All).Invoke(manager, null);
+                RequireOneNotice("when the game turns dev mode on");
+                managerType.GetMethod("Disable").Invoke(manager, null);
+                Require(alerts.Count == 1, "turning dev mode off through the game showed the notice");
+                managerType.GetMethod("EnableSilently", All).Invoke(manager, null);
+                Require(alerts.Count == 2, $"expected a second notice when dev mode was turned on again, got {alerts.Count - 1}");
+            });
+        });
         test("Dev mode notice: a co-op game that loads with dev mode on shows one warning", () =>
         {
+            // The game does not load a scene with dev mode on today (DevModeManager is made per scene, and only the
+            // ToggleDevMode key turns it on). This guards the case in which another mod turns it on while loading.
             Game(coop: true, devMode: true, localized: true, PostLoad);
             RequireOneNotice("at load");
             Game(coop: true, devMode: false, localized: true, PostLoad);
