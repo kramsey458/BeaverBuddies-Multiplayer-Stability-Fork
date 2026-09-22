@@ -122,8 +122,17 @@ namespace BeaverBuddies.IO
                   $"Ask the Host to rehost and join before they unpause.";
             // Called from inside a replay, so a server that never started must not throw here.
             NetBase?.StopAcceptingClients(message);
-            // Tell Steam friends too, so an old invite explains itself instead of hanging.
-            (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
+            // Tell Steam friends too, so an old invite explains itself instead of hanging. This can run inside a
+            // replay, where a throw would end the session. The server above already refuses guests, so the lobby
+            // is only a courtesy and a Steam failure is logged instead.
+            try
+            {
+                (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
+            }
+            catch (Exception e)
+            {
+                Plugin.LogWarning("Could not close the Steam lobby to new guests: " + e.Message);
+            }
             // TODO: remove map from memory
         }
 
