@@ -71,6 +71,19 @@ Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.
 
+RuntimeChecks also runs the game's own DistrictPreviewsValidator on a preview
+building, with a district service standing in for this computer's preview road
+graph (which holds the local player's hovered tool previews). Outside a replay
+it must refuse the building while those roads join two districts; while events
+replay the mod's prefix must accept it without reading them, at
+Priority.Last. It must be the mod's only patch on that method (no postfix or
+second prefix under any name), and no other placement check may be
+overridden. Patches applied with harmony.Patch at run time are not seen by
+these checks. Harmony is not
+installed: the checks run the mod's prefixes the way Harmony would, so a live
+two-player game with one player hovering a district-joining path is still the
+final check.
+
 RuntimeChecks also clones the installed game's depth-source modifier IL, substitutes
 a controlled frame clock and depth-query stub, and exercises the production
 timing transpiler. It reproduces frame-rate-dependent output before the patch
