@@ -15,6 +15,7 @@ using Timberborn.Forestry;
 using Timberborn.PlantingUI;
 using Timberborn.ScienceSystem;
 using Timberborn.TemplateInstantiation;
+using Timberborn.TerrainQueryingSystem;
 using Timberborn.ToolButtonSystem;
 using Timberborn.WorkSystemUI;
 using UnityEngine;
@@ -173,59 +174,107 @@ namespace BeaverBuddies.Events
         public List<Vector3Int> inputBlocks;
         public Ray ray;
         public string prefabName;
+        // The tiles to mark, levelled by the player who marked them. The game levels the dragged area with its terrain
+        // picker, which stops at the layer each player has sliced the view to: played again on another computer, the
+        // same ray could give another height and the marks would differ (a desync). Null in events from before.
+        public List<Vector3Int> coordinates;
 
         public const string UNMARK = "Unmark";
 
         public override void Replay(IReplayContext context)
         {
             var plantingService = context.GetSingleton<PlantingSelectionService>();
-            if (prefabName == UNMARK)
+            List<Vector3Int> leveled = coordinates
+                ?? LevelAbove(inputBlocks, plantingService._terrainAreaService._terrainService.OnGround);
+            PlantingLeveledCoordinatesPatcher.Recorded = leveled;
+            try
             {
-                plantingService.UnmarkArea(inputBlocks, ray);
+                if (prefabName == UNMARK)
+                {
+                    plantingService.UnmarkArea(inputBlocks, ray);
+                }
+                else
+                {
+                    plantingService.MarkArea(inputBlocks, ray, prefabName);
+                }
             }
-            else
+            finally
             {
-                plantingService.MarkArea(inputBlocks, ray, prefabName);
+                PlantingLeveledCoordinatesPatcher.Recorded = null;
             }
         }
 
+        /// <summary>
+        /// An event from before <see cref="coordinates"/>, levelled without the view. The planting tool drags its
+        /// rectangle on the level of the terrain it picked first, and the game marks one level above that, where the
+        /// ground is: so the marker's own levelling gave the tile above each dragged block that stands on ground.
+        /// </summary>
+        internal static List<Vector3Int> LevelAbove(IEnumerable<Vector3Int> inputBlocks, Func<Vector3Int, bool> onGround) =>
+            (inputBlocks ?? Enumerable.Empty<Vector3Int>())
+                .Select(block => new Vector3Int(block.x, block.y, block.z + 1))
+                .Where(onGround)
+                .ToList();
+
         public override string ToActionString()
         {
-            return $"Planting {inputBlocks.Count()} of {prefabName}";
+            return $"Planting {(coordinates ?? inputBlocks)?.Count ?? 0} of {prefabName}";
+        }
+
+        internal static PlantingAreaMarkedEvent Record(PlantingSelectionService service, IEnumerable<Vector3Int> inputBlocks,
+            Ray ray, string prefabName)
+        {
+            var blocks = new List<Vector3Int>(inputBlocks);
+            return new PlantingAreaMarkedEvent()
+            {
+                prefabName = prefabName,
+                ray = ray,
+                // The game only levels the dragged blocks, and the replay marks the levelled tiles below instead
+                // (PlantingLeveledCoordinatesPatcher), so the blocks themselves are not sent: an area is hundreds of
+                // tiles, and this halves what every computer serializes, sends and reads for it.
+                inputBlocks = new List<Vector3Int>(),
+                // Levelled here, with this player's view: the tiles they saw highlighted.
+                coordinates = service._terrainAreaService.InMapLeveledCoordinates(blocks, ray).ToList(),
+            };
         }
     }
 
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.MarkArea))]
     class PlantingAreaMarkedPatcher
     {
-        static bool Prefix(IEnumerable<Vector3Int> inputBlocks, Ray ray, string templateName)
+        static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray, string templateName)
         {
-            return ReplayEvent.DoPrefix(() =>
-            {
-                return new PlantingAreaMarkedEvent()
-                {
-                    prefabName = templateName,
-                    ray = ray,
-                    inputBlocks = new List<Vector3Int>(inputBlocks)
-                };
-            });
+            return ReplayEvent.DoPrefix(() => PlantingAreaMarkedEvent.Record(__instance, inputBlocks, ray, templateName));
         }
     }
 
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.UnmarkArea))]
     class PlantingAreaUnmarkedPatcher
     {
-        static bool Prefix(IEnumerable<Vector3Int> inputBlocks, Ray ray)
+        static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray)
         {
             return ReplayEvent.DoPrefix(() =>
-            {
-                return new PlantingAreaMarkedEvent()
-                {
-                    prefabName = PlantingAreaMarkedEvent.UNMARK,
-                    ray = ray,
-                    inputBlocks = new List<Vector3Int>(inputBlocks)
-                };
-            });
+                PlantingAreaMarkedEvent.Record(__instance, inputBlocks, ray, PlantingAreaMarkedEvent.UNMARK));
+        }
+    }
+
+    // While a planting event is played, the game's own MarkArea / UnmarkArea act on the tiles the event carries instead
+    // of levelling the area again with this computer's view (see PlantingAreaMarkedEvent.coordinates). Everything else
+    // they do (which tiles may be planted, the event the game posts) runs as in the game. Outside a replay it does
+    // nothing, so the tools' highlighting and every other caller level as before. Priority.Last, the rule for a prefix
+    // that replaces the original: another mod's prefix on the levelling runs first. If that prefix skips the original
+    // itself, Harmony skips this one too and the replay uses that mod's tiles instead, so a mod that replaces this
+    // levelling needs a lockstep review (none is known to).
+    [HarmonyPatch(typeof(TerrainAreaService), nameof(TerrainAreaService.InMapLeveledCoordinates))]
+    static class PlantingLeveledCoordinatesPatcher
+    {
+        internal static List<Vector3Int> Recorded;
+
+        [HarmonyPriority(Priority.Last)]
+        static bool Prefix(ref IEnumerable<Vector3Int> __result)
+        {
+            if (Recorded == null) return true;
+            __result = Recorded.ToList();
+            return false;
         }
     }
 

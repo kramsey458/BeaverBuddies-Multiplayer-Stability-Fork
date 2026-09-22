@@ -265,7 +265,8 @@ namespace BeaverBuddies.Activity
                 Vector3 target = new Vector3(state.X, state.Y, state.Z);
                 player.CursorFrom = player.State?.CursorVisible == true && state.CursorVisible ? player.CursorPosition(now) : target;
                 player.CursorTo = target; player.CursorChanged = now; player.LastSeen = now;
-                ColorUtility.TryParseHtmlString("#" + state.Color, out var advertised);
+                // A player still on the default Ping Color gets a color of their own by player number (see PlayerColors).
+                ColorUtility.TryParseHtmlString("#" + PlayerColors.Effective(state.Color, state.PlayerId), out var advertised);
                 player.State = state;
                 player.AdvertisedColor = advertised;
                 player.Label = state.Name + (state.PlayerId == 0 ? " (Host)" : " (P" + state.PlayerId + ")");

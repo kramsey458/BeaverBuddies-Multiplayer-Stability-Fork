@@ -399,15 +399,19 @@ static class ChatChecks
         });
 
         // ---- how a line is written ----
-        yield return ("A chat line is all in the sender's color, and no message can add markup", () =>
+        yield return ("A chat line colors only the name, the message stays in the panel's own color, and no message can add markup", () =>
         {
-            Equal("<color=#FFFF00>Ann: hi there</color>", ChatFormat.Line("Ann", "FFFF00", "hi there"));
-            Equal("<color=#FFFF00>bAnn/b: bhi/b</color>", ChatFormat.Line("<b>Ann</b>", "FFFF00", "<b>hi</b>"));
-            Equal("<color=#F2E8D0>Ann: x</color>", ChatFormat.Line("Ann", "nonsense", "x"));
-            // The only tags in a line are the one pair that colors it, whatever was typed.
+            Equal("<color=#FFFF00>Ann</color>: hi there", ChatFormat.Line("Ann", "FFFF00", "hi there"));
+            Equal("<color=#FFFF00>bAnn/b</color>: bhi/b", ChatFormat.Line("<b>Ann</b>", "FFFF00", "<b>hi</b>"));
+            Equal("<color=#F2E8D0>Ann</color>: x", ChatFormat.Line("Ann", "nonsense", "x"));
+            // The message is outside the color tags, so it is drawn in the label's own text color.
+            string line = ChatFormat.Line("Ann", "4D96FF", "hello");
+            Check(line.EndsWith("</color>: hello"), line);
+            Check(!line.Substring(line.IndexOf("</color>")).Contains("<color"), "the message is colored: " + line);
+            // The only tags in a line are the one pair that colors the name, whatever was typed.
             string hostile = ChatFormat.Line("</color><size=99>", "FFFF00", "</color><color=#FF0000>red</color>");
             Equal(2, hostile.Count(c => c == '<'));
-            Check(hostile.StartsWith("<color=#FFFF00>") && hostile.EndsWith("</color>"), hostile);
+            Check(hostile.StartsWith("<color=#FFFF00>") && hostile.Contains("</color>: ") && !hostile.EndsWith("</color>"), hostile);
         });
         yield return ("A dark name color is lightened until it can be read, and a light one is left alone", () =>
         {
