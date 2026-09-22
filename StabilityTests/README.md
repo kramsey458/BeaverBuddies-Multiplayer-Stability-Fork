@@ -15,7 +15,7 @@ live Unity/Harmony installation is not exercised by these checks.
 
 Run `dotnet run --project StabilityTests` from the repository root with .NET 8.
 This builds TimberNet and links the production SteamLinkSocket, SteamLinkManager,
-connection panel model, player cursor preferences and animation patch source. Steam and Unity APIs are test doubles; no game or
+connection panel model, player cursor preferences, animation patch and always-on desync check (DesyncCheck) source. Steam and Unity APIs are test doubles; no game or
 Steam client is required. Animation tests model a forward-only path cursor and
 invalid visual coordinates, not a running Unity water simulation.
 

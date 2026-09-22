@@ -19,6 +19,8 @@ namespace BeaverBuddies.Events
 
         public int ticksSinceLoad;
         public int? randomS0Before;
+        // All four words of Unity's random state before the host played this event, hashed (see DesyncCheck).
+        public int? randomStateHashBefore;
 
         public string type => GetType().Name;
 

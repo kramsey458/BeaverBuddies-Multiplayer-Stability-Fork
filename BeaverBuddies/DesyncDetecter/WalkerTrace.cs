@@ -10,9 +10,9 @@ namespace BeaverBuddies.DesyncDetecter
      * What every walking character looked like at the start of each recent tick, kept while debug mode is
      * on and written next to the water diagnostics when a desync is reported.
      *
-     * Why: a desync is only noticed when the random state differs, which is several ticks after two
-     * computers first disagree about where a beaver is (the "Move hash" in the verbose log). By then the
-     * trace no longer says which beaver it was or why. With this file from both computers,
+     * Why: the walker hash on the heartbeat (see DesyncCheck) stops the game within two ticks of two
+     * computers first disagreeing about where a beaver is, but a hash cannot say which beaver it was or why.
+     * With this file from both computers,
      * RuntimeChecks/compare_walker_traces.py names the first tick and character that differ, and which
      * of its inputs differed: where it was, its path, or its speed.
      *
