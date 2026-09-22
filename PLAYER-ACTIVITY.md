@@ -35,8 +35,8 @@ player who is sharing activity gets a card with:
 | Size | 50%–300% | 100% |
 | Transparency | 0%–90% | 50% |
 
-The color also applies to that player's name label, their selection outline and their chat
-lines in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
+The color also applies to that player's name label, their selection outline and their name in the
+chat in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
 color and transparency live, and **Reset** returns that player to the defaults.
 
 These are **display-only, local choices**. They are never sent over the network, so
@@ -60,6 +60,12 @@ In Mod Settings, **Player activity indicators** turns sharing and display on or 
 **Ping Display Name** and **Ping Color** are the name and color other players see for
 you here, and on your pings. Pick different names and colors for easier
 identification; connection labels distinguish players even if their names match.
+While **Ping Color** is left on its default yellow, other players see a color of their own by player
+number instead (the host orange, then blue, green, pink, purple, teal, red and lime for the guests as
+they join, repeating after eight), so players who never touch the setting still look different. Any
+other color, even a slightly different yellow, is kept as chosen. The swatch called **Their color** in
+**Player cursors** shows that color, and your own choices there still win. Pings always use the Ping
+Color as set, yellow by default.
 A host who disables their own display still relays other guests' activity.
 
 ## Performance and synchronization

@@ -101,6 +101,15 @@ namespace BeaverBuddies.IO
             };
         }
 
+        // A guest's action only happens once the host has read it, played it and sent it back, so one the host cannot
+        // read is lost for every player alike and nobody goes out of step. Ending the session for it would let any
+        // guest end it.
+        protected override bool HandleUnreadableFrame(string problem)
+        {
+            Plugin.LogWarning("Ignored an action from a guest that could not be read: " + problem);
+            return true;
+        }
+
         public void StopAcceptingClients()
         {
             Plugin.Log("Game started: no longer accepting clients");

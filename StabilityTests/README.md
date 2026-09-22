@@ -51,6 +51,22 @@ ordering fix, and checks water diagnostic snapshots and field hashes:
 dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory
 ```
 
+RuntimeChecks also checks which types a multiplayer frame may create. Frames are read with
+Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to create, and the
+`ReplayEventBinder` only lets actions and what they carry through. A frame that names any other type
+(a harmless sentinel stands in for a dangerous one), or a list, array, map or Nullable of it, even
+with the elements' own types left out, is refused before anything is created. So are Unity objects,
+delegates and reflection types, and a generic action whose type arguments no action carries. Because
+a frame that leaves a `$type` out gets the declared type without the binder being asked, no action
+may declare a Unity object, a delegate or a reflection type at any depth either. Every action the
+mod sends reads back unchanged, with every field filled in, and is written exactly as it is without
+the binder, so the event hash does not change. Actions from another mod's assembly loaded from bytes
+(standing in for MixedStorage's `StorageAllocationEvent`) pass, with the classes they declare. A frame
+that cannot be read (a refused type, an action from a mod that is not installed, no type at all, or a
+group of actions holding an empty entry or another group) is fed to the real guest and host event
+IO: the guest stops the session with a reason naming the type and its assembly and plays nothing
+more of that tick, and the host logs it, keeps the guest's other actions and carries on.
+
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.
@@ -60,6 +76,16 @@ a controlled frame clock and depth-query stub, and exercises the production
 timing transpiler. It reproduces frame-rate-dependent output before the patch
 and checks matching ramp values after it. This tests the real ramp arithmetic
 and emitted patch, but not Harmony installation inside Unity or depth sensing.
+
+RuntimeChecks also runs the game's own planting levelling (TerrainAreaService,
+TerrainPicker and GridTraversal) over a small made-up terrain seen through two
+layer views. A mark or unmark is recorded through the mod's own planting
+prefix, sent through the network JSON settings, and played through the event's
+Replay and the game's MarkArea / UnmarkArea on a computer with the other view;
+the tiles it acts on must be the ones the marking player levelled. Harmony is
+not installed: the checks run the mod's prefixes on the levelling the way
+Harmony would, so a live two-player game with different layer views is still
+the final check.
 
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 

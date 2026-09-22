@@ -20,6 +20,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Fixes/AnimationFixes.cs" Link="AnimationFixes.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/DesyncDetecter/WalkerTrace.cs" Link="WalkerTrace.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerCursorPreferences.cs" Link="PlayerCursorPreferences.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerColors.cs" Link="PlayerColors.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ConnectionStatusModel.cs" Link="ConnectionStatusModel.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ChatFormat.cs" Link="ChatFormat.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/PanelLayout.cs" Link="PanelLayout.cs" />
