@@ -112,6 +112,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **Random-number bookkeeping made safe.** Nested random-number scopes are counted correctly and restored even when an error interrupts them. *Tested.*
 - **Equal-distance demolition jobs chosen deterministically**, by persistent target IDs. *Tested; not yet confirmed in a playtest.*
 - **Entity ID collisions handled explicitly.** A regenerated ID is now applied, and the game fails with a clear error if no unique ID can be found. *Tested.*
+- **Dev mode's Ctrl keys no longer change another player's building.** With dev mode on, the game reads Ctrl ("place finished", "don't recover goods") while a placement or deletion is played, and in co-op that happens on every computer: a player holding Ctrl while someone else's building was placed or deleted got a finished building, or no recovered goods, on their computer alone. In a co-op game neither key is read any more, so both do nothing there; single player is unchanged. *Tested (the game's own placement and goods recovery code with Ctrl held); not yet played.*
 - **Stuck-controls recovery.** Input state is reset after a desync, a failed action, a lost connection and when a multiplayer game loads. *Tested with a mocked device reset.*
 
 **Crashes**

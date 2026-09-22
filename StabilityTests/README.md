@@ -47,6 +47,14 @@ timing transpiler. It reproduces frame-rate-dependent output before the patch
 and checks matching ramp values after it. This tests the real ramp arithmetic
 and emitted patch, but not Harmony installation inside Unity or depth sensing.
 
+RuntimeChecks also runs the game's own `BuildingPlacer.ShouldBePlacedFinished` and
+`BuildingGoodsRecoveryService.OnBuildingDeconstructed` on a keyboard where dev mode's
+Ctrl key is held, with the mod's prefixes in front of them in Harmony's order, in a
+co-op game and in single player: before the fix the held key finished the building and
+dropped no goods in co-op. It also decodes the IL of the placing, deconstruction and
+planting assemblies and fails on any other method there that reads a key and has not
+been reviewed.
+
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 
 ```
