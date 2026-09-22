@@ -44,7 +44,10 @@ Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to cre
 anything is created. Every action the mod sends reads back unchanged, with every field filled in, and
 is written exactly as it is without the binder, so the event hash does not change. Actions from
 another mod's assembly loaded from bytes (standing in for MixedStorage's `StorageAllocationEvent`)
-pass, with the classes they declare.
+pass, with the classes they declare. A frame that cannot be read (a refused type, an action from a mod
+that is not installed, or no type at all) is fed to the real guest and host event IO: the guest stops
+the session with a reason naming the type and its assembly and plays nothing more of that tick, and
+the host logs it, keeps the guest's other actions and carries on.
 
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
