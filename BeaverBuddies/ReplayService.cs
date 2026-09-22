@@ -71,6 +71,10 @@ namespace BeaverBuddies
     {
         public override bool ChangesGame() => false;
 
+        // The host's TEBPatcher hashes when this tick started, compared by every guest (see DesyncCheck).
+        public int? entityOrderHash;
+        public int? walkerPositionHash;
+
         public override void Replay(IReplayContext context)
         {
             // No op
@@ -104,6 +108,7 @@ namespace BeaverBuddies
             {
                 __ticksSinceLoad = value;
                 TimeTimePatcher.SetTicksSinceLoaded(value);
+                TEBPatcher.StartTick(value);
                 DesyncDetecterService.StartTick(value);
             }
         }
@@ -325,19 +330,21 @@ namespace BeaverBuddies
                 // If this event was played (e.g. on the server) and recorded a 
                 // random state, make sure we're in the same state.
                 // Keep this check independent of detailed logging preferences.
-                if (replayEvent.randomS0Before != null)
+                string mismatch = FindMismatchWithHost(replayEvent, out bool stops);
+                if (mismatch != null && stops)
                 {
-                    int s0 = UnityEngine.Random.state.s0;
-                    int randomS0Before = (int)replayEvent.randomS0Before;
-                    if (s0 != randomS0Before)
-                    {
-                        Plugin.LogWarning($"Random state mismatch: {s0:X8} != {randomS0Before:X8}");
-                        HandleDesync();
-                        return false;
-                    }
+                    Plugin.LogWarning(mismatch);
+                    HandleDesync(mismatch);
+                    return false;
+                }
+                // Entities or walkers differ while the random state agrees: logged once, the game goes on.
+                if (mismatch != null && TEBPatcher.FirstTickDifference())
+                {
+                    Plugin.LogWarning(mismatch + ". Logged only, the game goes on: the random state still matches the host's. " +
+                        "If a desync follows, this line says when the games first differed.");
                 }
                 // Only broadcast successful events from an active session.
-                replayEvent.randomS0Before = UnityEngine.Random.state.s0;
+                RecordRandomState(replayEvent);
                 replayEvent.Replay(this);
                 CloseJoiningIfGameChanged(io, currentTick, replayEvent);
                 if (CanAct && !EventIO.SkipRecording)
@@ -427,12 +434,24 @@ namespace BeaverBuddies
 
         public void HandleDesync()
         {
+            HandleDesync(null);
+        }
+
+        /// <param name="reason">
+        /// What the always-on check found (see DesyncCheck). Without detailed logging there is no trace, so this is
+        /// sent as the trace instead: the host's log and any report then say what differed, not only this guest's log.
+        /// </param>
+        public void HandleDesync(string reason)
+        {
             if (IsDesynced) return;
 
+            string trace = DesyncDetecterService.GetLastDesyncTrace();
+            if (string.IsNullOrEmpty(trace) && reason != null) trace = reason;
             ClientDesyncedEvent e = new ClientDesyncedEvent()
             {
-                desyncID = DesyncDetecterService.GetLastDesyncID(),
-                desyncTrace = DesyncDetecterService.GetLastDesyncTrace(),
+                // The same ID as DesyncDetecterService.GetLastDesyncID when the trace is that one.
+                desyncID = ReportingService.GetStringHash(trace),
+                desyncTrace = trace,
             };
             // Set IsDesynced to true so event play instead of sending
             // to the host, allowing the Client to continue play.
@@ -466,10 +485,51 @@ namespace BeaverBuddies
             if (!replayEvent.randomS0Before.HasValue &&
                 (EventIO.ShouldPlayPatchedEvents || replayEvent is HeartbeatEvent))
             {
-                replayEvent.randomS0Before = UnityEngine.Random.state.s0;
+                RecordRandomState(replayEvent);
                 //Plugin.Log($"Recording event s0: {replayEvent.randomS0Before}");
             }
+            // The heartbeat starts each tick, so it also says what the host's entities looked like when the
+            // previous tick finished. Each guest compares that at the start of the same tick.
+            if (replayEvent is HeartbeatEvent heartbeat && !heartbeat.entityOrderHash.HasValue)
+            {
+                heartbeat.entityOrderHash = TEBPatcher.EntityUpdateHash;
+                heartbeat.walkerPositionHash = TEBPatcher.PositionHash;
+            }
             eventsToSend.Enqueue(replayEvent);
+        }
+
+        private static void RecordRandomState(ReplayEvent replayEvent)
+        {
+            UnityEngine.Random.State state = UnityEngine.Random.state;
+            replayEvent.randomS0Before = state.s0;
+            replayEvent.randomStateHashBefore = DesyncCheck.RandomStateHash(state.s0, state.s1, state.s2, state.s3);
+        }
+
+        /// <summary>
+        /// The always-on desync check (see DesyncCheck): null when this game is where the host's was when it
+        /// played this event, otherwise what differs. <paramref name="stops"/> is true when the random state differs,
+        /// which stops the session; an entity or walker difference alone is only logged.
+        /// </summary>
+        private static string FindMismatchWithHost(ReplayEvent replayEvent, out bool stops)
+        {
+            stops = false;
+            HeartbeatEvent heartbeat = replayEvent as HeartbeatEvent;
+            // What a guest sends reaches the host with nothing to compare, and the host checks nothing.
+            if (replayEvent.randomS0Before == null && replayEvent.randomStateHashBefore == null &&
+                heartbeat?.entityOrderHash == null && heartbeat?.walkerPositionHash == null)
+            {
+                return null;
+            }
+            UnityEngine.Random.State random = UnityEngine.Random.state;
+            var local = new GameState
+            {
+                S0 = random.s0, S1 = random.s1, S2 = random.s2, S3 = random.s3,
+                EntityOrder = TEBPatcher.EntityUpdateHash,
+                WalkerPositions = TEBPatcher.PositionHash,
+            };
+            stops = DesyncCheck.RandomMismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore, local) != null;
+            return DesyncCheck.Mismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore,
+                heartbeat?.entityOrderHash, heartbeat?.walkerPositionHash, local);
         }
 
         private void SendEvents()

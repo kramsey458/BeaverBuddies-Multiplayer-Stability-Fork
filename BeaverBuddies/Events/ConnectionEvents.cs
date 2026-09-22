@@ -143,6 +143,13 @@ namespace BeaverBuddies.Events
 
         public override void Replay(IReplayContext context)
         {
+            // The guest logged what its check found as it happened; the host's log names it too (its first line, as
+            // a detailed-logging trace is long and was already written to the guest's log).
+            if (EventIO.Get() is ServerEventIO && !string.IsNullOrEmpty(desyncTrace))
+            {
+                string first = desyncTrace.Split('\n')[0].Trim();
+                Plugin.LogWarning("A player desynced: " + (first.Length > 300 ? first.Substring(0, 300) + "..." : first));
+            }
             ReplayService replayService = context.GetSingleton<ReplayService>();
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             replayService.SetTargetSpeed(0);
@@ -192,31 +199,26 @@ namespace BeaverBuddies.Events
                 }
                 else
                 {
+                    // The same way this guest joined: over Steam through the host's lobby, or to the address it typed.
                     context.GetSingleton<ClientConnectionService>()
-                    ?.ConnectOrShowFailureMessage();
+                    ?.Reconnect();
                 }
             };
 
 
             string reconnectText = isHost ? _loc.T("BeaverBuddies.ClientDesynced.SaveAndRehostButton") : _loc.T("BeaverBuddies.ClientDesynced.WaitForRehostButton");
             string reconnectMessage = _loc.T("BeaverBuddies.ClientDesynced.Message");
-            string bugReportMessageKey;
-            if (Settings.Debug)
-            {
-                bugReportMessageKey = "BeaverBuddies.ClientDesynced.PostBugReportButton";
-            }
-            else
+            // The report button needs an upload token, which public builds do not have, and the sentence that asks
+            // every player to press Enable Logging is only added when that button is there (see DesyncDialogPlan).
+            string bugReportMessageKey = DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken);
+            if (DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken))
             {
                 reconnectMessage += "\n\n" + _loc.T("BeaverBuddies.ClientDesynced.NeedToEnableTracing");
-                bugReportMessageKey = "BeaverBuddies.ClientDesynced.EnableTracing";
             }
 
-
-
             var builder = shower.Create().SetMessage(reconnectMessage);
-            if (reportingService.HasAccessToken)
+            if (bugReportMessageKey != null)
             {
-                // Only show the bug report button if we have the ability to post it
                 builder.SetInfoButton(bugReportAction, _loc.T(bugReportMessageKey));
             }
             DialogBox box = builder.SetConfirmButton(reconnectAction, reconnectText)

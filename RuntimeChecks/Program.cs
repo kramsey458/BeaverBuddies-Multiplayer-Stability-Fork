@@ -110,6 +110,8 @@ TickOnceChecks.Run(assembly, Test);
 DevKeyChecks.Run(assembly, Test);
 DevModeWarningChecks.Run(assembly, Test);
 JoinClosingChecks.Run(assembly, Test);
+DesyncCheckChecks.Run(assembly, Test);
+DesyncDialogChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

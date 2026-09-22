@@ -250,10 +250,10 @@ internal static class JoinClosingChecks
     // field and property that SF1's binder scans. ReplayEvent's members go into every event. The own members are
     // pinned for each event that overrides ChangesGame(), and for one ordinary action. A change here is a wire change
     // (the JSON is hashed, and the binder checks the members), so it needs its own decision, not a side effect.
-    static readonly string[] BaseMembers = { "randomS0Before", "ticksSinceLoad", "type" };
+    static readonly string[] BaseMembers = { "randomS0Before", "randomStateHashBefore", "ticksSinceLoad", "type" };
     static readonly (string Name, string[] Own)[] OwnMembers =
     {
-        ("BeaverBuddies.HeartbeatEvent", new string[0]),
+        ("BeaverBuddies.HeartbeatEvent", new[] { "entityOrderHash", "walkerPositionHash" }),
         ("BeaverBuddies.Events.SpeedSetEvent", new[] { "speed" }),
         ("BeaverBuddies.Events.ShowOptionsMenuEvent", new[] { "speed" }),
         ("BeaverBuddies.Events.InitializeClientEvent", new[] { "isDebugMode", "removeLargeColonySpeedLimit", "serverGameVersion", "serverModVersion" }),

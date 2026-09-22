@@ -13,6 +13,7 @@ BeaverBuddies.ClientDesynced.Message,"A connected player desynced and cannot con
 BeaverBuddies.ClientDesynced.FailedToRehostMessage,"Failed to Rehost. Manually save and Host again.","Failed to Rehost. Manually save and Host again."
 BeaverBuddies.ClientDesynced.SaveAndRehostButton,"Save and Rehost","Save and Rehost"
 BeaverBuddies.ClientDesynced.WaitForRehostButton,"Reconnect (wait for Rehost)","Reconnect (wait for Rehost)"
+BeaverBuddies.ClientDesynced.WaitForSteamInvite,"You joined this game through Steam, and Steam does not show the host's new game to you yet. Once the host has chosen Save and Rehost, accept the host's new Steam invite, or join the host from your Steam friends list.",""
 BeaverBuddies.ClientDesynced.PostBugReportButton,"Post Bug Report","Post Bug Report"
 BeaverBuddies.Editor.StartingLocation1,"Starting Location - Player 1",""
 BeaverBuddies.Editor.StartingLocation2,"Starting Location - Player 2",""

@@ -133,6 +133,8 @@ namespace BeaverBuddies
             IsTicking = false;
             activeNonGamePatchers.Clear();
             activeGamePatchers.Clear();
+            // The next multiplayer game starts them from zero as well (see the constructor).
+            TEBPatcher.ResetHashes();
             // No need to reset random
             // Don't reset seed, since it's set before the Reset
         }
@@ -145,6 +147,10 @@ namespace BeaverBuddies
                 UnityEngine.Random.InitState(nextSeedOnLoad.Value);
                 nextSeedOnLoad = null;
             }
+            // A multiplayer game is loading, on every player: the hashes the heartbeat carries start here, before
+            // anything ticks, and not from wherever an earlier game in this program left them. (Reset, when the
+            // previous game is left, clears them too.)
+            TEBPatcher.ResetHashes();
         }
 
         public static T GetNonGameRandom<T>(Func<T> getter)
@@ -995,14 +1001,27 @@ namespace BeaverBuddies
     [HarmonyPatch(typeof(TickableEntityBucket), nameof(TickableEntityBucket.TickAll))]
     public class TEBPatcher
     {
-        public static int EntityUpdateHash { get; private set; }
-        public static int PositionHash { get; private set; }
+        // Which entities tick, and where the walkers stand: sent on every heartbeat and compared by every guest
+        // (see DesyncCheck). Always kept in a multiplayer game, whatever the logging settings, since a guest
+        // compares them with the host's. Started from zero when a multiplayer game loads (DeterminismService).
+        private static readonly BeaverBuddies.DesyncDetecter.TickHashes hashes = new BeaverBuddies.DesyncDetecter.TickHashes();
+        private static readonly Func<TickableEntity, Guid> idOf = entity => entity.EntityId;
 
-        public static void SetHashes(int entityUpdateHash, int positionHash)
+        public static int EntityUpdateHash => hashes.EntityOrder;
+        public static int PositionHash => hashes.WalkerPositions;
+
+        public static void ResetHashes() => hashes.Reset();
+
+        // True the first time it is asked in a game, then false until the hashes are reset (see DesyncCheck.TickMismatch).
+        public static bool FirstTickDifference()
         {
-            EntityUpdateHash = entityUpdateHash;
-            PositionHash = positionHash;
+            if (hashes.DifferenceLogged) return false;
+            hashes.DifferenceLogged = true;
+            return true;
         }
+
+        // Called as each tick starts, so every player reads the same entities' IDs on it.
+        public static void StartTick(int tick) => hashes.StartTick(tick);
 
         // Which entities in each bucket have a MovementAnimator. Whether an entity has one never
         // changes once it is ticking, so it is looked up once and remembered (see EntitySlotCache),
@@ -1013,33 +1032,18 @@ namespace BeaverBuddies
         private static readonly ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>>.CreateValueCallback newAnimatorCache =
             _ => new EntitySlotCache<TickableEntity, MovementAnimator>();
 
-        // Whether the previous pass kept the hashes, to start them from zero when they are switched on.
-        private static bool keepingHashes;
-
         static void Prefix(TickableEntityBucket __instance)
         {
             if (EventIO.IsNull) return;
 
-            // The two hashes are only ever read by the detailed log line in ReplayService, which
-            // prints them under this same condition, so they are only kept while it is on. Hashing
-            // every entity is a real cost on every tick of every game otherwise. They start from
-            // zero when detailed logging turns on (including when a desync turns it on), so that
-            // both players' lines agree from the first one.
-            bool hashes = Settings.Debug && Settings.VerboseLogging;
-            if (hashes && !keepingHashes)
-            {
-                EntityUpdateHash = 0;
-                PositionHash = 0;
-            }
-            keepingHashes = hashes;
-
             var slots = animators.GetValue(__instance, newAnimatorCache);
             var entities = __instance._tickableEntities.Values;
+            // The bucket's size and a few of its IDs; hashing every ID on every tick is a real cost in a large
+            // colony (see TickHashes).
+            hashes.AddBucket(entities, idOf);
             for (int i = 0; i < __instance._tickableEntities.Count; i++)
             {
                 var entity = entities[i];
-                if (hashes)
-                    EntityUpdateHash = TimberNetBase.CombineHash(EntityUpdateHash, entity.EntityId.GetHashCode());
 
                 // Only characters that move have a MovementAnimator (buildings, for example, do
                 // not), and both steps below need one. Skip everything else. Most entities in a
@@ -1060,8 +1064,7 @@ namespace BeaverBuddies
                     // (hopefully) deterministic position
                     var targetPos = pathFollower._transform.position;
                     animatedPathFollower.CurrentPosition = targetPos;
-                    if (hashes)
-                        PositionHash = TimberNetBase.CombineHash(PositionHash, targetPos.GetHashCode());
+                    hashes.AddWalker(targetPos.x, targetPos.y, targetPos.z);
                     BeaverBuddies.DesyncDetecter.WalkerDiagnostics.Capture(entityComponent, pathFollower,
                         BeaverBuddies.DesyncDetecter.DesyncDetecterService.CurrentTick);
                 }
