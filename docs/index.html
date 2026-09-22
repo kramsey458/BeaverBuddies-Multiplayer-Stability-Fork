@@ -37,20 +37,20 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow">Timberborn co-op mod &middot; <span data-release="tag">v1.1.12</span></div>
+      <div class="eyebrow">Timberborn co-op mod &middot; <span data-release="tag">v1.1.13</span></div>
       <h1>Build your colony together.</h1>
       <p class="lede">BeaverBuddies Stability Fork lets you and your friends run one Timberborn colony at the same time, with Steam friend invites, a live connection panel, and fixes for the crashes and desyncs that make multiplayer painful.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.1.12</span></span>
+          <span>Download <span data-release="version">1.1.13</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Read the install guide</a>
       </div>
       <p class="hero-note">Free and open source. Tested on Windows with the Steam version of Timberborn 1.1.2.4.</p>
-      <div class="callout tip" data-release-pinned="1.1.12" style="margin-top:1.4rem">
+      <div class="callout tip" data-release-pinned="1.1.13" style="margin-top:1.4rem">
         <strong class="label">Stable</strong>
-        <p><b>1.1.12 is the current release.</b> 1.1.10 has been played extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 added a visual change on top and works without issues. 1.1.12 adds fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions, and a fuller desync check. Those are covered by automated checks but have not been played in multiplayer yet. If something goes wrong, 1.1.11 is still on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">releases page</a>. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
+        <p><b>1.1.13 is the current release.</b> 1.1.10 has been played extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 added a visual change on top and works without issues. 1.1.12 added fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions, and a fuller desync check. 1.1.13 adds a speed boost in the chat and a color of your choice for your own chat name. The maintainer played 1.1.13, which includes the 1.1.12 changes, and reports that it is stable and working; the particular situations the 1.1.12 fixes are for were not set up on purpose. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
       </div>
     </div>
 
@@ -64,7 +64,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.1.12</span></b><span>Latest release</span></li>
+      <li><b><span data-release="version">1.1.13</span></b><span>Latest release</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built and tested against</span></li>
       <li><b>Windows + Steam</b><span>Tested platform</span></li>
       <li><b>Two players</b><span>Tested group size</span></li>
@@ -113,7 +113,7 @@
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
         <h3>A connection panel</h3>
-        <p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance, and chat with everyone in the game. Collapse it to one line or hide it completely.</p>
+        <p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance, and chat with everyone in the game. A speed boost at the top of the chat adds to the game's speed for everyone. Collapse it to one line or hide it completely.</p>
       </article>
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3l7 17 2.5-7.5L21 10z"/></svg></div>
@@ -228,6 +228,7 @@
         </table>
       </div>
       <p style="color:var(--muted);font-size:.95rem">These are display-only choices that stay on your machine. They are never sent to other players, are remembered by player name, and cannot affect the simulation.</p>
+      <p style="color:var(--muted);font-size:.95rem">The first card, <b>You, in the chat</b>, sets the color you see your own name in, in the chat. Only you see it: others still see your Ping Color, or the color for your player number.</p>
     </div>
   </div>
 </section>
@@ -275,15 +276,15 @@
       </article>
       <article class="card">
         <h3 style="margin-top:0">More ways out of sync closed <span class="chip tested">Tested</span></h3>
-        <p>Planting now marks the same tiles when players have sliced the view to different layers. A building is no longer refused on your computer while you hover a path that would join two districts. The Tick once key and dev mode's Ctrl keys no longer change one computer only. And nobody can join after something was placed or changed while the game waited to start, since they would never be sent it. Not played yet.</p>
+        <p>Planting now marks the same tiles when players have sliced the view to different layers. A building is no longer refused on your computer while you hover a path that would join two districts. The Tick once key and dev mode's Ctrl keys no longer change one computer only. And nobody can join after something was placed or changed while the game waited to start, since they would never be sent it. Played as part of 1.1.13, which the maintainer reports is stable and working.</p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">A fuller desync check <span class="chip tested">Tested</span></h3>
-        <p>Guests used to compare a quarter of the host's random-number state; they now compare all of it, so a desync is caught sooner. Every tick they also compare the entities that tick and where every walking character stands, and log the first difference, so a desync report says when the games first went apart. Not played yet.</p>
+        <p>Guests used to compare a quarter of the host's random-number state; they now compare all of it, so a desync is caught sooner. Every tick they also compare the entities that tick and where every walking character stands, and log the first difference, so a desync report says when the games first went apart. Played as part of 1.1.13, which the maintainer reports is stable and working.</p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">A safer network reader <span class="chip tested">Tested</span></h3>
-        <p>A received message used to be able to make the game create any type of object; now it can only create multiplayer actions and their values, other mods' actions included. A guest that gets an action it cannot read, for example from a mod only the host has, stops with a message naming it instead of silently drifting apart. Not played yet.</p>
+        <p>A received message used to be able to make the game create any type of object; now it can only create multiplayer actions and their values, other mods' actions included. A guest that gets an action it cannot read, for example from a mod only the host has, stops with a message naming it instead of silently drifting apart. Played as part of 1.1.13, which the maintainer reports is stable and working.</p>
       </article>
     </div>
     <p style="margin-top:1.5rem">The full list is in the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
@@ -327,7 +328,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.12</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.13</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
