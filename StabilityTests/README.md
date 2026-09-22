@@ -100,6 +100,19 @@ not installed: the checks run the mod's prefixes on the levelling the way
 Harmony would, so a live two-player game with different layer views is still
 the final check.
 
+RuntimeChecks also runs the game's own `BuildingPlacer.ShouldBePlacedFinished` and
+`BuildingGoodsRecoveryService.OnBuildingDeconstructed` on a keyboard where dev mode's
+Ctrl key is held, with the mod's prefixes in front of them in Harmony's order, in a
+co-op game and in single player: before the fix the held key finished the building and
+dropped no goods in co-op. It also decodes the IL of the placing, demolishing,
+deconstruction and planting assemblies and fails on any method there that reads a key,
+the tools' own input handling included, unless it is patched or listed as reviewed
+with its reason (dev mode's instant unlock and plant spawner are listed as known
+local-only dev mode tools). The co-op dev mode notice is run against the game's own
+event bus, dev mode manager and notification service: shown each time dev mode is
+turned on in a co-op game, never when it is turned off, never in single player, and
+never an error when its text is missing.
+
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 
 ```

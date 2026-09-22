@@ -107,6 +107,8 @@ FrameTypeChecks.Run(assembly, Test);
 UnreadableFrameChecks.Run(assembly, Test);
 PlacementReplayChecks.Run(assembly, Test);
 TickOnceChecks.Run(assembly, Test);
+DevKeyChecks.Run(assembly, Test);
+DevModeWarningChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 
