@@ -90,6 +90,19 @@ namespace BeaverBuddies.Activity
         }
 
         /// <summary>
+        /// The key your own chat color is kept under (the "You, in the chat" card). No player's name lands on it:
+        /// KeyFor steps aside for it. Kept in the same file and shape as the players' styles, so an older build
+        /// reads the file as before and a newer one reads an older file.
+        /// </summary>
+        public const string SelfKey = "#you";
+
+        /// <summary>The color you see your own name in, in the chat (six hex digits), or null for the default.</summary>
+        public string OwnChatColor => Get(SelfKey).ColorHex;
+
+        /// <summary>Sets that color. Null, or anything that is not a color, returns to the default.</summary>
+        public void SetOwnChatColor(string hex) => Set(SelfKey, new PlayerCursorStyle { ColorHex = hex });
+
+        /// <summary>
         /// The color saved for a player who may not be connected right now, found from what a chat message
         /// records (their name and number), or null if none is saved. The numbered key is tried first: it
         /// is the one used while two connected players share a name.
@@ -105,6 +118,7 @@ namespace BeaverBuddies.Activity
         {
             string clean = (name ?? "").Trim().ToLowerInvariant();
             if (clean.Length == 0) clean = "player";
+            if (clean == SelfKey) clean = "_" + clean;
             return nameIsShared ? clean + "#" + playerId : clean;
         }
 

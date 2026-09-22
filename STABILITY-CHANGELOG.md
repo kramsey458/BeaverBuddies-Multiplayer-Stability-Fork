@@ -5,6 +5,66 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.13-preview1 (pre-release)
+
+A preview on top of 1.1.12 with two chat features taken from the BeaverBuddies MultiColony mod: a speed boost at the
+top of the chat, and a color of your choice for your own name in the chat. The speed boost adds a network message,
+so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
+
+**Not played in this fork yet.** The user reports both work without problems in the BeaverBuddies MultiColony mod, where they were written; this build of the Stability Fork has not been played yet. Everything below is also covered by automated checks.
+
+### A speed boost, from the chat box
+
+A row at the top of the chat, `Speed boost [-] [0] [+]`, adds a constant to the speed the players pick at the top
+right (the game's speed 1, 2 and 3 run at 1, 3 and 7): with a boost of +0.5, speed 2 runs at 3.5, and the fastest
+button at 7.5, about 12.5 ticks a second, past the 11.7 the buttons alone give.
+- **How it works.** `-` and `+` step by 0.5; the box takes a typed number (a sign, a comma or a dot are fine) on
+  Enter, or when the cursor leaves it; Esc drops what was typed. Any player may change it, and everyone plays the
+  change as an event (`SpeedBoostEvent`, which does not change the game and so leaves joining open), like a speed
+  change. The row shows what the boost makes of the picked speed, `= 3.5x`, while the game runs. The game's own
+  speed buttons show a speed no button has the way the game shows any custom speed: `x3.5` on the last button. A
+  player who joins is told the boost in the start message (`InitializeClientEvent.speedBoost`); a new session
+  starts at 0, like the chat. The boost is between -6.5 and +23, and the game never runs below 0.5x or above 30x
+  (`SpeedBoost.cs`).
+- **What it changes and what it does not.** Only how fast ticks are worked through, exactly as the speed buttons
+  do: nothing simulated, nothing sent with a tick, nothing saved. The tick rate is still bounded by the slowest
+  computer: the host eases off for a guest that falls behind as before, and a large colony will not reach 30x; the
+  connection panel's tick rate says what is really achieved.
+- **Speed changes with a boost.** The players' pick and the boost are kept apart (`ReplayService.ChosenSpeed` and
+  `Boost`; `TargetSpeed` is their sum, `SpeedSetEvent.speed` stays the pick): picking a speed keeps the boost, and
+  unpausing returns to the picked speed, not the boosted one (a postfix on `SpeedControlPanel.SetSpeed`). The game's
+  keys for the next and previous speed find the picked speed's button (a prefix on
+  `TimeSpeedButtonGroup.GetCurrentButton`); without it, at any speed no button has (a catch-up speed too) they did
+  nothing. A click on the speed already picked records nothing. The pause a desync report forces clears the pick
+  too, so picking the old speed again afterwards works.
+- **Catching up above speed 7.** The catch-up rule capped a guest at speed 10, which at a boosted speed of 12 would
+  have held a guest that fell behind below the speed it was meant to run at. The cap is now three above the chosen
+  speed when that is higher (`CatchUpSpeed.CapFor`), and above speed 7 the buffer a guest settles at grows with the
+  speed so it stays about a sixth of a second (two ticks at 7, three at 10, nine at 30). Speeds 1 to 7 are exactly
+  as before.
+
+### Your own name in the chat, in a color you pick
+
+Under Options, **Player cursors**, a card at the top, **You, in the chat**, lets you pick the color you see your own
+name in: the **Default** swatch (what others see: your Ping Color, or the color for your player number while that is
+still the default), the same ten presets as a player's card, or the Red/Green/Blue sliders; **Reset** returns to the
+default. It is on your screen only: nothing is sent, and others still see your Ping Color or your number's color.
+- Kept with the player styles in `BeaverBuddiesCursorStyles.json`, under the reserved key `#you`, so the file keeps
+  its shape and 1.1.12 reads it as before. A player who calls themselves `#you` is kept apart from it.
+- The card has no size or transparency: there is no cursor of your own to draw.
+
+### Validation
+
+- `StabilityTests`: **261** passed (12 new: the boost kept to a hundredth and within its limits, the picked speed
+  plus the boost with paused staying paused, a running game between 0.5x and 30x, - and + moving by a half step and
+  stopping at the limits, typed values read or refused, the value shown the same in every culture, the row's
+  English strings, a boosted speed never held below itself while catching up, the buffer above speed 7; your own
+  chat color kept under a key no name can take, saved and reloaded with an older file read as before, and every
+  string the Player cursors dialog asks for present in the English file).
+- `RuntimeChecks`: **141** passed against each of the Steam and non-Steam builds (the list of events that leave
+  joining open, and the members each carries, now include `SpeedBoostEvent` and `InitializeClientEvent.speedBoost`).
+- Python checks pass. Both builds compile with no warnings.
+
 ## 1.1.12
 
 The current release, on top of 1.1.11: fixes for several ways a shared co-op game could fall out of step, a network reader that only creates multiplayer

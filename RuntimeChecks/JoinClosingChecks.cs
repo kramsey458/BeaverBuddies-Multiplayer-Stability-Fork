@@ -13,6 +13,7 @@ internal static class JoinClosingChecks
         "BeaverBuddies.HeartbeatEvent",                         // a no-op that tells guests the host ticked
         "BeaverBuddies.Events.SpeedSetEvent",                   // unpausing runs the first tick, which closes joining
         "BeaverBuddies.Events.ShowOptionsMenuEvent",            // a SpeedSetEvent: a pause and the options menu
+        "BeaverBuddies.Events.SpeedBoostEvent",                 // a speed change: how fast ticks run, not what is in them
         "BeaverBuddies.Events.InitializeClientEvent",           // the host's greeting, sent to every guest as it joins
         "BeaverBuddies.Events.ClientDesyncedEvent",             // a desync report: the session is over
         "BeaverBuddies.DesyncDetecter.TraceLoggedForTickEvent", // compares debug traces, changes nothing
@@ -256,7 +257,8 @@ internal static class JoinClosingChecks
         ("BeaverBuddies.HeartbeatEvent", new[] { "entityOrderHash", "walkerPositionHash" }),
         ("BeaverBuddies.Events.SpeedSetEvent", new[] { "speed" }),
         ("BeaverBuddies.Events.ShowOptionsMenuEvent", new[] { "speed" }),
-        ("BeaverBuddies.Events.InitializeClientEvent", new[] { "isDebugMode", "removeLargeColonySpeedLimit", "serverGameVersion", "serverModVersion" }),
+        ("BeaverBuddies.Events.SpeedBoostEvent", new[] { "boost" }),
+        ("BeaverBuddies.Events.InitializeClientEvent", new[] { "isDebugMode", "removeLargeColonySpeedLimit", "serverGameVersion", "serverModVersion", "speedBoost" }),
         ("BeaverBuddies.Events.ClientDesyncedEvent", new[] { "desyncID", "desyncTrace" }),
         ("BeaverBuddies.DesyncDetecter.TraceLoggedForTickEvent", new[] { "tick", "traces" }),
         ("BeaverBuddies.Ping.PingEvent", new[] { "CreatorID", "WorldPosition", "colorHex", "senderName", "worldX", "worldY", "worldZ" }),

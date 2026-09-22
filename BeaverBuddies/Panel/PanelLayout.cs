@@ -11,9 +11,12 @@ namespace BeaverBuddies.Panel
         /// <summary>
         /// How tall the chat is, in the game's interface units. A compact box, not as tall as the section above it:
         /// with everything the host sees the panel is already tall, and the game's alerts sit at the bottom of the
-        /// screen.
+        /// screen. 150 for the messages and the box to type in, plus the speed boost row above them.
         /// </summary>
-        public const float ChatHeight = 150;
+        public const float ChatHeight = 150 + BoostRowHeight;
+
+        /// <summary>The speed boost row: the game's small - and + buttons, and the margin under the row.</summary>
+        public const float BoostRowHeight = 28;
 
         // A width taken from another panel is believed only within these limits, so a panel that is hidden, not laid
         // out yet or stretched across the screen can never make this one absurd.

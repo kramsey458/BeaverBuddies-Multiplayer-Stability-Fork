@@ -114,7 +114,19 @@ namespace BeaverBuddies
         }
         public int TicksSinceLoad => ticksSinceLoad;
 
+        /// <summary>The speed the game is asked to run at: the chosen speed plus the session's boost (0 paused).</summary>
         public float TargetSpeed  { get; private set; } = 0;
+
+        /// <summary>The speed the players picked at the top right (1, 3 or 7 for the game's speed 1, 2 and 3; 0 paused).</summary>
+        public float ChosenSpeed { get; private set; } = 0;
+
+        /// <summary>The session's speed boost (SpeedBoost): added to the chosen speed, the same for everyone.</summary>
+        public float Boost { get; private set; } = 0;
+
+        // The boost again, readable from any thread: the start message for a joining player is built on the network
+        // thread (see InitializeClientEvent.Create). A new session starts at 0.
+        private static volatile float sessionBoost;
+        public static float SessionBoost => sessionBoost;
         public bool IsDesynced { get; private set; } = false;
         public static bool HasReplayFailure { get; private set; }
 
@@ -187,6 +199,7 @@ namespace BeaverBuddies
             AutomationResetter automationResetter
         )
         {
+            sessionBoost = 0;
             //_tickWathcerService = AddSingleton(tickWathcerService);
             _eventBus = AddSingleton(eventBus);
             _speedManager = AddSingleton(speedManager);
@@ -621,6 +634,25 @@ namespace BeaverBuddies
         {
             TargetSpeed = speed;
             UpdateSpeed();
+        }
+
+        /// <summary>The players picked a speed (a SpeedSetEvent): the game runs at it plus the boost.</summary>
+        public void SetChosenSpeed(float speed)
+        {
+            ChosenSpeed = speed;
+            SetTargetSpeed(SpeedBoost.Apply(speed, Boost));
+        }
+
+        /// <summary>
+        /// The session's boost changed (a SpeedBoostEvent, or the start message as a player joins): the chosen speed
+        /// stays, the game's speed follows. A paused game (the start message always finds one) is left alone.
+        /// </summary>
+        public void SetBoost(float boost)
+        {
+            Boost = SpeedBoost.Clamp(boost);
+            sessionBoost = Boost;
+            float target = SpeedBoost.Apply(ChosenSpeed, Boost);
+            if (target != TargetSpeed) SetTargetSpeed(target);
         }
 
         private readonly HostPacing hostPacing = new HostPacing();

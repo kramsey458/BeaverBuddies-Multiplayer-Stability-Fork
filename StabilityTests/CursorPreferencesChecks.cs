@@ -105,6 +105,59 @@ static class CursorPreferencesChecks
             Equal("player", PlayerCursorPreferences.KeyFor("", 2, false));
             Equal("player", PlayerCursorPreferences.KeyFor(null, 2, false));
         });
+        yield return ("Your own chat color is kept with the styles, under a key no player's name can take", () =>
+        {
+            var prefs = new PlayerCursorPreferences(null);
+            Check(prefs.OwnChatColor == null, "nothing chosen yet");
+            prefs.SetOwnChatColor(" #4d96ff ");
+            Equal("4D96FF", prefs.OwnChatColor);
+            Equal(1, prefs.Count);
+            // Back to the default: the entry goes, as a player's default style does.
+            prefs.SetOwnChatColor(null);
+            Check(prefs.OwnChatColor == null && prefs.Count == 0, "default not dropped");
+            prefs.SetOwnChatColor("not a color");
+            Check(prefs.OwnChatColor == null && prefs.Count == 0, "an invalid color is the default");
+            // A player who calls themselves by the reserved key is kept apart from it, connected or not.
+            prefs.SetOwnChatColor("FF4D4D");
+            Check(PlayerCursorPreferences.KeyFor(PlayerCursorPreferences.SelfKey, 2, false) != PlayerCursorPreferences.SelfKey, "name lands on the key");
+            Check(PlayerCursorPreferences.KeyFor(" #YOU ", 2, false) != PlayerCursorPreferences.SelfKey, "name lands on the key (case)");
+            Check(prefs.SavedColorFor(PlayerCursorPreferences.SelfKey, 2) == null, "a player named like the key gets your color");
+            prefs.Set(PlayerCursorPreferences.KeyFor(PlayerCursorPreferences.SelfKey, 2, false), new PlayerCursorStyle { ColorHex = "6BCB77" });
+            Equal("6BCB77", prefs.SavedColorFor(PlayerCursorPreferences.SelfKey, 2));
+            Equal("FF4D4D", prefs.OwnChatColor);
+        });
+        yield return ("Your own chat color survives a save and reload, and an older file without it reads as before", () =>
+        {
+            using var file = new TempFile();
+            var prefs = new PlayerCursorPreferences(file.Path);
+            prefs.Set("sarah", new PlayerCursorStyle { ColorHex = "112233" });
+            prefs.SetOwnChatColor("9B5DE5");
+            Check(prefs.Save());
+            var reloaded = new PlayerCursorPreferences(file.Path);
+            Equal("9B5DE5", reloaded.OwnChatColor);
+            Equal("112233", reloaded.Get("sarah").ColorHex);
+            // The file is still one flat map of styles, so a build without this feature reads it as before.
+            Check(File.ReadAllText(file.Path).Contains("\"" + PlayerCursorPreferences.SelfKey + "\""), "not in the same map");
+            File.WriteAllText(file.Path, "{\"sarah\":{\"ColorHex\":\"112233\"}}");
+            var older = new PlayerCursorPreferences(file.Path);
+            Check(older.OwnChatColor == null); Equal("112233", older.Get("sarah").ColorHex);
+        });
+        yield return ("Every string the Player cursors dialog asks for exists in the English file", () =>
+        {
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(System.IO.Path.Combine(root, "BeaverBuddies.sln"))) root = System.IO.Path.GetDirectoryName(root)!;
+            Check(root != null, "could not find the repository root");
+            string csv = File.ReadAllText(System.IO.Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv"));
+            var defined = new HashSet<string>(System.Text.RegularExpressions.Regex.Matches(csv, "^([A-Za-z0-9.]+),", System.Text.RegularExpressions.RegexOptions.Multiline)
+                .Select(m => m.Groups[1].Value));
+            string source = File.ReadAllText(System.IO.Path.Combine(root!, "BeaverBuddies", "Activity", "PlayerCursorSettingsUI.cs"));
+            var used = System.Text.RegularExpressions.Regex.Matches(source, "\"(BeaverBuddies\\.Cursors\\.[A-Za-z0-9.]+)\"").Select(m => m.Groups[1].Value).Distinct().ToList();
+            Check(used.Count >= 12, "found only " + used.Count + " keys; the check is not looking in the right place");
+            var missing = used.Where(k => !defined.Contains(k)).ToList();
+            Check(missing.Count == 0, "missing from enUS_BeaverBuddie.csv: " + string.Join(", ", missing));
+            foreach (string key in new[] { "BeaverBuddies.Cursors.You", "BeaverBuddies.Cursors.YouNote", "BeaverBuddies.Cursors.Default" })
+                Check(used.Contains(key), "the dialog never asks for " + key);
+        });
         yield return ("A color saved for a player is found again from a chat message, even when they are not connected", () =>
         {
             var prefs = new PlayerCursorPreferences(null);
