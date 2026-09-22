@@ -5,6 +5,10 @@ using System.Text.RegularExpressions;
 // hashes start when a multiplayer game loads. StabilityTests checks the comparison itself over the transport.
 internal static class DesyncCheckChecks
 {
+    // The same method, whichever way it was found (a call's operand, or reflection).
+    static bool Same(MemberInfo found, MemberInfo method) =>
+        found != null && found.Module == method.Module && found.MetadataToken == method.MetadataToken;
+
     public static void Run(Assembly mod, Action<string, Action> test)
     {
         const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
@@ -37,8 +41,9 @@ internal static class DesyncCheckChecks
                 throw new Exception("A hash was lost in transit");
         });
 
-        // The constructor clears them as well, but it cannot run here: it also seeds Unity's random numbers.
-        test("Leaving a multiplayer game clears the tick hashes, so the next one starts from zero", () =>
+        // The constructor clears them as well, but it cannot run here (it also seeds Unity's random numbers), so that
+        // part is read from its instructions.
+        test("Loading or leaving a multiplayer game clears the tick hashes, so each game starts from zero", () =>
         {
             // Whatever the game being left accumulated.
             object hashes = patcherType.GetField("hashes", all)?.GetValue(null)
@@ -54,6 +59,10 @@ internal static class DesyncCheckChecks
             object service = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(serviceType);
             serviceType.GetMethod("Reset")!.Invoke(service, null);
             if (Order() != 0 || Walkers() != 0) throw new Exception($"The hashes survived: {Order():X8} {Walkers():X8}");
+            // And the constructor, which every player runs as a multiplayer game loads.
+            if (!serviceType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Any(ctor => IlScan.Instructions(ctor).Any(i => i.Calls && i.Is("BeaverBuddies.TEBPatcher", "ResetHashes"))))
+                throw new Exception("Loading a multiplayer game (the DeterminismService constructor) does not clear the tick hashes");
         });
 
         // StabilityTests runs the comparison; this is that the compiled ReplayService feeds it and acts on it. Unity's
@@ -84,16 +93,65 @@ internal static class DesyncCheckChecks
                 if (!Names(check[0], "BeaverBuddies.TEBPatcher", hash))
                     throw new Exception($"{check[0].Name} compares without reading this game's {hash.Substring(4)}");
 
-            // The replay of each event asks the check and stops at a mismatch.
+            // The replay of each event asks the check and stops at a mismatch, passing on what differed (the host's
+            // log and a report name it; without detailed logging there is no other trace).
             var replay = Naming(check[0].DeclaringType!.FullName!, check[0].Name);
-            if (!replay.Any(method => Names(method, "BeaverBuddies.ReplayService", "HandleDesync")))
-                throw new Exception($"Nothing that calls {check[0].Name} goes on to HandleDesync");
+            if (!replay.Any(method => members[method].Any(m => m is MethodBase handle && handle.Name == "HandleDesync" &&
+                    handle.DeclaringType?.FullName == "BeaverBuddies.ReplayService" && handle.GetParameters().Length == 1)))
+                throw new Exception($"Nothing that calls {check[0].Name} goes on to HandleDesync with what differed");
 
-            // And the host fills in what the guests compare.
-            foreach (var (type, field) in new[] { ("BeaverBuddies.Events.ReplayEvent", "randomStateHashBefore"),
-                ("BeaverBuddies.HeartbeatEvent", "entityOrderHash"), ("BeaverBuddies.HeartbeatEvent", "walkerPositionHash") })
-                if (!members.Values.Any(list => list.Any(m => m is FieldInfo f && f.DeclaringType?.FullName == type && f.Name == field)))
-                    throw new Exception($"ReplayService never sets {field}, so the host sends nothing to compare");
+            // And the host fills in what the guests compare. A guest compares only what the host sent, so without
+            // these stores every guest would compare nothing new and still pass: the check would be off.
+            const string replayEvent = "BeaverBuddies.Events.ReplayEvent", heartbeat = "BeaverBuddies.HeartbeatEvent";
+            var code = members.Keys.ToDictionary(method => method, IlScan.Instructions);
+            var stamping = code.Keys.Where(method => code[method].Any(i => i.Stores && i.Is(replayEvent, "randomStateHashBefore"))).ToArray();
+            if (stamping.Length == 0)
+                throw new Exception("ReplayService never stores randomStateHashBefore, so the host sends no whole random state to compare");
+            foreach (var method in stamping)
+                foreach (string word in new[] { "s0", "s1", "s2", "s3" })
+                    if (!code[method].Any(i => i.Loads && i.Is("UnityEngine.Random+State", word)))
+                        throw new Exception($"{method.Name} stores randomStateHashBefore without reading {word} of this game's random state");
+            // Every event the host plays and sends goes through EnqueueEventForSending, the heartbeat included.
+            var send = code.Keys.SingleOrDefault(method => method.Name == "EnqueueEventForSending")
+                ?? throw new Exception("ReplayService has no EnqueueEventForSending");
+            if (!code[send].Any(i => (i.Stores && i.Is(replayEvent, "randomStateHashBefore")) ||
+                    (i.Calls && stamping.Any(method => Same(i.Member, method)))))
+                throw new Exception("EnqueueEventForSending does not record the whole random state, so the host sends none");
+            foreach (var (field, getter) in new[] { ("entityOrderHash", "get_EntityUpdateHash"), ("walkerPositionHash", "get_PositionHash") })
+            {
+                if (!code[send].Any(i => i.Stores && i.Is(heartbeat, field)))
+                    throw new Exception($"EnqueueEventForSending never stores the heartbeat's {field}, so the host sends none");
+                if (!code[send].Any(i => i.Calls && i.Is("BeaverBuddies.TEBPatcher", getter)))
+                    throw new Exception($"EnqueueEventForSending stores {field} without reading TEBPatcher.{getter.Substring(4)}");
+            }
+            var beats = code.Keys.Where(method => code[method].Any(i => i.Op == System.Reflection.Emit.OpCodes.Newobj &&
+                i.Member?.DeclaringType?.FullName == heartbeat)).ToArray();
+            if (beats.Length == 0 || !beats.All(method => code[method].Any(i => i.Calls && Same(i.Member, send))))
+                throw new Exception("A heartbeat is sent without going through EnqueueEventForSending, so it carries no hashes");
+        });
+
+        // The comparison is only as good as the hashes: they used to be kept only with detailed logging on, and a
+        // public game would then send and compare 0 == 0 on every tick. The pass needs the game's buckets, so this
+        // reads its instructions.
+        test("Every bucket pass adds to the tick hashes whatever the logging settings, and each tick moves the sampled IDs", () =>
+        {
+            var prefix = patcherType.GetMethod("Prefix", all) ?? throw new Exception("TEBPatcher has no Prefix");
+            var code = IlScan.Instructions(prefix);
+            const string hashes = "BeaverBuddies.DesyncDetecter.TickHashes";
+            foreach (string add in new[] { "AddBucket", "AddWalker" })
+                if (!code.Any(i => i.Calls && i.Is(hashes, add)))
+                    throw new Exception($"TEBPatcher.Prefix never calls TickHashes.{add}, so that hash never changes");
+            var gate = code.FirstOrDefault(i => i.Member?.DeclaringType?.FullName == "BeaverBuddies.Settings" &&
+                (i.Member.Name.Contains("Debug") || i.Member.Name.Contains("VerboseLogging")));
+            if (gate != null)
+                throw new Exception($"TEBPatcher.Prefix reads Settings.{gate.Member!.Name}: the hashes must not depend on a player's logging settings");
+
+            // Without this the same eighth of each bucket's IDs is hashed on every tick, and the other seven never are.
+            var replayService = mod.GetType("BeaverBuddies.ReplayService", true)!;
+            var tickSetter = replayService.GetProperty("ticksSinceLoad", all)?.SetMethod
+                ?? throw new Exception("ReplayService has no ticksSinceLoad setter");
+            if (!IlScan.Instructions(tickSetter).Any(i => i.Calls && i.Is("BeaverBuddies.TEBPatcher", "StartTick")))
+                throw new Exception("Setting ReplayService.ticksSinceLoad does not call TEBPatcher.StartTick, so the sampled IDs never rotate");
         });
     }
 }
