@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 // Which types a multiplayer frame may create. Frames are read with TypeNameHandling.All, so a "$type" at any depth
 // names a type to create; only actions (ReplayEvent types) and what they carry may be created, from BeaverBuddies or
@@ -14,7 +15,6 @@ internal static class FrameTypeChecks
         var groupedType = mod.GetType("BeaverBuddies.GroupedEvent", true);
         var automationType = mod.GetType("BeaverBuddies.Events.AutomationEvent", true);
         var jsonType = mod.GetType("BeaverBuddies.IO.JsonSettings", true);
-        var binderType = mod.GetType("BeaverBuddies.IO.ReplayEventBinder", true);
         var newtonsoft = jsonType.BaseType.Assembly;
         var convert = newtonsoft.GetType("Newtonsoft.Json.JsonConvert", true);
         var settingsBase = newtonsoft.GetType("Newtonsoft.Json.JsonSerializerSettings", true);
@@ -24,7 +24,11 @@ internal static class FrameTypeChecks
         var vector3 = unity.GetType("UnityEngine.Vector3", true);
         var vector3Int = unity.GetType("UnityEngine.Vector3Int", true);
         var ray = unity.GetType("UnityEngine.Ray", true);
+        var unityObject = unity.GetType("UnityEngine.Object", true);
         var traceType = mod.GetType("BeaverBuddies.DesyncDetecter.Trace", true);
+        // Looked up when a check needs it, so a build without the binder fails those checks instead of all of them.
+        Type Binder() => mod.GetType("BeaverBuddies.IO.ReplayEventBinder", false)
+            ?? throw new Exception("BeaverBuddies.IO.ReplayEventBinder is not in this build: frames are read with no binder");
 
         // Plugin.Log* would otherwise reach Unity's native logger.
         var pluginLogger = mod.GetType("BeaverBuddies.Plugin", true).GetField("logger", all);
@@ -110,13 +114,26 @@ internal static class FrameTypeChecks
                 new List<FrameSentinel> { new() }, new[] { new FrameSentinel() },
                 new Dictionary<string, FrameSentinel> { ["key"] = new() }, new Dictionary<string, int> { ["key"] = 1 },
             };
+            // Written honestly, each element names its own type too, and that alone is refused. A frame can leave it
+            // out: Newtonsoft then makes each element the collection's declared element type without asking the
+            // binder, so the collection's own type must be refused for what it holds. JsonSettings writes indented
+            // JSON, so the element's "$type" is removed with the white space after it.
+            var elementType = new Regex($"\"\\$type\":\\s*\"{Regex.Escape($"{typeof(FrameSentinel).FullName}, {typeof(FrameSentinel).Assembly.GetName().Name}")}\",\\s*");
+            int untyped = 0;
             foreach (object carried in carriedValues)
             {
-                string json = Write(Grouped(Automation(carried)));
-                int before = FrameSentinel.Created;
-                if (Refusal(json) == null) throw new Exception($"A frame carrying {carried.GetType()} was read");
-                if (FrameSentinel.Created != before) throw new Exception("A sentinel was created before it was refused");
+                string typed = Write(Grouped(Automation(carried)));
+                var frames = new List<(string How, string Json)> { ("", typed) };
+                if (elementType.IsMatch(typed)) { frames.Add((" with untyped elements", elementType.Replace(typed, ""))); untyped++; }
+                foreach (var (how, json) in frames)
+                {
+                    int before = FrameSentinel.Created;
+                    if (Refusal(json) == null)
+                        throw new Exception($"A frame carrying {carried.GetType()}{how} was read and created {FrameSentinel.Created - before} sentinels");
+                    if (FrameSentinel.Created != before) throw new Exception($"A sentinel was created before {carried.GetType()}{how} was refused");
+                }
             }
+            if (untyped != 3) throw new Exception($"Only {untyped} of the list, array and map could be sent with untyped elements");
         }));
 
         test("A type given to the binder as an extra payload type passes; without it the same frame is refused", () => Quietly(() =>
@@ -124,7 +141,7 @@ internal static class FrameTypeChecks
             string json = Write(Grouped(Automation(new FrameSentinel())));
             object settings = Fresh();
             settingsBase.GetProperty("SerializationBinder").SetValue(settings,
-                Activator.CreateInstance(binderType, new object[] { new[] { typeof(FrameSentinel) } }));
+                Activator.CreateInstance(Binder(), new object[] { new[] { typeof(FrameSentinel) } }));
             if (Write(Read(json, settings)) != json) throw new Exception("The extra payload type did not read back");
             if (Refusal(json, Fresh()) == null) throw new Exception("A fresh binder without the extra type read it");
         }));
@@ -134,14 +151,55 @@ internal static class FrameTypeChecks
             // The types found by following the members of every action. A class from the game, the framework or
             // another library (one that can do something when it is created or filled in) must never be reached,
             // which would happen, for example, if an action declared a field of a game service.
+            Type binderType = Binder();
             object binder = Activator.CreateInstance(binderType, new object[] { Type.EmptyTypes });
             var found = ((IEnumerable)binderType.GetField("payloadTypes", all).GetValue(binder)).Cast<Type>().ToList();
             var unexpected = found.Where(t => t.Assembly != mod && !t.IsValueType && t != typeof(string) && !t.IsArray &&
                 !(t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))).Select(t => t.FullName).ToList();
             if (unexpected.Count > 0) throw new Exception("Unexpected types are allowed: " + string.Join(", ", unexpected));
+            // Not even one of this mod's own: a Unity object, a delegate or a reflection type does something when made.
+            var never = found.Where(t => unityObject.IsAssignableFrom(t) || typeof(Delegate).IsAssignableFrom(t) ||
+                typeof(MemberInfo).IsAssignableFrom(t) || typeof(Assembly).IsAssignableFrom(t)).Select(t => t.FullName).ToList();
+            if (never.Count > 0) throw new Exception("Types that must never be created are allowed: " + string.Join(", ", never));
             foreach (Type expected in new[] { traceType, ray, vector3Int, typeof(object[]), typeof(List<>).MakeGenericType(vector3Int) })
                 if (!found.Contains(expected)) throw new Exception($"{expected} was not found in the actions' members");
         });
+
+        // Resolves a type by the name a frame would give it, as Newtonsoft does. True if the binder let it through.
+        bool Binds(object binder, Type type)
+        {
+            var name = new object[] { type, null, null };
+            binder.GetType().GetMethod("BindToName").Invoke(binder, name);
+            try { binder.GetType().GetMethod("BindToType").Invoke(binder, new[] { name[1], name[2] }); return true; }
+            catch (TargetInvocationException e) when (e.InnerException?.GetType().Name == "RefusedTypeException") { return false; }
+        }
+
+        test("A Unity object, a delegate or a reflection type is refused even when a build lists it as an extra payload type", () => Quietly(() =>
+        {
+            var never = new[] { unity.GetType("UnityEngine.GameObject", true), unity.GetType("UnityEngine.ScriptableObject", true),
+                typeof(Action), typeof(MethodInfo), typeof(Assembly) };
+            object binder = Activator.CreateInstance(Binder(), new object[] { never });
+            foreach (Type type in never)
+                if (Binds(binder, type)) throw new Exception($"{type} was allowed");
+        }));
+
+        test("A generic action passes only if its type arguments do", () => Quietly(() =>
+        {
+            // This mod's generic actions (BuildingDropdownEvent<T>, say) are closed over a game component by each
+            // concrete action. A frame names the concrete action, which passes; the generic one closed over that game
+            // class, which no action carries, must not.
+            object binder = Activator.CreateInstance(Binder(), new object[] { Type.EmptyTypes });
+            var concrete = mod.GetTypes()
+                .Where(t => eventType.IsAssignableFrom(t) && !t.IsAbstract && !t.ContainsGenericParameters &&
+                    t.BaseType is { IsGenericType: true } b && eventType.IsAssignableFrom(b))
+                .OrderBy(t => t.FullName, StringComparer.Ordinal).ToList();
+            if (concrete.Count == 0) throw new Exception("No action derives from a generic action");
+            foreach (Type type in concrete)
+            {
+                if (!Binds(binder, type)) throw new Exception($"{type} was refused");
+                if (Binds(binder, type.BaseType)) throw new Exception($"{type.BaseType} was allowed, although {type.BaseType.GetGenericArguments()[0]} is carried by no action");
+            }
+        }));
 
         // ---- every real action still reads back ----
 
