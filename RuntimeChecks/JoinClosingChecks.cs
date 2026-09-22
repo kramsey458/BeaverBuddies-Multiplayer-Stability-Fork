@@ -218,44 +218,61 @@ internal static class JoinClosingChecks
             throw new Exception("The replay loop was not found");
         });
 
-        test("ChangesGame is a method, so it adds nothing to an event's JSON or its hash", () =>
+        test("ChangesGame is a method, so it adds nothing to an event's JSON, its hash or what the binder scans", () =>
         {
             var named = EventTypes().Append(eventType)
                 .SelectMany(t => t.GetMembers(all).Where(m => m is FieldInfo || m is PropertyInfo))
                 .Where(m => m.Name.Contains("ChangesGame", StringComparison.OrdinalIgnoreCase)).ToList();
             if (named.Count > 0) throw new Exception("A field or property is named after ChangesGame: " + named[0].DeclaringType + "." + named[0].Name);
-            // What Newtonsoft writes is the data members, whatever this build adds to them: compare the keys with those.
-            foreach (string name in NotGameChanging.Append("BeaverBuddies.Events.BuildingPausedChangedEvent"))
+            var problems = new List<string>();
+            string Show(IEnumerable<string> names) => "[" + string.Join(",", names) + "]";
+            // ReplayEvent's own members are in every event: one more changes every event on the wire.
+            var baseMembers = Members(eventType, eventType.BaseType);
+            if (!baseMembers.SequenceEqual(Sorted(BaseMembers)))
+                problems.Add($"ReplayEvent's fields and properties are {Show(baseMembers)}, not {Show(Sorted(BaseMembers))}");
+            foreach (var (name, own) in OwnMembers)
             {
-                object replayEvent = Activator.CreateInstance(mod.GetType(name, true), true);
-                string json = (string)jsonType.GetMethod("Serialize").MakeGenericMethod(replayEvent.GetType()).Invoke(null, new[] { replayEvent });
-                var keys = JsonDocument.Parse(json).RootElement.EnumerateObject().Select(p => p.Name).OrderBy(k => k, StringComparer.Ordinal).ToList();
-                var expected = DataMembers(replayEvent.GetType()).Append("$type").OrderBy(k => k, StringComparer.Ordinal).ToList();
-                if (!keys.SequenceEqual(expected))
-                    throw new Exception($"{name} JSON keys [{string.Join(",", keys)}] are not its data members [{string.Join(",", expected)}]");
+                var type = mod.GetType(name, true);
+                var members = Members(type, eventType);
+                if (!members.SequenceEqual(Sorted(own)))
+                    problems.Add($"{name}'s own fields and properties are {Show(members)}, not {Show(Sorted(own))}");
+                object replayEvent = Activator.CreateInstance(type, true);
+                string json = (string)jsonType.GetMethod("Serialize").MakeGenericMethod(type).Invoke(null, new[] { replayEvent });
+                var keys = Sorted(JsonDocument.Parse(json).RootElement.EnumerateObject().Select(p => p.Name));
+                var expected = Sorted(own.Concat(BaseMembers).Append("$type"));
+                if (!keys.SequenceEqual(expected)) problems.Add($"{name}'s JSON keys are {Show(keys)}, not {Show(expected)}");
             }
-            ChangesGameMethod();
+            if (problems.Count > 0) throw new Exception(string.Join("; ", problems));
         });
     }
 
-    // Public fields and readable properties, and non-public ones marked [JsonProperty], less [JsonIgnore]: what
-    // Newtonsoft's default contract writes. Methods are never written.
-    static IEnumerable<string> DataMembers(Type type)
+    // What an event carries, as it was before ChangesGame() existed: its JSON keys (less "$type") and every instance
+    // field and property that SF1's binder scans. ReplayEvent's members go into every event. The own members are
+    // pinned for each event that overrides ChangesGame(), and for one ordinary action. A change here is a wire change
+    // (the JSON is hashed, and the binder checks the members), so it needs its own decision, not a side effect.
+    static readonly string[] BaseMembers = { "randomS0Before", "ticksSinceLoad", "type" };
+    static readonly (string Name, string[] Own)[] OwnMembers =
     {
-        const BindingFlags instance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-        bool Has(MemberInfo m, string attribute) => m.GetCustomAttributes(true).Any(a => a.GetType().Name == attribute);
-        var names = new HashSet<string>();
-        for (Type t = type; t != null && t != typeof(object); t = t.BaseType)
-        {
-            foreach (var field in t.GetFields(instance | BindingFlags.DeclaredOnly))
-                if (!field.IsDefined(typeof(CompilerGeneratedAttribute)) && !Has(field, "JsonIgnoreAttribute") && (field.IsPublic || Has(field, "JsonPropertyAttribute")))
-                    names.Add(field.Name);
-            foreach (var property in t.GetProperties(instance | BindingFlags.DeclaredOnly))
-                if (property.GetIndexParameters().Length == 0 && !Has(property, "JsonIgnoreAttribute") &&
-                    (property.GetMethod?.IsPublic == true || Has(property, "JsonPropertyAttribute")))
-                    names.Add(property.Name);
-        }
-        return names;
+        ("BeaverBuddies.HeartbeatEvent", new string[0]),
+        ("BeaverBuddies.Events.SpeedSetEvent", new[] { "speed" }),
+        ("BeaverBuddies.Events.ShowOptionsMenuEvent", new[] { "speed" }),
+        ("BeaverBuddies.Events.InitializeClientEvent", new[] { "isDebugMode", "removeLargeColonySpeedLimit", "serverGameVersion", "serverModVersion" }),
+        ("BeaverBuddies.Events.ClientDesyncedEvent", new[] { "desyncID", "desyncTrace" }),
+        ("BeaverBuddies.DesyncDetecter.TraceLoggedForTickEvent", new[] { "tick", "traces" }),
+        ("BeaverBuddies.Ping.PingEvent", new[] { "CreatorID", "WorldPosition", "colorHex", "senderName", "worldX", "worldY", "worldZ" }),
+        ("BeaverBuddies.Events.BuildingPausedChangedEvent", new[] { "entityID", "wasPaused" }),
+    };
+
+    static List<string> Sorted(IEnumerable<string> names) => names.OrderBy(n => n, StringComparer.Ordinal).ToList();
+
+    // Every instance field and property, of any visibility, declared from type up to (not including) stop.
+    static List<string> Members(Type type, Type stop)
+    {
+        const BindingFlags declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        var names = new List<string>();
+        for (Type t = type; t != null && t != stop; t = t.BaseType)
+            names.AddRange(t.GetFields(declared).Select(f => f.Name).Concat(t.GetProperties(declared).Select(p => p.Name)));
+        return Sorted(names);
     }
 
     // The methods a method body calls, in IL order.

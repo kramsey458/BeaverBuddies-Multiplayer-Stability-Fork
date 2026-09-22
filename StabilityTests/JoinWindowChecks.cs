@@ -91,7 +91,15 @@ static class JoinWindowChecks
                 // What closes joining is an action the host plays; it still goes to everyone already admitted.
                 host.StopAcceptingClients(Closed);
                 host.DoUserInitiatedEvent(new JObject { [TimberNetBase.TYPE_KEY] = "BuildingPlacedEvent", [TimberNetBase.TICKS_KEY] = 0 });
-                Check(SpinWait.SpinUntil(() => client.HasEventsForTick(0), 2000), "the admitted guest never got the action");
+                // Look for the action itself: the save's SetState frame is also a tick-0 message, so a check for
+                // any tick-0 message (HasEventsForTick(0)) passes without it.
+                var received = new List<JObject>();
+                Check(SpinWait.SpinUntil(() =>
+                {
+                    host.Update();
+                    received.AddRange(client.ReadEvents(0));
+                    return received.Any(e => TimberNetBase.GetType(e) == "BuildingPlacedEvent");
+                }, 2000), "the admitted guest never got the action");
                 Check(host.ClientCount == 1 && error == null, "closing joining dropped a guest that had already joined");
             }
             finally { host.Close(); client.Close(); }

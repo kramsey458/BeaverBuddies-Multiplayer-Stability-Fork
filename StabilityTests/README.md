@@ -63,4 +63,5 @@ against the compiled mod, that every ReplayEvent type is in a table of events th
 or not (a new type fails until it is added; a type from another assembly counts as changing it),
 that such an action at tick 0 closes joining with its own reason and one that does not change the
 game, or one at a later tick, does not, that the replay loop closes joining after playing the action
-and before queueing it to be sent, and that each event's JSON is still exactly its data members.
+and before queueing it to be sent, and that ChangesGame() added no field, property or JSON key
+(those of ReplayEvent and of every event that overrides it are pinned, so a wire change fails).
