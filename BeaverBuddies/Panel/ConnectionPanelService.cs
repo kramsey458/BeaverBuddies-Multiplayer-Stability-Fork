@@ -16,8 +16,8 @@ namespace BeaverBuddies.Panel
 {
     /// <summary>
     /// Shows connected players, ping, tick rate and sync state in a small HUD panel during multiplayer.
-    /// It only reads: it never sends a gameplay event, never touches the simulation, and any failure
-    /// disables just the panel.
+    /// It reads, and sends only chat and the speed boost (a speed change, which no more touches the
+    /// simulation than the speed buttons do); any failure disables just the panel.
     /// </summary>
     public sealed class ConnectionPanelService : RegisteredSingleton, IPostLoadableSingleton, IUpdatableSingleton, IInputProcessor, IResettableSingleton
     {
@@ -63,7 +63,11 @@ namespace BeaverBuddies.Panel
                 view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
                 view.FpsFloorClicked += OnFpsFloorClicked;
-                if (view.Chat != null) { view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf; }
+                if (view.Chat != null)
+                {
+                    view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf;
+                    view.Chat.BoostRequested = OnBoostRequested;
+                }
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
                 loaded = true;
@@ -169,7 +173,7 @@ namespace BeaverBuddies.Panel
             var model = PanelModelBuilder.Build(Collect(net, replay, now), Translate);
             view.Show(model, mode == PanelDisplayMode.Expanded);
             view.SetVisible(true);
-            if (mode == PanelDisplayMode.Expanded) RefreshChatColors();
+            if (mode == PanelDisplayMode.Expanded) { RefreshChatColors(); ShowBoost(replay); }
         }
 
         // ---- chat ----
@@ -222,10 +226,11 @@ namespace BeaverBuddies.Panel
         // color they chose for themselves, or the one you set for them in the player cursors settings.
         string ChatColorOf(ChatMessage message)
         {
-            // Nobody sets a color for their own cursor: others see your Ping Color, or the color for your player
-            // number while it is still the default.
+            // Your own name: the color you picked for it under Player cursors (only you see it), else what others
+            // see by default: your Ping Color, or the color for your player number while it is still the default.
             if (myPlayerIdKnown && message.PlayerId == myPlayerId)
-                return PlayerColors.Effective(ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), myPlayerId);
+                return PlayerActivityService.Preferences.OwnChatColor
+                    ?? PlayerColors.Effective(ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), myPlayerId);
             var activity = SingletonManager.GetSingleton<PlayerActivityService>();
             if (activity != null && activity.TryGetCursorColor(message.PlayerId, out Color cursor)) return ColorUtility.ToHtmlStringRGB(cursor);
             // No cursor for them now (they left, or player activity is off): the color you saved for them, if any,
@@ -238,6 +243,24 @@ namespace BeaverBuddies.Panel
         {
             if (view.Chat == null || chatFailed) return;
             try { view.Chat.RefreshColors(); }
+            catch (Exception error) { DisableChat(error); }
+        }
+
+        // ---- the speed boost ----
+
+        // The boost is the session's: the request is played by everyone as an event, like a speed change. It changes
+        // how fast ticks are worked through, never what is in them (SpeedBoost).
+        bool OnBoostRequested(float boost)
+        {
+            var net = CurrentNetwork();
+            if (net == null || net.IsStopped) return false;
+            return BeaverBuddies.Events.SpeedBoostRequest.Send(boost);
+        }
+
+        void ShowBoost(ReplayService replay)
+        {
+            if (view.Chat == null || chatFailed) return;
+            try { view.Chat.ShowBoost(replay?.Boost ?? 0, replay?.TargetSpeed ?? 0); }
             catch (Exception error) { DisableChat(error); }
         }
 
@@ -277,6 +300,15 @@ namespace BeaverBuddies.Panel
 
         static TimberNetBase CurrentNetwork() => EventIO.Get() is ServerEventIO host ? host.NetBase :
             EventIO.Get() is ClientEventIO guest ? guest.NetBase : null;
+
+        /// <summary>This player's number in the session (the host is 0), or -1 with no session or before the host has said.</summary>
+        public static int LocalPlayerId()
+        {
+            var net = CurrentNetwork();
+            if (net == null) return -1;
+            NetworkStatus status = net.GetNetworkStatus();
+            return status.IsHost ? 0 : status.YourPlayerId;
+        }
 
         PanelInputs Collect(TimberNetBase net, ReplayService replay, float now)
         {

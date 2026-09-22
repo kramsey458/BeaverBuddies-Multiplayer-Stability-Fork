@@ -27,11 +27,14 @@ namespace BeaverBuddies.Events
         public bool isDebugMode;
         // The host's choice for the session. Absent from an older host, which reads as the game's default.
         public bool removeLargeColonySpeedLimit;
+        // The session's speed boost (SpeedBoost) as this player joins. Absent from an older host, which reads as 0.
+        public float speedBoost;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
+            context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {
@@ -63,6 +66,7 @@ namespace BeaverBuddies.Events
                 serverGameVersion = GameVersions.CurrentVersion.ToString(),
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
+                speedBoost = ReplayService.SessionBoost,
                 //mapName = mapName,
             };
             return message;
@@ -152,7 +156,9 @@ namespace BeaverBuddies.Events
             }
             ReplayService replayService = context.GetSingleton<ReplayService>();
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
-            replayService.SetTargetSpeed(0);
+            // Paused, and the pick with it: otherwise picking the old speed again afterwards would be taken for asking for
+            // the speed already picked, and ignored (SpeedChangePatcher).
+            replayService.SetChosenSpeed(0);
             BeaverBuddies.DesyncDetecter.WaterDiagnostics.WriteOnDesync();
             BeaverBuddies.DesyncDetecter.WalkerDiagnostics.WriteOnDesync();
             ReportingService reportingService = context.GetSingleton<ReportingService>();

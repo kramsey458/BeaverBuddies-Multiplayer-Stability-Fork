@@ -27,17 +27,36 @@ namespace BeaverBuddies
         // building, so the rule is built to change speed a few times per hitch, not every tick.
         public const int ReleaseTicks = 1;
 
-        // The original cap on catch-up speed.
+        // The fastest of the game's speed buttons. Up to it the buffer and release mark above hold.
+        const float ButtonMaxSpeed = 7;
+
+        // Above speed 7 (a speed boost, see SpeedBoost) the buffer grows with the speed so it stays
+        // the same stretch of time, about a sixth of a second: two ticks at speed 7, three at 10,
+        // nine at 30. The release mark stays one below it.
+        public static int BufferTicksFor(float targetSpeed) =>
+            targetSpeed <= ButtonMaxSpeed ? BufferTicks : Math.Max(BufferTicks, (int)Math.Round(targetSpeed * 2 / ButtonMaxSpeed));
+
+        public static int ReleaseTicksFor(float targetSpeed) =>
+            targetSpeed <= ButtonMaxSpeed ? ReleaseTicks : BufferTicksFor(targetSpeed) - 1;
+
+        // The original cap on catch-up speed, for the speeds the game's buttons give (1, 3 and 7).
         public const float MaxSpeed = 10;
+
+        // A boosted speed can be above that cap. A guest then catches up this many steps above the
+        // chosen speed, whatever it is, so it is never held below the speed it is meant to run at.
+        public const float CatchUpMargin = 3;
+
+        public static float CapFor(float targetSpeed) => Math.Max(MaxSpeed, targetSpeed + CatchUpMargin);
 
         public static float For(float targetSpeed, int ticksBehind, float currentSpeed)
         {
             // The original rule, unchanged. It also covers a paused game (target 0), where a guest
             // that is behind still has to run to reach the tick the host paused on.
+            float cap = CapFor(targetSpeed);
             float speed = targetSpeed;
             if (ticksBehind > targetSpeed)
             {
-                speed = Math.Min(ticksBehind, MaxSpeed);
+                speed = Math.Max(targetSpeed, Math.Min(ticksBehind, cap));
             }
             if (targetSpeed <= 0)
             {
@@ -45,17 +64,18 @@ namespace BeaverBuddies
             }
 
             bool catchingUp = currentSpeed > targetSpeed;
-            if (ticksBehind > (catchingUp ? ReleaseTicks : BufferTicks))
+            int buffer = BufferTicksFor(targetSpeed);
+            if (ticksBehind > (catchingUp ? ReleaseTicksFor(targetSpeed) : buffer))
             {
                 // Whole steps above the chosen speed. The lag naturally flickers by one tick as the host's
                 // tick arrives and ours finishes, so while catching up the speed only ever rises; it drops
                 // back once, at the release mark. Otherwise it would flip on every tick.
-                float boosted = targetSpeed + Math.Max(1, ticksBehind - BufferTicks);
+                float boosted = targetSpeed + Math.Max(1, ticksBehind - buffer);
                 if (catchingUp)
                 {
                     boosted = Math.Max(boosted, currentSpeed);
                 }
-                speed = Math.Max(speed, Math.Min(boosted, MaxSpeed));
+                speed = Math.Max(speed, Math.Min(boosted, cap));
             }
             return speed;
         }

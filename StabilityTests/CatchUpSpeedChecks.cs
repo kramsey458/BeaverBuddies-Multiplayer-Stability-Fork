@@ -10,7 +10,8 @@ static class CatchUpSpeedChecks
     static float Original(float targetSpeed, int ticksBehind) =>
         ticksBehind > targetSpeed ? Math.Min(ticksBehind, 10) : targetSpeed;
 
-    static readonly float[] Speeds = { 0, 1, 2, 3, 7, 10 };
+    // 10, 14 and 30 are boosted speeds (SpeedBoost): above the buttons' 7.
+    static readonly float[] Speeds = { 0, 1, 2, 3, 7, 10, 14, 30 };
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
@@ -36,7 +37,7 @@ static class CatchUpSpeedChecks
                     {
                         float speed = CatchUpSpeed.For(target, behind, current);
                         Check(speed >= Original(target, behind), $"slower than original at target {target}, behind {behind}");
-                        Check(speed <= Math.Max(target, CatchUpSpeed.MaxSpeed), $"above cap at target {target}, behind {behind}");
+                        Check(speed <= CatchUpSpeed.CapFor(target), $"above cap at target {target}, behind {behind}");
                     }
         });
         yield return ("Catch-up: a paused game keeps the original rule exactly", () =>
@@ -72,6 +73,47 @@ static class CatchUpSpeedChecks
                     float speed = CatchUpSpeed.For(target, behind, target);
                     Equal(speed, (float)Math.Round(speed));
                 }
+        });
+        yield return ("Catch-up: a boosted speed above the buttons' is never held below itself, and catches up above it", () =>
+        {
+            // The old cap of 10 would have held a guest at speed 12 that fell far behind at 10, further behind still.
+            Equal(10f, CatchUpSpeed.CapFor(7)); Equal(10f, CatchUpSpeed.CapFor(0)); Equal(15f, CatchUpSpeed.CapFor(12));
+            Equal(12f, CatchUpSpeed.For(12, 0, 12));
+            Equal(12f, CatchUpSpeed.For(12, CatchUpSpeed.BufferTicksFor(12), 12));
+            Equal(13f, CatchUpSpeed.For(12, CatchUpSpeed.BufferTicksFor(12) + 1, 12));
+            Equal(15f, CatchUpSpeed.For(12, 15, 12));
+            Equal(15f, CatchUpSpeed.For(12, 40, 12));
+            for (int behind = 0; behind <= 60; behind++)
+                foreach (float current in new float[] { 0, 12, 14, 15 })
+                    Check(CatchUpSpeed.For(12, behind, current) >= 12, $"held below 12 at {behind} behind, running {current}");
+            // A boosted speed keeps its fraction: the steps above it are whole ticks on top of it.
+            Equal(3.5f, CatchUpSpeed.For(3.5f, 0, 3.5f));
+            Equal(3.5f, CatchUpSpeed.For(3.5f, 2, 3.5f));
+            Equal(4.5f, CatchUpSpeed.For(3.5f, 3, 3.5f));
+            Equal(10f, CatchUpSpeed.For(3.5f, 40, 3.5f));
+            // The speeds the buttons give are exactly as before.
+            Equal(10f, CatchUpSpeed.For(7, 40, 7)); Equal(8f, CatchUpSpeed.For(7, 3, 7)); Equal(2f, CatchUpSpeed.For(1, 2, 1));
+        });
+        yield return ("Catch-up: above speed 7 the buffer grows with the speed and stays about a sixth of a second", () =>
+        {
+            Equal(2, CatchUpSpeed.BufferTicksFor(7)); Equal(2, CatchUpSpeed.BufferTicksFor(8));
+            Equal(3, CatchUpSpeed.BufferTicksFor(10)); Equal(4, CatchUpSpeed.BufferTicksFor(14)); Equal(9, CatchUpSpeed.BufferTicksFor(30));
+            for (float speed = 7; speed <= 30; speed += 0.5f)
+            {
+                double seconds = CatchUpSpeed.BufferTicksFor(speed) * 0.6 / speed;
+                Check(seconds >= 0.14 && seconds <= 0.21, $"speed {speed}: buffer of {seconds:0.000} s");
+                Equal(CatchUpSpeed.BufferTicksFor(speed) - 1, CatchUpSpeed.ReleaseTicksFor(speed));
+            }
+            // A guest at a boosted speed that hitches settles near its buffer too, with few speed changes. Measured in
+            // seconds of game time, its lag is the same as at speed 7 (each hitch costs twice the ticks, and the
+            // guest recovers them twice as fast): about a fifth of a second.
+            var fast = Simulate(14, CatchUpSpeed.For);
+            var seven = Simulate(7, CatchUpSpeed.For);
+            Check(fast.AverageBehind <= CatchUpSpeed.BufferTicksFor(14) + 2, $"average lag {fast.AverageBehind:0.0} at speed 14");
+            Check(fast.AverageBehind * 0.6 / 14 <= seven.AverageBehind * 0.6 / 7 * 1.3,
+                $"lag of {fast.AverageBehind * 0.6 / 14:0.000} s at speed 14 against {seven.AverageBehind * 0.6 / 7:0.000} s at speed 7");
+            Check(fast.SpeedChanges <= fast.Hitches * 8, $"{fast.SpeedChanges} changes for {fast.Hitches} hitches at speed 14");
+            Equal(0, Simulate(14, CatchUpSpeed.For, hitchEverySeconds: 0).SpeedChanges);
         });
         yield return ("Catch-up: a guest that hitches settles near the buffer instead of drifting to seven", () =>
         {

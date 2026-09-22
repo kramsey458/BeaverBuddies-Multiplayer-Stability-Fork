@@ -22,8 +22,8 @@ namespace BeaverBuddies.Activity
     }
 
     /// <summary>
-    /// A dialog for choosing, per connected player, the color, size and transparency of their cursor.
-    /// These choices are local: they change only how you see other players.
+    /// A dialog for choosing, per connected player, the color, size and transparency of their cursor, and the
+    /// color of your own name in the chat. These choices are local: they change only what you see.
     /// </summary>
     public class PlayerCursorSettingsUI : RegisteredSingleton
     {
@@ -117,6 +117,7 @@ namespace BeaverBuddies.Activity
         {
             shownVersion = service.PlayersVersion;
             list.Clear();
+            list.Add(BuildSelfCard());
             var players = service.Players();
             if (players.Count == 0)
             {
@@ -126,10 +127,27 @@ namespace BeaverBuddies.Activity
             foreach (var player in players) list.Add(BuildCard(player));
         }
 
-        VisualElement BuildCard(PlayerCursorEntry player)
+        VisualElement BuildCard(PlayerCursorEntry player) =>
+            BuildCard(player.StyleKey, player.Label, player.AdvertisedColor, loc.T("BeaverBuddies.Cursors.TheirColor"), cursor: true, note: null);
+
+        // Your own name in the chat, as you see it. Others see your Ping Color (or the color for your player number
+        // while it is the default), and that is the card's default swatch. There is no cursor of your own to size or
+        // fade, so the card has the color alone.
+        VisualElement BuildSelfCard()
+        {
+            string ping = ColorUtility.ToHtmlStringRGB(Settings.PingColorValue);
+            Color fallback = Hex(PlayerColors.Effective(ping, BeaverBuddies.Panel.ConnectionPanelService.LocalPlayerId()));
+            return BuildCard(PlayerCursorPreferences.SelfKey, loc.T("BeaverBuddies.Cursors.You"), fallback,
+                loc.T("BeaverBuddies.Cursors.Default"), cursor: false, note: loc.T("BeaverBuddies.Cursors.YouNote"));
+        }
+
+        /// <param name="key">The saved style's key.</param>
+        /// <param name="fallback">The color with no choice made, shown as the first swatch with <paramref name="fallbackCaption"/>.</param>
+        /// <param name="cursor">Whether this is a cursor, with a size and a transparency; false for your own chat name.</param>
+        /// <param name="note">A line under the name saying what the card is for, or null.</param>
+        VisualElement BuildCard(string key, string label, Color fallback, string fallbackCaption, bool cursor, string note)
         {
             var prefs = PlayerActivityService.Preferences;
-            string key = player.StyleKey;
             // Work on a copy; the saved entry is replaced each time a control changes.
             var style = prefs.Get(key).Clone();
 
@@ -144,10 +162,15 @@ namespace BeaverBuddies.Activity
             var preview = new VisualElement();
             preview.style.width = 18; preview.style.height = 18; preview.style.marginRight = 8;
             Border(preview, 1, new Color(1, 1, 1, .5f), 3);
-            var name = Text(player.Label, 16, Ink); name.style.flexGrow = 1; name.style.unityFontStyleAndWeight = FontStyle.Bold;
+            var name = Text(label, 16, Ink); name.style.flexGrow = 1; name.style.unityFontStyleAndWeight = FontStyle.Bold;
             var reset = new Button { text = loc.T("BeaverBuddies.Cursors.Reset") };
             header.Add(preview); header.Add(name); header.Add(reset);
             card.Add(header);
+            if (note != null)
+            {
+                var noteText = Text(note, 12, Muted); noteText.style.marginBottom = 6;
+                card.Add(noteText);
+            }
 
             // Colour: presets, then exact channels.
             var swatches = Horizontal(); swatches.style.flexWrap = Wrap.Wrap; swatches.style.marginBottom = 4;
@@ -165,19 +188,22 @@ namespace BeaverBuddies.Activity
             card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Red"), red, redValue));
             card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Green"), green, greenValue));
             card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Blue"), blue, blueValue));
-            card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Size"), size, sizeValue));
-            card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Transparency"), transparency, transparencyValue));
+            if (cursor)
+            {
+                card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Size"), size, sizeValue));
+                card.Add(SliderRow(loc.T("BeaverBuddies.Cursors.Transparency"), transparency, transparencyValue));
+            }
 
             Color EffectiveColor()
             {
                 if (style.ColorHex != null && ColorUtility.TryParseHtmlString("#" + style.ColorHex, out var custom)) return custom;
-                return player.AdvertisedColor;
+                return fallback;
             }
 
             void Refresh(bool updateSliders)
             {
                 Color color = EffectiveColor();
-                var shown = color; shown.a = style.Opacity;
+                var shown = color; shown.a = cursor ? style.Opacity : 1f;
                 preview.style.backgroundColor = shown;
                 foreach (var (view, hex) in swatchViews)
                     Border(view, string.Equals(hex, style.ColorHex, StringComparison.OrdinalIgnoreCase) ? 2 : 1,
@@ -220,7 +246,7 @@ namespace BeaverBuddies.Activity
             reset.clicked += () => { style = new PlayerCursorStyle(); Store(true, true); };
 
             // Added last: the swatch handlers use the sliders above.
-            swatchViews.Add((AddSwatch(swatches, player.AdvertisedColor, loc.T("BeaverBuddies.Cursors.TheirColor"), () => SetColor(null)), null));
+            swatchViews.Add((AddSwatch(swatches, fallback, fallbackCaption, () => SetColor(null)), null));
             foreach (var preset in Presets)
             {
                 string hex = ColorUtility.ToHtmlStringRGB(preset);
