@@ -6,8 +6,9 @@ namespace BeaverBuddies.DesyncDetecter
 {
     /*
      * The always-on desync check. The host notes what its game looked like just before it played each event, and
-     * at the start of every tick on the heartbeat; each guest compares that with its own game at the same point and
-     * stops the session (ReplayService.HandleDesync) at the first difference. It runs whatever the detailed-logging
+     * at the start of every tick on the heartbeat; each guest compares that with its own game at the same point. A
+     * difference in the random state stops the session (ReplayService.HandleDesync). A difference in the entities or
+     * the walkers is only written to the log, once per game (see TickMismatch). It runs whatever the detailed-logging
      * settings are, on every player, so nothing here may depend on anything that differs between computers.
      *
      * What is compared:
@@ -49,6 +50,15 @@ namespace BeaverBuddies.DesyncDetecter
         /// </summary>
         public static string Mismatch(int? hostS0, int? hostRandomState, int? hostEntityOrder, int? hostWalkerPositions, GameState local)
         {
+            return RandomMismatch(hostS0, hostRandomState, local) ?? TickMismatch(hostEntityOrder, hostWalkerPositions, local);
+        }
+
+        /// <summary>
+        /// Null when this game's random state is the host's. A difference here stops the session: the games have
+        /// already drawn different numbers, or are about to.
+        /// </summary>
+        public static string RandomMismatch(int? hostS0, int? hostRandomState, GameState local)
+        {
             // The original line, kept word for word for anyone who searches logs for it.
             if (hostS0 != null && local.S0 != hostS0)
                 return $"Random state mismatch: {local.S0:X8} != {hostS0:X8}";
@@ -59,6 +69,18 @@ namespace BeaverBuddies.DesyncDetecter
                     return $"Random state mismatch: the first word agrees but the rest does not " +
                         $"(here {local.S0:X8} {local.S1:X8} {local.S2:X8} {local.S3:X8}, hash {random:X8}; host's hash {hostRandomState:X8})";
             }
+            return null;
+        }
+
+        /// <summary>
+        /// Null when the entities that tick and the walkers' positions are the host's. A difference here is only
+        /// logged, once per game, and the session goes on: this comparison has not been played for long yet, and a
+        /// walker that something moves on the frame (an Earth Repopulator pilot flying its plane, for example) would
+        /// end a game whose simulation still agrees. If the games really went apart, the random state follows and
+        /// stops the session; the log line then says when the walkers first differed.
+        /// </summary>
+        public static string TickMismatch(int? hostEntityOrder, int? hostWalkerPositions, GameState local)
+        {
             if (hostEntityOrder != null && local.EntityOrder != hostEntityOrder)
                 return $"Entity mismatch: the entities that tick here are not the host's (hash {local.EntityOrder:X8} != {hostEntityOrder:X8})";
             if (hostWalkerPositions != null && local.WalkerPositions != hostWalkerPositions)
@@ -89,6 +111,9 @@ namespace BeaverBuddies.DesyncDetecter
 
         public int EntityOrder { get; private set; }
         public int WalkerPositions { get; private set; }
+        // Whether this game already logged an entity or walker difference (see DesyncCheck.TickMismatch). The hashes
+        // add up, so once they differ they differ on every tick after; one line is enough.
+        public bool DifferenceLogged { get; set; }
 
         // Which position in each bucket is read first on this tick: the same on every player, since it only
         // depends on the tick.
@@ -100,6 +125,7 @@ namespace BeaverBuddies.DesyncDetecter
             EntityOrder = 0;
             WalkerPositions = 0;
             firstSampled = 0;
+            DifferenceLogged = false;
         }
 
         public void StartTick(int tick)

@@ -1012,6 +1012,14 @@ namespace BeaverBuddies
 
         public static void ResetHashes() => hashes.Reset();
 
+        // True the first time it is asked in a game, then false until the hashes are reset (see DesyncCheck.TickMismatch).
+        public static bool FirstTickDifference()
+        {
+            if (hashes.DifferenceLogged) return false;
+            hashes.DifferenceLogged = true;
+            return true;
+        }
+
         // Called as each tick starts, so every player reads the same entities' IDs on it.
         public static void StartTick(int tick) => hashes.StartTick(tick);
 

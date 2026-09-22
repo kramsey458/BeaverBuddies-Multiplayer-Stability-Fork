@@ -99,6 +99,12 @@ internal static class DesyncCheckChecks
             if (!replay.Any(method => members[method].Any(m => m is MethodBase handle && handle.Name == "HandleDesync" &&
                     handle.DeclaringType?.FullName == "BeaverBuddies.ReplayService" && handle.GetParameters().Length == 1)))
                 throw new Exception($"Nothing that calls {check[0].Name} goes on to HandleDesync with what differed");
+            // Only a random-state difference stops the session. An entity or walker difference alone is logged once
+            // per game and the game goes on (DesyncCheck.TickMismatch says why).
+            if (!Names(check[0], "BeaverBuddies.DesyncDetecter.DesyncCheck", "RandomMismatch"))
+                throw new Exception($"{check[0].Name} does not ask DesyncCheck.RandomMismatch whether to stop, so an entity or walker difference would end the session");
+            if (!replay.Any(method => Names(method, "BeaverBuddies.TEBPatcher", "FirstTickDifference")))
+                throw new Exception("An entity or walker difference is not logged once per game (TEBPatcher.FirstTickDifference)");
 
             // And the host fills in what the guests compare. A guest compares only what the host sent, so without
             // these stores every guest would compare nothing new and still pass: the check would be off.

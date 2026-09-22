@@ -32,8 +32,12 @@ internal static class DesyncDialogChecks
             if (sentences.Length != 1) throw new Exception($"The dialog names the Enable Logging sentence {sentences.Length} times, expected once");
             var body = code[sentences[0].Method];
             int ask = body.FindIndex(i => i.Calls && i.Is(plan, "AsksToEnableLogging"));
-            if (ask < 0 || ask + 1 >= body.Count || !body[ask + 1].BranchesIfFalse ||
-                !(body[ask].Offset < sentences[0].At && sentences[0].At < body[ask + 1].Target))
+            // The Release Steam configuration is not optimized: there the answer goes through a local first
+            // (stloc, ldloc) before the branch that tests it.
+            int test = ask + 1;
+            while (test < body.Count && (body[test].Op.Name!.StartsWith("stloc") || body[test].Op.Name!.StartsWith("ldloc"))) test++;
+            if (ask < 0 || test >= body.Count || !body[test].BranchesIfFalse ||
+                !(body[ask].Offset < sentences[0].At && sentences[0].At < body[test].Target))
                 throw new Exception("The Enable Logging sentence is not added only when DesyncDialogPlan.AsksToEnableLogging is true");
             var reportButton = code.SelectMany(pair => pair.Value.Where(i => i.Calls && i.Member?.Name == "SetInfoButton")
                 .Select(i => (Method: pair.Key, At: i.Offset))).ToArray();

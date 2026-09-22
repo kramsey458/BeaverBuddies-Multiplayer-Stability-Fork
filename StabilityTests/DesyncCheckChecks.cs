@@ -178,6 +178,29 @@ static class DesyncCheckChecks
             Check(DesyncCheck.Mismatch(guest.S0, DesyncCheck.RandomStateHash(guest.S0, guest.S1, guest.S2, guest.S3), null, null, state) == null);
             Check(DesyncCheck.Mismatch(null, null, null, null, state) == null);
         });
+        yield return ("Desync check: only the random state stops the session; an entity or walker difference is logged once", () =>
+        {
+            var host = Game.Colony(); var guest = host.Copy();
+            var walker = guest.Buckets.SelectMany(b => b).First(e => e.Walks);
+            walker.Z = BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(walker.Z) + 1);
+            guest.Tick(1);
+            var state = guest.State;
+            int random = DesyncCheck.RandomStateHash(guest.S0, guest.S1, guest.S2, guest.S3);
+            // The walker differs, the random state agrees: reported, but not a reason to stop (ReplayService only
+            // stops on RandomMismatch).
+            Check(DesyncCheck.TickMismatch(null, state.WalkerPositions ^ 1, state) != null, "a walker difference is not reported");
+            Check(DesyncCheck.RandomMismatch(guest.S0, random, state) == null, "a walker difference alone would stop the session");
+            Check(DesyncCheck.Mismatch(guest.S0, random, null, state.WalkerPositions ^ 1, state)!.Contains("walking"));
+            // A random difference still stops it, whatever the walkers say.
+            Check(DesyncCheck.RandomMismatch(guest.S0, random ^ 1, state) != null, "a random state difference would not stop the session");
+            Check(DesyncCheck.RandomMismatch(guest.S0 ^ 1, null, state) != null, "an s0 difference would not stop the session");
+            // One log line per game: the hashes add up, so a difference stays on every tick after.
+            var hashes = new TickHashes();
+            Check(!hashes.DifferenceLogged);
+            hashes.DifferenceLogged = true;
+            hashes.Reset();
+            Check(!hashes.DifferenceLogged, "a new game would not log its first difference");
+        });
         yield return ("Tick hashes: one ID in IdStride is read on a tick, and every entity within IdStride ticks", () =>
         {
             var hashes = new TickHashes();

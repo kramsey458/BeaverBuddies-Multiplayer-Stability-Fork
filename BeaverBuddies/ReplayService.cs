@@ -330,12 +330,18 @@ namespace BeaverBuddies
                 // If this event was played (e.g. on the server) and recorded a 
                 // random state, make sure we're in the same state.
                 // Keep this check independent of detailed logging preferences.
-                string mismatch = FindMismatchWithHost(replayEvent);
-                if (mismatch != null)
+                string mismatch = FindMismatchWithHost(replayEvent, out bool stops);
+                if (mismatch != null && stops)
                 {
                     Plugin.LogWarning(mismatch);
                     HandleDesync(mismatch);
                     return false;
+                }
+                // Entities or walkers differ while the random state agrees: logged once, the game goes on.
+                if (mismatch != null && TEBPatcher.FirstTickDifference())
+                {
+                    Plugin.LogWarning(mismatch + ". Logged only, the game goes on: the random state still matches the host's. " +
+                        "If a desync follows, this line says when the games first differed.");
                 }
                 // Only broadcast successful events from an active session.
                 RecordRandomState(replayEvent);
@@ -501,10 +507,12 @@ namespace BeaverBuddies
 
         /// <summary>
         /// The always-on desync check (see DesyncCheck): null when this game is where the host's was when it
-        /// played this event, otherwise what differs.
+        /// played this event, otherwise what differs. <paramref name="stops"/> is true when the random state differs,
+        /// which stops the session; an entity or walker difference alone is only logged.
         /// </summary>
-        private static string FindMismatchWithHost(ReplayEvent replayEvent)
+        private static string FindMismatchWithHost(ReplayEvent replayEvent, out bool stops)
         {
+            stops = false;
             HeartbeatEvent heartbeat = replayEvent as HeartbeatEvent;
             // What a guest sends reaches the host with nothing to compare, and the host checks nothing.
             if (replayEvent.randomS0Before == null && replayEvent.randomStateHashBefore == null &&
@@ -519,6 +527,7 @@ namespace BeaverBuddies
                 EntityOrder = TEBPatcher.EntityUpdateHash,
                 WalkerPositions = TEBPatcher.PositionHash,
             };
+            stops = DesyncCheck.RandomMismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore, local) != null;
             return DesyncCheck.Mismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore,
                 heartbeat?.entityOrderHash, heartbeat?.walkerPositionHash, local);
         }
