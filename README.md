@@ -112,6 +112,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **Random-number bookkeeping made safe.** Nested random-number scopes are counted correctly and restored even when an error interrupts them. *Tested.*
 - **Equal-distance demolition jobs chosen deterministically**, by persistent target IDs. *Tested; not yet confirmed in a playtest.*
 - **Entity ID collisions handled explicitly.** A regenerated ID is now applied, and the game fails with a clear error if no unique ID can be found. *Tested.*
+- **Tick once is off in co-op.** The game's pause key (period by default) advances one tick when it is pressed while the game is paused. That tick bypassed multiplayer: it ran on the pressing player's computer only, without the shared actions, and the desync check could not see it. In multiplayer the key now only pauses; pressed while paused, it shows a notice instead. *Tested; not yet confirmed in a playtest.*
 - **Stuck-controls recovery.** Input state is reset after a desync, a failed action, a lost connection and when a multiplayer game loads. *Tested with a mocked device reset.*
 
 **Crashes**
