@@ -41,10 +41,10 @@ sits at the same edge.
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |
 | **Speed** | The current game speed, or Paused. |
 | **Behind host** | Guests only: how many ticks behind the host this game is. Should sit at 0 or 1. |
-| **Guest behind** | Host only: how many ticks behind the slowest guest was at its last report, about once a second. Shown once a guest running 1.0.4 or newer has reported. |
-| **Easing off** | Host only, and only while it applies: the share of the chosen speed the host is running at because a guest cannot keep up, such as "75% of speed", or "75% (frame rate)" when it is a guest's frame rate that is holding it back. It returns to full speed by itself. Reads **waiting for a guest** while the host stands still for a guest more than 60 ticks behind (1.0.6). |
+| **Guest behind** | Host only: how many ticks behind the slowest guest was at its last report, about once a second. Shown once a guest has reported. |
+| **Easing off** | Host only, and only while it applies: the share of the chosen speed the host is running at because a guest cannot keep up, such as "75% of speed", or "75% (frame rate)" when it is a guest's frame rate that is holding it back. It returns to full speed by itself. Reads **waiting for a guest** while the host stands still for a guest more than 60 ticks behind. |
 | **Guest fps** | Host only: the lowest frame rate any guest reported, about once a second. A guest reports nothing while its game window is in the background. |
-| **Ease off below** | Host only. Click it to choose a guest frame rate floor: Off, 20, 30, 45 or 60 fps. While a guest stays below the floor the host slows the game a little, and speeds back up by itself. The same choice is in the mod settings. |
+| **Ease off below** | Host only. Click it to choose a guest frame rate floor: Off, 20, 30, 45 or 60 fps. While a guest stays below the floor the host slows the game a little, and speeds back up by itself. The same choice is in Mod Settings as **Ease off when a guest drops below this frame rate**. |
 | **Connection** | How players are connected: Direct (IP, including Hamachi or port forwarding) or Steam. |
 
 The host sees every guest's ping. A guest sees its own ping to the host on the host's row (and on

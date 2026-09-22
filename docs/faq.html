@@ -92,7 +92,7 @@
       <details class="q">
         <summary>Which version of Timberborn does it need?</summary>
         <div class="answer">
-          <p>It is built and tested against Timberborn <b>1.1.2.4</b>. Every player must run the same game version, because the mod compares it when someone joins.</p>
+          <p>It is built and tested against Timberborn <b>1.1.2.4</b>, and needs at least 1.1. Every player installs the same version of the mod and runs the same game version, because the mod compares both when someone joins.</p>
         </div>
       </details>
 
@@ -131,7 +131,7 @@
       <details class="q">
         <summary>Can someone join after the game has started?</summary>
         <div class="answer">
-          <p>No. Nobody can join once the host chooses <b>Start Game</b>. Everyone starts from the same save, and a running game cannot be handed to a newcomer. Save, host again, and invite them.</p>
+          <p>No. Nobody can join once the host chooses <b>Start Game</b>, or once anyone has placed, marked or changed something while the game waited to start. Everyone starts from the same save, and a running game cannot be handed to a newcomer. Save, host again, and invite them.</p>
         </div>
       </details>
 
@@ -234,14 +234,14 @@
       <details class="q">
         <summary>Does the mod slow the game down?</summary>
         <div class="answer">
-          <p>Normal play has little overhead, and the latest release does less work every tick and every frame. The one big exception is <b>Always Use Detailed Logging</b>, which records a lot of extra detail for diagnosing desyncs. Leave it off unless you are hunting a desync.</p>
+          <p>Normal play has little overhead, and this fork has trimmed some of the work the mod does every tick and every frame. The one big exception is <b>Always Use Detailed Logging</b>, which records a lot of extra detail for diagnosing desyncs. Leave it off unless you are hunting a desync.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Is there a delay when I do something as a guest?</summary>
         <div class="answer">
-          <p>A little. A guest's action goes to the host, which schedules it on a tick and sends it back, so it appears a short moment after you click. The latest release removes about half a tick of that delay (roughly 0.3 seconds at normal speed) by sending your actions immediately, and over Steam that delay no longer grows as the game speeds up.</p>
+          <p>A little. A guest's action goes to the host, which schedules it on a tick and sends it back, so it appears a short moment after you click. This fork removes about half a tick of that delay (roughly 0.3 seconds at normal speed) by sending your actions immediately, and over Steam the delay no longer grows as the game speeds up.</p>
         </div>
       </details>
     </section>
@@ -267,8 +267,8 @@
         <summary>What are the known limits?</summary>
         <div class="answer">
           <ul>
-            <li>Everyone must run the exact same build. Other mods should match (you get a warning when they do not), and settings are not compared.</li>
-            <li>Nobody can join after <b>Start Game</b>, or once something has been placed or changed while the game waited to start.</li>
+            <li>Every player installs the same version of the mod (the same download) and runs the same game version. Other mods should match (you get a warning when they do not), and settings are not compared.</li>
+            <li>Nobody can join after <b>Start Game</b>, or once something has been placed, marked or changed while the game waited to start.</li>
             <li>Desyncs can still happen.</li>
             <li>Tested with two players on Windows and Steam only.</li>
             <li>Text added by this fork is English only. Other languages show the English text for those strings.</li>
@@ -280,7 +280,7 @@
       <details class="q">
         <summary>Who made it?</summary>
         <div class="answer">
-          <p>The multiplayer design and most of the code come from the original <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors. This fork is maintained by <a href="https://github.com/kramsey458">kramsey458</a>. It is an unofficial community mod and is not affiliated with Timberborn's developer, Mechanistry.</p>
+          <p>The multiplayer design and most of the code come from the original <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors. This fork is maintained by <a href="https://github.com/timbermods">Timbermods</a>. It is an unofficial community mod for Timberborn and is not affiliated with or endorsed by Mechanistry.</p>
         </div>
       </details>
     </section>
@@ -311,10 +311,11 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
 <script src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-Stability-Fork" data-asset="^BeaverBuddies-Stability-Fork-[\d.]+\.zip$"></script>

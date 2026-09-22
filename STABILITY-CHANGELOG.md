@@ -21,7 +21,7 @@ played, is still on the releases page.
   view, so a player whose view was sliced at another layer got the marks, or removed them, at a different height. The planting action now
   carries the tiles the marking player saw highlighted, and every computer marks or unmarks exactly those; the game's own checks of which
   tiles may be planted still run. The action no longer sends the dragged area as well, so it is about half the size. *Tested: the game's
-  own levelling over a made-up terraced map seen through two layer views, recorded, sent and played through the mod.*
+  own leveling over a made-up terraced map seen through two layer views, recorded, sent and played through the mod.*
 - **A building refused while you hover a path that joins two districts.** Every computer checks a replayed building on a preview copy,
   and one of those checks asks whether this computer's preview roads, which include whatever the local player is hovering or dragging,
   join two districts. A player holding such a path preview (red, "Districts in conflict") refused another player's building while the
@@ -281,7 +281,7 @@ from reading the code, and each fix changes a decision that is checked on its ow
   applies here again, the game stays paused, and the game itself shows the reason and the way out
   (open the menu to save, or to return to the main menu and join again). If the connection drops
   while the game is still loading, the message appears as soon as the game is up.
-- **A cancelled or failed join or host left a dead session in the main menu.** Cancelling the host's
+- **A canceled or failed join or host left a dead session in the main menu.** Canceling the host's
   lobby, or a join that failed after the connection was made (a host that had already started, a
   build mismatch), left the closed session installed until the main menu was loaded again. Whatever
   was played next from that menu, single player included, then started as a multiplayer game with
@@ -666,7 +666,7 @@ versions are untested.
 ### Validation
 
 - Release Steam build succeeds with no warnings. 59 RuntimeChecks pass against the built mod.
-- 97 StabilityTests pass, ten of them new (`CatchUpSpeedChecks`): exact behaviour at each speed,
+- 97 StabilityTests pass, ten of them new (`CatchUpSpeedChecks`): exact behavior at each speed,
   never slower than the original rule, the paused case, the host case, and the hitching-guest
   model above. The rule is a pure function (`BeaverBuddies/CatchUpSpeed.cs`) linked into the tests.
 - Two Python checks pass, and the non-Steam build also succeeds with no warnings.

@@ -56,7 +56,7 @@
       <h2>Check these first</h2>
       <p>Most multiplayer problems come from a mismatch between the players. Before anything else, check that everyone has:</p>
       <ul>
-        <li>the <b>exact same download</b> of the mod (the mod list shows the version, and it must be the same zip, not just the same number),</li>
+        <li>the <b>same version of the mod, from the same download</b> (the mod list shows the version, and it must be the same zip, not just the same number),</li>
         <li>the <b>same version of Timberborn</b>,</li>
         <li>the <b>same other mods</b> enabled, at the same versions,</li>
         <li>and has <b>fully restarted the game</b> since installing or updating.</li>
@@ -252,8 +252,9 @@
           <ol>
             <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>both</b> computers. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It is off by default.</li>
             <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
-            <li>Try a lower game speed if a slower computer keeps falling behind, or, as the host, click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
-            <li>Make sure both players run the latest release, which does less work every tick and every frame.</li>
+            <li>Try a lower game speed if a slower computer keeps falling behind. As the host, you can also click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
+            <li>If the host turned on <b>Remove the large colony speed limit</b>, the game runs at the full chosen speed in a big colony, which a slower computer may not keep up with. Turn it off, or use a lower speed.</li>
+            <li>Make sure both players run the latest release, which has the newest performance fixes.</li>
           </ol>
         </div>
       </details>
@@ -297,7 +298,7 @@
         <li>Close the game so the log is complete.</li>
         <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> in Explorer (paste it into the address bar).</li>
         <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>, the log of the session before.</li>
-        <li>If a desync happened with detailed logging on, the water diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. They are written only on your computer and are never uploaded.</li>
+        <li>If a desync happened with detailed logging on, water and walker diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. Include that folder too. The files are written only on your computer and are never uploaded.</li>
       </ol>
       <div class="callout">
         <strong class="label">Before you share</strong>
@@ -344,10 +345,11 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
 <script>
