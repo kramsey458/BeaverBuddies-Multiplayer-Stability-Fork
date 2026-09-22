@@ -72,7 +72,7 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.11.zip</span></code>. The release also has a <code><span data-release="version">1.1.11</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.12.zip</span></code>. The release also has a <code><span data-release="version">1.1.12</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -101,16 +101,16 @@
         <strong class="label">Updating from an earlier download?</strong>
         <p>Earlier downloads used a folder named <code>BeaverBuddies-StabilityPreview</code>. Delete it from <code>Mods</code> before you copy in the new folder. The two share a mod ID, so having both would conflict.</p>
       </div>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.1.11</span>-SHA256SUMS.txt</code>:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.11.zip</span> -Algorithm SHA256</code></pre>
+      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.1.12</span>-SHA256SUMS.txt</code>:</p>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.12.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>BeaverBuddies - Stability Fork</b> with version <b><span data-release="version">1.1.11</span></b>.</li>
+        <li>The mod list shows <b>BeaverBuddies - Stability Fork</b> with version <b><span data-release="version">1.1.12</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies v<span data-release="version">1.1.11</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies v<span data-release="version">1.1.12</span> is loaded!</code></li>
       </ul>
       <p>If it is not there, see <a href="troubleshooting.html#not-loading">The mod does not load</a>.</p>
     </section>
@@ -159,7 +159,7 @@
       <p>A desync means the players' games have drifted apart. The game tells you, and the host should:</p>
       <ol>
         <li>Choose <b>Save and Rehost</b>.</li>
-        <li>Steam guests accept a fresh invite; direct IP guests reconnect.</li>
+        <li>Then guests choose <b>Reconnect (wait for Rehost)</b>, which joins the way they joined: a direct IP guest redials the address it used, and a Steam guest joins the host's new Steam lobby if Steam shows it (the host has <b>Allow Friends to Join Directly via Steam</b> on); otherwise a Steam guest accepts the host's new invite.</li>
       </ol>
       <p>If the game says multiplayer has stopped because an action could not be completed, return to the main menu and reload a known-good save. Do not overwrite your good save with that session. More help is in <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
     </section>

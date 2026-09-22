@@ -18,8 +18,9 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
   friend can also use **Join Game** from Steam's friends list.
 - Both players need the same BeaverBuddies build and the game version must match.
 
-Nobody can join after **Start Game**. An old invite then says the host already started,
-instead of hanging; the host rehosts and sends a new one.
+Nobody can join after **Start Game**, or once something has been placed, marked or changed while
+the game waited to start. An old invite then says the host already started or changed the game,
+instead of hanging; the host saves, rehosts and sends a new one.
 
 No port forwarding or Hamachi is needed. Connections go directly between players when
 Steam can find a route, and are otherwise relayed through Steam's network. Valve documents
