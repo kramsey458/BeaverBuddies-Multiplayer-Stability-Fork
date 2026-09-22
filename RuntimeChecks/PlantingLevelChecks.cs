@@ -99,14 +99,6 @@ internal static class PlantingLevelChecks
             int z = Xyz(picked.GetType().GetProperty("Coordinates")!.GetValue(picked)!).z;
             return NewList(from x in Enumerable.Range(1, 5) from y in Enumerable.Range(1, 3) select (x, y, z));
         }
-        List<(int, int, int)> LevelAbove(IList blocks)
-        {
-            var levelAbove = eventType.GetMethod("LevelAbove", all)
-                ?? throw new Exception("events without levelled tiles have no view-free levelling");
-            var onGround = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(vector3Int, typeof(bool)), terrain,
-                terrainServiceType.GetMethod("OnGround")!);
-            return Tiles((IEnumerable)levelAbove.Invoke(null, new object[] { blocks, onGround })!);
-        }
 
         // The mod's prefixes on the game's levelling, run as Harmony runs them (this harness cannot install Harmony):
         // highest priority first, and one that returns false skips the rest and the game's own levelling.
@@ -209,14 +201,7 @@ internal static class PlantingLevelChecks
         List<(int, int, int)> Played(object replayEvent, int view)
         {
             object areaService = AreaService(view);
-            object service = RuntimeHelpers.GetUninitializedObject(selectionType);
-            selectionType.GetField("_terrainAreaService", all)!.SetValue(service, areaService);
-            // UnmarkArea clears the highlighted objects first.
-            object highlighting = Activator.CreateInstance(areaHighlightingType,
-                Activator.CreateInstance(rollingHighlighterType, Activator.CreateInstance(highlighterType)), null, null)!;
-            selectionType.GetField("_areaHighlightingService", all)!.SetValue(service, highlighting);
-            var context = (SingletonContextProxy)DispatchProxy.Create(contextType, typeof(SingletonContextProxy));
-            context.Singleton = service;
+            object context = PlayingContext(areaService);
             List<(int, int, int)>? played = null;
             terrain.Probe = () =>
             {
@@ -227,6 +212,19 @@ internal static class PlantingLevelChecks
             catch (TargetInvocationException e) when (e.InnerException is ReachedLevelling) { }
             finally { terrain.Probe = null; }
             return played ?? throw new Exception("the replay never reached the game's levelling");
+        }
+        // The planting service of a computer that plays events, levelling with `areaService`.
+        object PlayingContext(object areaService)
+        {
+            object service = RuntimeHelpers.GetUninitializedObject(selectionType);
+            selectionType.GetField("_terrainAreaService", all)!.SetValue(service, areaService);
+            // UnmarkArea clears the highlighted objects first.
+            object highlighting = Activator.CreateInstance(areaHighlightingType,
+                Activator.CreateInstance(rollingHighlighterType, Activator.CreateInstance(highlighterType)), null, null)!;
+            selectionType.GetField("_areaHighlightingService", all)!.SetValue(service, highlighting);
+            var context = (SingletonContextProxy)DispatchProxy.Create(contextType, typeof(SingletonContextProxy));
+            context.Singleton = service;
+            return context;
         }
 
         const int FullView = 100, Sliced = 3;
@@ -277,15 +275,23 @@ internal static class PlantingLevelChecks
             if (action != $"Planting {coordinates.Count} of Carrot") throw new Exception($"the log line reads \"{action}\"");
         });
 
+        // An event without levelled tiles (as an earlier build sent it: the dragged blocks and the ray) is levelled by the
+        // event's Replay from the blocks alone, not with the view of the computer that plays it.
         foreach (int view in new[] { FullView, Sliced })
-            test($"Planting: an older event is levelled as the marker's own game did (view {view})", () =>
+            test($"Planting: an older event without tiles is played on the tiles the marker's own game levelled (marked in view {view})", () =>
             {
                 object marker = AreaService(view);
                 IList blocks = Dragged(marker);
                 var expected = Leveled(marker, blocks);
-                var fallback = LevelAbove(blocks);
-                if (!fallback.SequenceEqual(expected)) throw new Exception($"fallback {Show(fallback)}, the game {Show(expected)}");
-                if (view == Sliced && fallback.Count == 0) throw new Exception("the sliced view marked nothing");
+                if (expected.Count == 0) throw new Exception($"view {view} marked nothing");
+                object older = Activator.CreateInstance(eventType, true)!;
+                eventType.GetField("prefabName")!.SetValue(older, "Carrot");
+                eventType.GetField("inputBlocks")!.SetValue(older, blocks);
+                eventType.GetField("ray")!.SetValue(older, ray);
+                int other = view == FullView ? Sliced : FullView;
+                var played = Played(Received(older), other);
+                if (!played.SequenceEqual(expected))
+                    throw new Exception($"marked in view {view} on {Show(expected)}, played in view {other} on {Show(played)}");
             });
 
         test("Planting: while an event is played, levelling gives the recorded tiles", () =>
@@ -331,6 +337,26 @@ internal static class PlantingLevelChecks
             catch (TargetInvocationException) { /* the unset game services: expected here */ }
             if (recorded.GetValue(null) != null) throw new Exception("recorded tiles leaked out of the replay");
         });
+
+        // Every real replay returns normally. Tiles left recorded after it would be what this computer's levelling
+        // gives from then on: the tool's highlighting and the next mark it records.
+        foreach (bool unmarking in new[] { false, true })
+            test($"Planting: {(unmarking ? "an unmark" : "a mark")} that plays to the end leaves no recorded tiles behind", () =>
+            {
+                FieldInfo recorded = Recorded();
+                object e = Activator.CreateInstance(eventType, true)!;
+                eventType.GetField("prefabName")!.SetValue(e, unmarking ? unmark : "Carrot");
+                eventType.GetField("inputBlocks")!.SetValue(e, NewList(Array.Empty<(int, int, int)>()));
+                eventType.GetField("ray")!.SetValue(e, ray);
+                Coordinates().SetValue(e, NewList(new[] { (1, 1, 6) }));
+                try
+                {
+                    // Without Harmony the game levels the event's empty blocks itself, finds nothing to act on and returns.
+                    eventType.GetMethod("Replay")!.Invoke(e, new object[] { PlayingContext(AreaService(FullView)) });
+                    if (recorded.GetValue(null) != null) throw new Exception("recorded tiles stayed set after a replay that finished");
+                }
+                finally { recorded.SetValue(null, null); }
+            });
 
         test("Planting: the game members the fix relies on are there", () =>
         {

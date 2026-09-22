@@ -258,8 +258,10 @@ namespace BeaverBuddies.Events
     // While a planting event is played, the game's own MarkArea / UnmarkArea act on the tiles the event carries instead
     // of levelling the area again with this computer's view (see PlantingAreaMarkedEvent.coordinates). Everything else
     // they do (which tiles may be planted, the event the game posts) runs as in the game. Outside a replay it does
-    // nothing, so the tools' highlighting and every other caller level as before. Last, so another mod's prefix on the
-    // levelling still runs.
+    // nothing, so the tools' highlighting and every other caller level as before. Priority.Last, the rule for a prefix
+    // that replaces the original: another mod's prefix on the levelling runs first. If that prefix skips the original
+    // itself, Harmony skips this one too and the replay uses that mod's tiles instead, so a mod that replaces this
+    // levelling needs a lockstep review (none is known to).
     [HarmonyPatch(typeof(TerrainAreaService), nameof(TerrainAreaService.InMapLeveledCoordinates))]
     static class PlantingLeveledCoordinatesPatcher
     {
