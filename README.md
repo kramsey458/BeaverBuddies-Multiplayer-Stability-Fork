@@ -9,6 +9,9 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 > [!NOTE]
 > **1.1.13 is the current release.** 1.1.10 has been played extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 added a visual change on top and works without issues. 1.1.12 added fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions, and a fuller desync check. 1.1.13 adds a speed boost in the chat and a color of your choice for your own chat name (see the [changelog](STABILITY-CHANGELOG.md)). The maintainer played 1.1.13, which includes the 1.1.12 changes, and reports that it is stable and working; the particular situations the 1.1.12 fixes are for were not set up on purpose. This is a record of what has been played, not a guarantee: see [Things to know](#things-to-know-before-you-play) for what has not been tried.
 
+> [!IMPORTANT]
+> **Feature-complete.** 1.1.13 is the final feature release. The Stability Fork will still be updated for new Timberborn versions and for bugs that are found, but it gets no new features. New features go into [BeaverBuddies MultiColony](https://github.com/timbermods/BeaverBuddies-MultiColony), which is built on this fork and includes everything it does: with separate colonies off it plays one shared colony, as this mod does, and it can also give each player a colony of their own. MultiColony is a separate mod and still in beta; do not enable both at the same time.
+
 This is an independent fork of [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by thomaswp and contributors, the original multiplayer mod, maintained by [Timbermods](https://github.com/timbermods). It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* [here](https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues), not to the original project.
 
 ## Highlights
@@ -187,6 +190,8 @@ BeaverBuddies is a mod to allow multiplayer co-op in Timberborn.
 > **If you would like to use the BeaverBuddies mod**, please see [the setup instructions in the wiki](https://github.com/thomaswp/BeaverBuddies/wiki)! This README is for developers.
 
 ## Contributing
+
+This fork is feature-complete: bug reports and problems with new Timberborn versions are still welcome [here](https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues), and new features go into [BeaverBuddies MultiColony](https://github.com/timbermods/BeaverBuddies-MultiColony).
 
 We appreciate your help! To get started working on BeaverBuddies, see [the guide in the wiki](https://github.com/thomaswp/BeaverBuddies/wiki/Contributing).
 

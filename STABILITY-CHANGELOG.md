@@ -7,7 +7,8 @@ entry above the current one.
 
 ## 1.1.13
 
-The current release, on top of 1.1.12: two chat features taken from the BeaverBuddies MultiColony mod, a speed boost at
+The current release and the final feature release: from here the fork gets updates for new Timberborn versions and
+bug fixes only, and new features go into BeaverBuddies MultiColony. On top of 1.1.12: two chat features taken from the BeaverBuddies MultiColony mod, a speed boost at
 the top of the chat and a color of your choice for your own name in the chat. The speed boost adds a network message,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
 
