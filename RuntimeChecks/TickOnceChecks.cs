@@ -37,10 +37,15 @@ internal static class TickOnceChecks
             }
         }
 
-        test("Tick once: the game still has Ticker.TickOnce and SpeedControlPanel.PauseOrTickOnce", () =>
+        test("Tick once: the game's pause-or-tick-once key still reaches Ticker.TickOnce", () =>
         {
-            Require(tickerType.GetMethod("TickOnce", all, Type.EmptyTypes) != null, "Ticker.TickOnce is gone");
-            Require(panelType.GetMethod("PauseOrTickOnce", all, Type.EmptyTypes) != null, "SpeedControlPanel.PauseOrTickOnce is gone");
+            var tickOnce = tickerType.GetMethod("TickOnce", all, Type.EmptyTypes);
+            Require(tickOnce != null, "Ticker.TickOnce is gone");
+            var pauseOrTickOnce = panelType.GetMethod("PauseOrTickOnce", all, Type.EmptyTypes);
+            Require(pauseOrTickOnce != null, "SpeedControlPanel.PauseOrTickOnce is gone");
+            // If a game update routes the key somewhere else, the mod's patch no longer covers it.
+            Require(Calls(pauseOrTickOnce!, tickOnce!),
+                "SpeedControlPanel.PauseOrTickOnce no longer calls Ticker.TickOnce: check what the key runs now");
         });
 
         // The mod's prefix on Ticker.TickOnce, found by its Harmony target rather than by name.
@@ -116,9 +121,86 @@ internal static class TickOnceChecks
             Require(RunPrefix(), "tick once was refused in single player");
             Require(alerts.Count == 0, "single player showed the co-op notice");
         }));
+        // In co-op this computer's speed is often 0 while the shared game runs (a guest waiting for the host's next
+        // tick, a host waiting for a slow guest), and then the panel calls TickOnce for a key pressed to pause. A loaded
+        // ReplayService with the given shared (target) speed, and a session that records like a guest or a host.
+        var replayType = mod.GetType("BeaverBuddies.ReplayService", true)!;
+        var replayLoaded = replayType.GetField("<IsLoaded>k__BackingField", all)!;
+        var behaviorType = mod.GetType("BeaverBuddies.IO.UserEventBehavior", true)!;
+        object InstallReplay(float sharedSpeed)
+        {
+            object replay = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(replayType);
+            foreach (string queue in new[] { "eventsToSend", "eventsToPlay" })
+            {
+                var field = replayType.GetField(queue, all)!;
+                field.SetValue(replay, Activator.CreateInstance(field.FieldType));
+            }
+            replayType.GetField("<TargetSpeed>k__BackingField", all)!.SetValue(replay, sharedSpeed);
+            singletons.GetMethod("RegisterSingleton")!.MakeGenericMethod(replayType).Invoke(null, new[] { replay });
+            replayLoaded.SetValue(null, true);
+            return replay;
+        }
+        List<object> Queued(object replay, string queue) =>
+            ((System.Collections.IEnumerable)replayType.GetField(queue, all)!.GetValue(replay)!).Cast<object>().ToList();
+        void InstallSessionAs(string behavior)
+        {
+            var io = DispatchProxy.Create(eventIo, typeof(BehaviorEventIoProxy));
+            ((BehaviorEventIoProxy)io).Behavior = Enum.Parse(behaviorType, behavior);
+            eventIo.GetMethod("Set")!.Invoke(null, new[] { io });
+        }
+        void RequirePauseRequest(List<object> queued, string who)
+        {
+            Require(queued.Count == 1, $"{who}: expected one recorded pause, got {queued.Count} events");
+            Require(queued[0].GetType().FullName == "BeaverBuddies.Events.SpeedSetEvent",
+                $"{who}: recorded {queued[0].GetType().FullName}, not a SpeedSetEvent");
+            float speed = (float)queued[0].GetType().GetField("speed")!.GetValue(queued[0])!;
+            Require(speed == 0, $"{who}: the recorded speed is {speed}, not a pause");
+        }
+
+        test("Tick once: while the shared co-op game runs and this computer waits, the key asks everyone to pause", () => Quiet(() =>
+        {
+            try
+            {
+                // A guest: the pause goes to the host, which plays it for everyone.
+                alerts.Clear();
+                InstallSessionAs("Send"); InstallLocalization(); InstallNotice();
+                object guest = InstallReplay(2);
+                Require(!RunPrefix(), "a guest waiting for the host ran tick once: it ticks this computer only");
+                Require(alerts.Count == 0, "a guest that asked to pause was shown the tick once notice");
+                RequirePauseRequest(Queued(guest, "eventsToSend"), "guest");
+                Require(Queued(guest, "eventsToPlay").Count == 0, "guest: an event was queued to play locally");
+
+                // A host holding for a slow guest: the pause is queued like the host's own pause button.
+                eventIo.GetMethod("Reset")!.Invoke(null, null);
+                singletons.GetMethod("Reset")!.Invoke(null, null);
+                alerts.Clear();
+                InstallSessionAs("QueuePlay"); InstallLocalization(); InstallNotice();
+                object host = InstallReplay(1);
+                Require(!RunPrefix(), "a host holding for a guest ran tick once: it ticks this computer only");
+                Require(alerts.Count == 0, "a host that asked to pause was shown the tick once notice");
+                RequirePauseRequest(Queued(host, "eventsToPlay"), "host");
+                Require(Queued(host, "eventsToSend").Count == 0, "host: the pause skipped the host's own queue");
+            }
+            finally { replayLoaded.SetValue(null, false); }
+        }));
+        test("Tick once: while the shared co-op game is paused, the key shows the notice and records nothing", () => Quiet(() =>
+        {
+            try
+            {
+                alerts.Clear();
+                InstallSessionAs("Send"); InstallLocalization(); InstallNotice();
+                object replay = InstallReplay(0);
+                Require(!RunPrefix(), "tick once ran in a paused co-op game: it ticks this computer only");
+                Require(alerts.Count == 1, $"expected one notice, got {alerts.Count}");
+                Require(Queued(replay, "eventsToSend").Count == 0 && Queued(replay, "eventsToPlay").Count == 0,
+                    "an event was recorded for a key pressed in a paused game");
+            }
+            finally { replayLoaded.SetValue(null, false); }
+        }));
+
         // After a failed multiplayer action the session is removed but the game is held still (TickBuckets is
         // blocked too); tick once must not get around that.
-        var failure = mod.GetType("BeaverBuddies.ReplayService", true)!.GetField("<HasReplayFailure>k__BackingField", all)!;
+        var failure = replayType.GetField("<HasReplayFailure>k__BackingField", all)!;
         test("Tick once: refused after a failed multiplayer action, with no co-op notice", () => Quiet(() =>
         {
             alerts.Clear();
@@ -149,6 +231,21 @@ internal static class TickOnceChecks
         });
     }
 
+    // True if the method's body calls this method (call or callvirt).
+    static bool Calls(MethodInfo method, MethodInfo target)
+    {
+        byte[] il = method.GetMethodBody()!.GetILAsByteArray()!;
+        for (int i = 0; i + 4 < il.Length; i++)
+        {
+            if (il[i] != 0x28 && il[i] != 0x6F) continue;
+            MethodBase called;
+            try { called = method.Module.ResolveMethod(BitConverter.ToInt32(il, i + 1)); }
+            catch (Exception) { continue; }
+            if (called.Module == target.Module && called.MetadataToken == target.MetadataToken) return true;
+        }
+        return false;
+    }
+
     // True if the method's body calls a generic method with this name and type argument (call or callvirt).
     static bool CallsGeneric(MethodInfo method, string name, string typeArgument)
     {
@@ -163,6 +260,18 @@ internal static class TickOnceChecks
                 && m.GetGenericArguments().Any(t => t.FullName == typeArgument)) return true;
         }
         return false;
+    }
+}
+
+// A co-op session that records the player's actions the way a guest (Send) or a host (QueuePlay) does.
+public class BehaviorEventIoProxy : DispatchProxy
+{
+    public object Behavior;
+    protected override object Invoke(MethodInfo method, object[] args)
+    {
+        if (method.Name == "get_UserEventBehavior") return Behavior;
+        return method.ReturnType.IsValueType && method.ReturnType != typeof(void)
+            ? Activator.CreateInstance(method.ReturnType) : null;
     }
 }
 

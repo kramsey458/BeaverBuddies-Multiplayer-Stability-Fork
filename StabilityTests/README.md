@@ -55,10 +55,13 @@ python -m unittest discover -s RuntimeChecks -p "test_water_snapshots.py"
 ```
 
 RuntimeChecks also runs the mod's prefix on the game's Ticker.TickOnce (the
-pause key pressed while paused), the way Harmony would: it must skip the
-game's method and show one warning notice in a co-op game, skip it with no
-notice after a failed multiplayer action, and let it run in single player. It
-also checks that the prefix is `[HarmonyPriority(Priority.Last)]`, that the game
-scene binds the notice, and that the notice text is in the built English
-localization. Harmony is not installed, so pressing the key in a live co-op
-game is still the final check.
+Tick once key pressed while the game is paused), the way Harmony would: in a
+co-op game it must skip the game's method, show one warning notice when the
+shared game is paused, and record one shared pause instead when only this
+computer stands still (a guest waiting for the host, a host waiting for a
+guest). It must skip it with no notice after a failed multiplayer action, and
+let it run in single player. It also checks that the speed panel still calls
+Ticker.TickOnce, that the prefix is `[HarmonyPriority(Priority.Last)]`, that
+the game scene binds the notice, and that the notice text is in the built
+English localization. Harmony is not installed, so pressing the key in a live
+co-op game is still the final check.

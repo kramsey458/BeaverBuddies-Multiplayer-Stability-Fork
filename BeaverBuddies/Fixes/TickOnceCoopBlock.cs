@@ -1,3 +1,4 @@
+using BeaverBuddies.Events;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using HarmonyLib;
@@ -15,7 +16,8 @@ namespace BeaverBuddies.Fixes
     /// (TickableBucketServiceTickUpdatePatcher). So the tick counter and the shared actions were skipped and the tick
     /// ran on that computer only, desyncing the game. The heartbeat's random-state check did not see it either: outside
     /// Ticker.Update and outside a replay, the tick's random draws come from the non-game generator. In a co-op game it
-    /// is refused with a notice; in single player the game's own method runs.
+    /// is refused: with a notice when the shared game is paused, and as a shared pause when only this computer stands
+    /// still (see the prefix). In single player the game's own method runs.
     /// </summary>
     public class TickOnceCoopNotice : RegisteredSingleton, ILoadableSingleton
     {
@@ -54,6 +56,19 @@ namespace BeaverBuddies.Fixes
             // null) but the game must not tick on. The dialog already said why, so no notice.
             if (ReplayService.HasReplayFailure) return false;
             if (EventIO.IsNull) return true;
+
+            // In co-op this computer's speed is often held at 0 while the shared game runs: a guest waiting for the
+            // host's next tick, a host waiting for a slow guest. The speed panel then sees "paused" and calls tick
+            // once, but the player pressed the key on a running game and asked to pause it. So ask for the pause
+            // everyone plays, the same shared speed event the pause button records (SpeedChangePatcher).
+            ReplayService replayService = ReplayEvent.GetReplayServiceIfReady();
+            if (replayService != null && replayService.TargetSpeed != 0)
+            {
+                Plugin.Log("Tick once pressed while the co-op game runs and this computer waits: asking to pause instead");
+                replayService.RecordEvent(new SpeedSetEvent() { speed = 0 });
+                return false;
+            }
+
             Plugin.Log("Refused tick once in a co-op game: it would tick this computer only");
             SingletonManager.GetSingleton<TickOnceCoopNotice>()?.Show();
             return false;
