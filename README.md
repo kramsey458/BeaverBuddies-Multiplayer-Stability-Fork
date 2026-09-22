@@ -7,9 +7,7 @@ Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game co
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
 
 > [!NOTE]
-> **1.1.11 is stable and working.** 1.1.10 has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 is that release with a visual change on top (each player gets a color of their own, and only the name is colored in the chat), and it is working without issues. That is a record of what has been played, not a guarantee: see [Things to know](#things-to-know-before-you-play) for what has not been tried.
->
-> **1.1.12 is a pre-release** with fixes for several ways a shared game could fall out of step, a safer network reader and a fuller desync check (see the [changelog](STABILITY-CHANGELOG.md)). It has not been played yet, so the download below stays 1.1.11 until it has. To try it, both players install it from the [releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases).
+> **1.1.12 is the current release.** 1.1.10 has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far; 1.1.11 added a visual change on top and works without issues. 1.1.12 adds fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions and a fuller desync check (see the [changelog](STABILITY-CHANGELOG.md)). Those are covered by automated checks but have not been played in multiplayer yet; if something goes wrong, the 1.1.11 download is still on the [releases page](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases). That is a record of what has been played, not a guarantee: see [Things to know](#things-to-know-before-you-play) for what has not been tried.
 
 This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
 
@@ -31,10 +29,10 @@ This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thoma
 
 **You need:** Timberborn (this release is built and tested against **1.1.2.4**), with the **Harmony** and **Mod Settings** mods enabled. Every player must run the same game version too.
 
-1. Download `BeaverBuddies-Stability-Fork-1.1.11.zip` from the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest).
+1. Download `BeaverBuddies-Stability-Fork-1.1.12.zip` from the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest).
 2. **Close Timberborn.**
 3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`. If you installed an earlier download, delete its old `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
-4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.1.11) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
+4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.1.12) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
 5. **Every player must install the exact same download** and restart the game. This is the most common cause of trouble; see [Things to know](#things-to-know-before-you-play).
 
 This fork is distributed through GitHub Releases only. The Steam Workshop and mod.io pages linked further down belong to the original project.
@@ -146,7 +144,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 ## Things to know before you play
 
 - **Everyone must run the exact same build.** The mod compares the game version and the mod's own files when someone joins. A copy someone compiled themselves can be refused even when the version number matches. If one player is on a different build over Steam, joining can look like it is hanging on "Receiving map...".
-- **Other mods should match; you get a warning when they do not.** When someone joins, both players are shown which mods are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation (a housing mod, for example) will make the games drift apart. Settings are not compared, so settings that affect the simulation (for example **Reduce the number of forced pauses**) should match too.
+- **Other mods should match; you get a warning when they do not.** When someone joins, both players are shown which mods are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation (a housing mod, for example) will make the games drift apart, and a guest missing a mod that sends its own multiplayer actions (MixedStorage, for example) is stopped at the first such action, with the mod named. Settings are not compared, so settings that affect the simulation (for example **Reduce the number of forced pauses**) should match too.
 - **Join before the host starts.** Nobody can join a game that has already started, or one in which a player has already placed, marked or changed something while it waited. After a desync the host uses **Save and Rehost**.
 - **Desyncs can still happen.** This fork reduces known causes, not all of them.
 - **Dev mode is for single player.** Most of its tools (the instant unlock with Ctrl-click, a construction site's Finish now, deleting beavers or any object, the debug panels) change only the computer they are used on and desync a co-op game. A notice says so when dev mode is turned on in a co-op game. Its Ctrl keys for placing a building finished and for not recovering goods are off in co-op.

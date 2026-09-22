@@ -145,7 +145,7 @@
       <details class="q">
         <summary>What happens if the game desyncs?</summary>
         <div class="answer">
-          <p>The game tells you. The host chooses <b>Save and Rehost</b>, and guests reconnect (Steam guests accept a fresh invite). This fork removes many known causes of desyncs, but it cannot promise none, so keep backups of your saves. See <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
+          <p>The game tells you. The host chooses <b>Save and Rehost</b>, and guests choose <b>Reconnect (wait for Rehost)</b>, which joins the way they joined: a direct IP guest redials the address it used, and a Steam guest joins the host's new Steam lobby if Steam shows it (the host has <b>Allow Friends to Join Directly via Steam</b> on); otherwise a Steam guest accepts the host's new invite. This fork removes many known causes of desyncs, but it cannot promise none, so keep backups of your saves. See <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
         </div>
       </details>
     </section>
@@ -163,7 +163,7 @@
       <details class="q">
         <summary>Can I use other mods?</summary>
         <div class="answer">
-          <p>Yes, but every player should have the same mods at the same versions. When someone joins, both players are shown a warning if their mod lists differ, naming the mods that are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation will make the games drift apart. Settings that affect the simulation (for example <b>Reduce the number of forced pauses</b>) are not compared and should match too. See <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
+          <p>Yes, but every player should have the same mods at the same versions. When someone joins, both players are shown a warning if their mod lists differ, naming the mods that are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation will make the games drift apart, and a guest missing a mod that sends its own multiplayer actions (MixedStorage, for example) is stopped at the first such action, with the mod named. Settings that affect the simulation (for example <b>Reduce the number of forced pauses</b>) are not compared and should match too. See <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
         </div>
       </details>
 
@@ -268,11 +268,11 @@
         <div class="answer">
           <ul>
             <li>Everyone must run the exact same build. Other mods should match (you get a warning when they do not), and settings are not compared.</li>
-            <li>Nobody can join after <b>Start Game</b>.</li>
+            <li>Nobody can join after <b>Start Game</b>, or once something has been placed or changed while the game waited to start.</li>
             <li>Desyncs can still happen.</li>
             <li>Tested with two players on Windows and Steam only.</li>
             <li>Text added by this fork is English only. Other languages show the English text for those strings.</li>
-            <li>One fix, for a demolition selection that includes already-demolished buildings, has automated tests but has not been confirmed in a live session.</li>
+            <li>One fix, for a demolition selection that includes already-demolished buildings, has automated tests but has not been confirmed in a live session, and neither have the 1.1.12 fixes (see the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>).</li>
           </ul>
         </div>
       </details>

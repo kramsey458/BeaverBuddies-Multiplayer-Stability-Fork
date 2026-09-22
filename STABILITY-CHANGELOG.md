@@ -5,14 +5,14 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## 1.1.12 (pre-release)
+## 1.1.12
 
-On top of 1.1.11: fixes for several ways a shared co-op game could fall out of step, a network reader that only creates multiplayer
+The current release, on top of 1.1.11: fixes for several ways a shared co-op game could fall out of step, a network reader that only creates multiplayer
 actions, and a fuller desync check. It changes what is sent over the network, so every player must install this build (the join check
 refuses a different one). Nothing saved changes.
 
-**Not played yet.** Everything below is covered by automated checks only; each item says what they cover. It is a pre-release until it
-has been played in a two-player game.
+**Not played yet.** Everything below is covered by automated checks only; each item says what they cover. 1.1.11, which has been
+played, is still on the releases page.
 
 ### Desyncs fixed
 
@@ -86,7 +86,7 @@ has been played in a two-player game.
 
 ## 1.1.11
 
-The current stable release, on top of 1.1.10. It changes only how players are colored on the cursors and in the chat: nothing that is simulated, sent or
+On top of 1.1.10. It changes only how players are colored on the cursors and in the chat: nothing that is simulated, sent or
 saved changes. Every player should install this build: the join check compares the mod build, so it will not join a session running a different one.
 
 The fork owner played this change in multiplayer and reported that it works without issues. Because it only changes what is drawn, what has been
