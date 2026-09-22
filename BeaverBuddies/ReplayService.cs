@@ -332,7 +332,7 @@ namespace BeaverBuddies
                 if (mismatch != null)
                 {
                     Plugin.LogWarning(mismatch);
-                    HandleDesync();
+                    HandleDesync(mismatch);
                     return false;
                 }
                 // Only broadcast successful events from an active session.
@@ -410,12 +410,24 @@ namespace BeaverBuddies
 
         public void HandleDesync()
         {
+            HandleDesync(null);
+        }
+
+        /// <param name="reason">
+        /// What the always-on check found (see DesyncCheck). Without detailed logging there is no trace, so this is
+        /// sent as the trace instead: the host's log and any report then say what differed, not only this guest's log.
+        /// </param>
+        public void HandleDesync(string reason)
+        {
             if (IsDesynced) return;
 
+            string trace = DesyncDetecterService.GetLastDesyncTrace();
+            if (string.IsNullOrEmpty(trace) && reason != null) trace = reason;
             ClientDesyncedEvent e = new ClientDesyncedEvent()
             {
-                desyncID = DesyncDetecterService.GetLastDesyncID(),
-                desyncTrace = DesyncDetecterService.GetLastDesyncTrace(),
+                // The same ID as DesyncDetecterService.GetLastDesyncID when the trace is that one.
+                desyncID = ReportingService.GetStringHash(trace),
+                desyncTrace = trace,
             };
             // Set IsDesynced to true so event play instead of sending
             // to the host, allowing the Client to continue play.

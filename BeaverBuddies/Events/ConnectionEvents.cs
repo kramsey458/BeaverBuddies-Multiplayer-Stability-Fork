@@ -138,6 +138,13 @@ namespace BeaverBuddies.Events
 
         public override void Replay(IReplayContext context)
         {
+            // The guest logged what its check found as it happened; the host's log names it too (its first line, as
+            // a detailed-logging trace is long and was already written to the guest's log).
+            if (EventIO.Get() is ServerEventIO && !string.IsNullOrEmpty(desyncTrace))
+            {
+                string first = desyncTrace.Split('\n')[0].Trim();
+                Plugin.LogWarning("A player desynced: " + (first.Length > 300 ? first.Substring(0, 300) + "..." : first));
+            }
             ReplayService replayService = context.GetSingleton<ReplayService>();
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             replayService.SetTargetSpeed(0);
