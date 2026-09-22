@@ -50,12 +50,12 @@
       <p class="hero-note">Free and open source. Tested on Windows with the Steam version of Timberborn 1.1.2.4.</p>
       <div class="callout tip" data-release-pinned="1.1.12" style="margin-top:1.4rem">
         <strong class="label">Stable</strong>
-        <p><b>1.1.12 is the current release.</b> 1.1.10 has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far; 1.1.11 added a visual change on top and works without issues. 1.1.12 adds fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions and a fuller desync check. Those are covered by automated checks but have not been played in multiplayer yet; if something goes wrong, 1.1.11 is still on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">releases page</a>. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
+        <p><b>1.1.12 is the current release.</b> 1.1.10 has been played extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 added a visual change on top and works without issues. 1.1.12 adds fixes for several ways a shared game could fall out of step, a network reader that only creates multiplayer actions, and a fuller desync check. Those are covered by automated checks but have not been played in multiplayer yet. If something goes wrong, 1.1.11 is still on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">releases page</a>. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
       </div>
     </div>
 
     <figure class="panel-demo">
-      <img class="panel-shot" src="assets/connection-panel.png" width="383" height="558" alt="Screenshot of the in-game connection panel as the host sees it: status In sync, the host's own row das it mane in bold with a dash, sarawr at 19 ms, tick rate 11.7 ticks per second, speed 7x, 1 tick behind, connection Steam, and a chat with a yellow line from das it mane and a pink line from sarawr.">
+      <img class="panel-shot" src="assets/connection-panel.png" width="383" height="558" alt="Screenshot of the in-game connection panel as the host sees it: status In sync, the host's own row in bold with a dash, one guest at 19 ms, tick rate 11.7 ticks per second, speed 7x, the guest 1 tick behind at 35 fps, Ease off below set to Off, connection Steam, and a chat with a yellow line from the host and a pink line from the guest.">
       <figcaption class="demo-caption">The in-game connection panel, as the host sees it during a Steam co-op session (a screenshot from 1.1.10, where the whole chat line took the player's color; since 1.1.11 only the name does).</figcaption>
     </figure>
   </div>
@@ -83,7 +83,7 @@
     <ol class="steps horizontal">
       <li>
         <h3>Everyone installs the mod</h3>
-        <p>Same download, same version, then restart the game. <a href="install.html">Install guide</a></p>
+        <p>Every player installs the same version of the mod (the same download) and runs the same game version, then restarts the game. <a href="install.html">Install guide</a></p>
       </li>
       <li>
         <h3>The host invites a friend</h3>
@@ -133,7 +133,7 @@
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
         <h3>Quicker and lighter</h3>
-        <p>A guest's actions reach the host about half a tick sooner (roughly 0.3 seconds at normal speed), the mod does less work every tick and every frame, and over Steam the ping no longer climbs as the game speeds up.</p>
+        <p>A guest's actions reach the host about half a tick sooner (roughly 0.3 seconds at normal speed), the mod's work every tick and every frame has been trimmed, and over Steam the ping no longer climbs as the game speeds up.</p>
       </article>
     </div>
   </div>
@@ -300,7 +300,7 @@
       <li><b>Every action is mirrored.</b> Building, changing a recipe or setting a priority is sent to the host, which decides which tick it happens on and sends it to everyone.</li>
       <li><b>The game is deterministic.</b> Given the same save and the same actions on the same ticks, every copy of the game plays out exactly the same.</li>
     </ol>
-    <p>That is why <b>everyone must run the same build</b>, why other mods should match, and why nobody can join once the host has started. When something breaks that sameness, that is a desync. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> explains the design in more detail.</p>
+    <p>That is why <b>every player must run the same build</b>, why other mods should match, and why nobody can join once the host has started. When something breaks that sameness, that is a desync. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> explains the design in more detail.</p>
   </div>
 </section>
 
@@ -309,7 +309,7 @@
   <div class="container narrow">
     <h2>Good to know before you play</h2>
     <ul>
-      <li><b>Everyone must run the exact same build</b> of the mod and the same version of the game.</li>
+      <li><b>Every player installs the same version of the mod (the same download) and runs the same game version.</b> The mod refuses a different build when someone joins.</li>
       <li><b>Other mods should match.</b> When someone joins, both players get a warning listing any mods that differ. A guest missing a mod whose actions the host sends (MixedStorage, for example) is stopped at the first such action, with the mod named. Settings are not compared, so keep simulation-affecting settings identical.</li>
       <li><b>Join before the host starts.</b> Nobody can join after <b>Start Game</b>, or once something has been placed, marked or changed while the game waited.</li>
       <li><b>Desyncs can still happen.</b> This fork removes known causes; it cannot promise none. Keep backups of your saves.</li>
@@ -358,10 +358,11 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
 <script src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-Stability-Fork" data-asset="^BeaverBuddies-Stability-Fork-[\d.]+\.zip$"></script>

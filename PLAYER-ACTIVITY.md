@@ -98,7 +98,7 @@ every player in a session has this feature or none of them do.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (50 checks) covers:
+`dotnet run --project StabilityTests` covers, among its other checks:
 
 - the production transport over in-memory streams with a host and two guests:
   identity assignment (a guest claiming another id is ignored), relay without echo,
@@ -111,7 +111,7 @@ every player in a session has this feature or none of them do.
   save and reload, unwritable locations, and name-collision keys.
 
 `dotnet run --project RuntimeChecks -- <BeaverBuddies.dll> <Timberborn Managed>
-<Harmony dir> <ModSettings Scripts dir>` (53 checks) still passes against the
+<Harmony dir> <ModSettings Scripts dir>` also passes against the
 compiled mod.
 
 **Not covered by automated tests:** how the cursor, labels and outlines actually

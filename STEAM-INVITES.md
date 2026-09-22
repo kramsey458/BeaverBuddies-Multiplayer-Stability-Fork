@@ -16,7 +16,7 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
 - Accept the invite (Steam notification or overlay). If Timberborn is not running, Steam
   launches it and joins for you. With **Allow Friends to Join Directly via Steam** on, a
   friend can also use **Join Game** from Steam's friends list.
-- Both players need the same BeaverBuddies build and the game version must match.
+- Both players install the same version of the mod (the same download) and run the same game version.
 
 Nobody can join after **Start Game**, or once something has been placed, marked or changed while
 the game waited to start. An old invite then says the host already started or changed the game,
@@ -28,8 +28,8 @@ that relaying prevents players' IP addresses from being revealed to each other.
 
 ## How it works
 
-Previously this used Valve's legacy `ISteamNetworking` P2P API, which Valve marks
-deprecated ("we may remove this API from the SDK in a future release"). It now uses
+The original BeaverBuddies used Valve's legacy `ISteamNetworking` P2P API, which Valve marks
+deprecated ("we may remove this API from the SDK in a future release"). This fork uses
 `ISteamNetworkingSockets`, the API Valve recommends, which ships in the game's own
 Steamworks assembly.
 
@@ -115,7 +115,7 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
 
 - Both players must be online in Steam, and the friend must own Timberborn.
 - Joining after **Start Game** is not possible (as before). After a desync, the host uses
-  **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the host's new
+  **Save and Rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the host's new
   lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the guest
   is told to accept a fresh invite.
 - The **Invite Friends** button does nothing for the first moment after hosting starts,

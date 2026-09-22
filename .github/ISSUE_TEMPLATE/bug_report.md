@@ -1,36 +1,40 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a desync, crash or other problem with the Stability Fork
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Important**: Do not restart Timberborn after your bug has happened. This will overwrite your log file, which is important for diagnosing bugs! You can close the game, but do not restart it until you have submitted this report.
+**Important**: Collect the logs before you play again. Each time Timberborn starts, it replaces `Player.log` and keeps the previous session's log as `Player-prev.log`, so starting the game twice loses the log of the session with the problem. You can close the game, but do not start it again until you have submitted this report.
 
 **Describe the bug**
 * What happened: [Desync / Crash / Unexpected behavior]
-* What were your doing right before this happened?: [Were your doing anything you had not previously done (e.g. created a specific type of building, did something in the user interface?]
+* What were you doing right before this happened? [Were you doing anything you had not done before, for example building a specific type of building or using a particular part of the interface?]
+* How were you connected? [Steam invite / Direct IP / Hamachi or another virtual network]
 
-**Save File**: On the Server, [find the save file](https://timberborn.fandom.com/wiki/Game_Save_File#Location) for the game the desynced or crashed. Rename the file from `xxx.timber` to `xxx.zip` and upload it here (e.g., by drag-and-drop).
+**Save file**: On the host's computer, [find the save file](https://timberborn.fandom.com/wiki/Game_Save_File#Location) for the game that desynced or crashed. Rename the file from `xxx.timber` to `xxx.zip` and upload it here (for example, by drag-and-drop).
 * This is important. It's almost impossible to reproduce errors without the save.
 
-[Optional] **Logs**: On both the server and client computer, do the following steps:
-1. Go to the Timberborn local files folder (inside your Timberborn folder), e.g. `C:\Users\[username]\AppData\LocalLow\Mechanistry\Timberborn`
-2. Rename the Player.log file to server.txt (for server) and client.txt (for client).
-3. Upload these files to this issue.
+**Logs**: On both the host's and the guest's computer:
+1. Open `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn` in File Explorer (paste it into the address bar).
+2. Rename `Player.log` to `host.txt` (on the host) or `guest.txt` (on the guest). If the game has been started again since the problem happened, use `Player-prev.log` instead.
+3. Upload these files to this issue. If there is a `BeaverBuddiesDiagnostics` folder, zip it and upload it too.
 
-**To Reproduce**: If you have been able to reproduce this bug multiple times, describe the steps (or delete this section)
+Logs contain file paths that include your Windows user name. Look through them before you upload if that matters to you.
+
+**To reproduce**: If you have been able to reproduce this bug more than once, describe the steps (or delete this section)
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
 **Screenshots**
-If this is an unexpected behavior, or there is something unique about your map that caused the bug, add screenshots to help explain your problem.
+If this is unexpected behavior, or there is something unique about your map that caused the bug, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information for **both** Host and Client):**
- - OS: [e.g. iOS, Windows 11, Ubuntu Linux]
- - Timberborn version: [visible from main menu in the bottom-left corner]
- - BeaverBuddies version: [when you downloaded it, it had a version]
+**Setup (please fill this in for both the host and the guest):**
+ - OS: [for example, Windows 11]
+ - Timberborn version: [shown in the bottom-left corner of the main menu]
+ - BeaverBuddies Stability Fork version: [shown in the mod list, for example 1.1.12]
+ - Other mods enabled: [list them, or "none"]
