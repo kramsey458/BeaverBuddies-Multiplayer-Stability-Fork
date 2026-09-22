@@ -416,6 +416,8 @@ internal static class FrameTypeChecks
             if (type == typeof(float)) return 1.5f;
             if (type == typeof(double)) return 2.25;
             if (type == typeof(bool)) return true;
+            // Any other nullable travels as its value.
+            if (Nullable.GetUnderlyingType(type) is Type underlying) return Value(underlying, where);
             if (type == typeof(Guid)) return new Guid("0b7e1c55-5f4e-4a5e-9d2c-3a1f6e0d9b21");
             if (type.IsEnum) return Enum.GetValues(type).Cast<object>().Last();
             if (type == vector3Int) return Activator.CreateInstance(vector3Int, 1, -2, 3);

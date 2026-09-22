@@ -240,7 +240,14 @@ internal static class JoinClosingChecks
                 object replayEvent = Activator.CreateInstance(type, true);
                 string json = (string)jsonType.GetMethod("Serialize").MakeGenericMethod(type).Invoke(null, new[] { replayEvent });
                 var keys = Sorted(JsonDocument.Parse(json).RootElement.EnumerateObject().Select(p => p.Name));
-                var expected = Sorted(own.Concat(BaseMembers).Append("$type"));
+                // A member marked to be left out while null (HeartbeatEvent.hostSpeed, 1.1.14) is not in a fresh event's
+                // JSON; ReviewFixChecks checks that it is there once set.
+                var leftOutWhileNull = type.GetMembers(all).Where(m => (m is FieldInfo || m is PropertyInfo) && m.DeclaringType == type
+                    && m.GetCustomAttributesData().Any(a => a.AttributeType.Name == "JsonPropertyAttribute"
+                        && a.NamedArguments.Any(n => n.MemberName == "NullValueHandling" && Convert.ToInt32(n.TypedValue.Value) == 1))
+                    && (m is FieldInfo f ? f.GetValue(replayEvent) : ((PropertyInfo)m).GetValue(replayEvent)) == null)
+                    .Select(m => m.Name).ToHashSet();
+                var expected = Sorted(own.Concat(BaseMembers).Append("$type").Where(k => !leftOutWhileNull.Contains(k)));
                 if (!keys.SequenceEqual(expected)) problems.Add($"{name}'s JSON keys are {Show(keys)}, not {Show(expected)}");
             }
             if (problems.Count > 0) throw new Exception(string.Join("; ", problems));
@@ -254,7 +261,8 @@ internal static class JoinClosingChecks
     static readonly string[] BaseMembers = { "randomS0Before", "randomStateHashBefore", "ticksSinceLoad", "type" };
     static readonly (string Name, string[] Own)[] OwnMembers =
     {
-        ("BeaverBuddies.HeartbeatEvent", new[] { "entityOrderHash", "walkerPositionHash" }),
+        // hostSpeed (1.1.14): the host's pace while it eases off for a slow guest, for the guests to follow.
+        ("BeaverBuddies.HeartbeatEvent", new[] { "entityOrderHash", "hostSpeed", "walkerPositionHash" }),
         ("BeaverBuddies.Events.SpeedSetEvent", new[] { "speed" }),
         ("BeaverBuddies.Events.ShowOptionsMenuEvent", new[] { "speed" }),
         ("BeaverBuddies.Events.SpeedBoostEvent", new[] { "boost" }),

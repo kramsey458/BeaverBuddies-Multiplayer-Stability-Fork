@@ -147,6 +147,11 @@ namespace BeaverBuddies
                 UnityEngine.Random.InitState(nextSeedOnLoad.Value);
                 nextSeedOnLoad = null;
             }
+            // So does the clock the patched Time.time returns in multiplayer (TimeTimePatcher): it was set only as each tick
+            // started, so until the first one it read wherever this program's last multiplayer game had got to (0 in a
+            // fresh program, the old session's time on a host that saved and rehosted). What reads the clock while a game
+            // loads (a walking beaver's animation, say) now reads the same on every computer.
+            TimeTimePatcher.ResetForLoad();
             // A multiplayer game is loading, on every player: the hashes the heartbeat carries start here, before
             // anything ticks, and not from wherever an earlier game in this program left them. (Reset, when the
             // previous game is left, clears them too.)
@@ -184,73 +189,39 @@ namespace BeaverBuddies
         {
             get
             {
-                // If for some reason this is happening outside of
-                // a multiplayer game, we don't need to freeze the seed
-                if (EventIO.IsNull) return false;
-
-                // Something is asking us to return false
-                if (IsNonGameplay) return true;
-
-
-                // When the game is loading, almost all random calls are gameplay logic
-                // (e.g., choosing when trees die, or choosing an Enterer).
-                // I have filtered out the non-gameplay ones I've found, and even if they
-                // use gameplay random, it should be ok as long as they are deterministic,
-                // and not determined by UI events. This may require more monitoring.
-                // So we want to use gameplay random.
-                if (!ReplayService.IsLoaded)
+                // The rule itself is RandomSourceRules (checked on its own); this gathers the facts it needs.
+                bool inSession = !EventIO.IsNull;
+                bool loaded = ReplayService.IsLoaded;
+                bool otherThread = UnityThread != null && Thread.CurrentThread != UnityThread;
+                bool gameMarker = !otherThread && activeGamePatchers.Count > 0;
+                bool nonGameMarker = !otherThread && activeNonGamePatchers.Count > 0;
+                RandomSourceRules.Source source = RandomSourceRules.Choose(inSession, IsNonGameplay, otherThread,
+                    gameMarker, nonGameMarker, loaded, IsTicking, ReplayService.IsReplayingEvents);
+                if (source == RandomSourceRules.Source.Unknown)
                 {
-                    if (Settings.Debug)
-                    {
-                        DesyncDetecterService.Trace($"Load RNG; s0 before: {UnityEngine.Random.state.s0:X8}");
-                    }
-                    return false;
-                }
-
-                // Calls from a non-game thread should never use the game's random
-                // though if they are game-related we may need a solution for that...
-                if (UnityThread != null && Thread.CurrentThread != UnityThread)
-                {
+                    // Not classified yet: logged so it can be, and kept off the game's random state meanwhile.
                     LogUnknownRandomCalled();
                     return true;
                 }
-
-                // If this is explicitly marked as game code, use game RNG
-                if (activeGamePatchers.Count > 0) return false;
-
-                bool areActiveNonGamePatchers = activeNonGamePatchers.Count > 0;
-
-                // If this is non-game code, don't use the Game's random
-                if (areActiveNonGamePatchers) return true;
-
-                // If we're ticking, it's likely game code, and hopefully
-                // we've caught any non-game code that can run during a tick!
-                if (IsTicking)
-                {
-                    var entity = TickableEntityTickPatcher.currentlyTickingEntity;
-                    if (Settings.Debug)
-                    {
-                        DesyncDetecterService.Trace($"Tick RNG; " +
-                        $"s0 before: {UnityEngine.Random.state.s0:X8}; " +
-                        $"Last entity: {entity?.Name} - {entity?.EntityId}");
-                    }
-                    return false;
-                }
-
-                // If we are replaying/playing events recorded from this
-                // user or other clients, we should always use the game's random.
-                // These mostly happen during ticks, but can also happen
-                // when the game is paused.
-                if (ReplayService.IsReplayingEvents) return false;
-
-                // If we're not ticking/replaying, and random is happening from an
-                // unknown source, log it so we can classify it.
-                LogUnknownRandomCalled();
-
-                // And ultimately return true, assuming it's non-game code,
-                // though we can't be sure and need to investigate.
-                return true;
+                if (source == RandomSourceRules.Source.NonGame) return true;
+                if (inSession && Settings.Debug && !(loaded && gameMarker)) TraceGameDraw(loaded);
+                return false;
             }
+        }
+
+        // With detailed logging on: a line in the tick's trace for each game draw while loading or ticking.
+        private static void TraceGameDraw(bool loaded)
+        {
+            if (!loaded)
+            {
+                DesyncDetecterService.Trace($"Load RNG; s0 before: {UnityEngine.Random.state.s0:X8}");
+                return;
+            }
+            if (!IsTicking) return;
+            var entity = TickableEntityTickPatcher.currentlyTickingEntity;
+            DesyncDetecterService.Trace($"Tick RNG; " +
+                $"s0 before: {UnityEngine.Random.state.s0:X8}; " +
+                $"Last entity: {entity?.Name} - {entity?.EntityId}");
         }
 
         [HarmonyPatch(typeof(TickableEntity), nameof(TickableEntity.Tick))]
@@ -822,7 +793,8 @@ namespace BeaverBuddies
     [HarmonyPatch(typeof(Guid), nameof(Guid.NewGuid))]
     public class GuidPatcher
     {
-        private static bool makeRealGuid = false;
+        // Per thread: a real GUID asked for on a network thread must not make the main thread's next entity ID real too.
+        [ThreadStatic] private static bool makeRealGuid;
 
         public static Guid RealNewGuid()
         {
@@ -951,6 +923,9 @@ namespace BeaverBuddies
             time = ticks * tickLength;
         }
 
+        /// <summary>A game is loading: the clock is at tick 0 until its first tick starts.</summary>
+        public static void ResetForLoad() => time = 0;
+
         public static void Install() {
             // get pointers to the original & replacement methods.
             var original_method = typeof(Time).GetProperty(nameof(Time.time)).GetGetMethod();
@@ -1056,7 +1031,8 @@ namespace BeaverBuddies
                 }
                 if (ReferenceEquals(anim, null)) continue;
                 var entityComponent = entity._entityComponent;
-                var pathFollower = entityComponent.GetComponent<Walker>()?.PathFollower;
+                Walker walker = entityComponent.GetComponent<Walker>();
+                var pathFollower = walker?.PathFollower;
                 var animatedPathFollower = anim._animatedPathFollower;
                 if (pathFollower != null && animatedPathFollower != null)
                 {
@@ -1064,7 +1040,9 @@ namespace BeaverBuddies
                     // (hopefully) deterministic position
                     var targetPos = pathFollower._transform.position;
                     animatedPathFollower.CurrentPosition = targetPos;
-                    hashes.AddWalker(targetPos.x, targetPos.y, targetPos.z);
+                    // A walker switched off does not move in the simulation: a pilot riding its plane (which flies on
+                    // frame time, as in the game; Doc/WonderTiming.md) would read as walkers that differ.
+                    if (walker.Enabled) hashes.AddWalker(targetPos.x, targetPos.y, targetPos.z);
                     BeaverBuddies.DesyncDetecter.WalkerDiagnostics.Capture(entityComponent, pathFollower,
                         BeaverBuddies.DesyncDetecter.DesyncDetecterService.CurrentTick);
                 }

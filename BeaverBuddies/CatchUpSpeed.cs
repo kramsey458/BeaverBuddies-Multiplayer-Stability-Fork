@@ -48,6 +48,15 @@ namespace BeaverBuddies
 
         public static float CapFor(float targetSpeed) => Math.Max(MaxSpeed, targetSpeed + CatchUpMargin);
 
+        // The speed a guest works through ticks at, before any catching up: the one the players chose or, while the host
+        // eases off for a slow guest (HostPacing, FrameRatePacing), the host's own lower pace, which the host sends with
+        // each tick (HeartbeatEvent.hostSpeed). Until 1.1.14 a guest ran at the chosen speed while the host ran
+        // slower, so it reached the start of every tick before the host's word for it and stood waiting there: every
+        // guest but the slow one went stop-go on every tick, more the more the host eased. A host holding still (0) is
+        // not a pace: a guest behind it catches up.
+        public static float PaceFor(float chosenSpeed, float? hostSpeed) =>
+            hostSpeed is float host && host > 0 && host < chosenSpeed ? host : chosenSpeed;
+
         public static float For(float targetSpeed, int ticksBehind, float currentSpeed)
         {
             // The original rule, unchanged. It also covers a paused game (target 0), where a guest

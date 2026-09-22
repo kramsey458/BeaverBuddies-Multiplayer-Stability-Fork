@@ -5,9 +5,102 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.14
+
+The current release: bug fixes on top of 1.1.13, and no new features. They come from a review of BeaverBuddies
+MultiColony 1.4.0-beta11, whose shared-colony code is this fork's; each fix was made there first (MultiColony
+1.4.0-beta12) and is the same here unless it says otherwise. The heartbeat and the Wonder activation carry a new field,
+so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
+
+**Not played yet.** Everything below is covered by automated checks, and 30 of the new ones fail against 1.1.13's
+build, so they test the fixes, but none of it has been played. 1.1.13, which was played, stays on the releases page.
+
+### Desyncs
+
+- **Wonders run on the tick, the Earth Repopulator's plane launch included.** Every Wonder's activation and
+  deactivation animation, and all of the Iron Teeth Earth Repopulator's launch (the catapult's wait, the runway, the
+  launcher's turn between planes), ran on each player's render frames. A player at another frame rate deactivated the
+  Wonder and removed its pilots on another tick, and the planes, created from a frame update, got other entity IDs on
+  every computer. In co-op they now advance once per tick, the same everywhere (`Fixes/WonderTimingFix.cs`, design
+  note `BeaverBuddies/Doc/WonderTiming.md`). This is PR #46, which was closed because its timing transpilers threw
+  when a game update changes a method they patch, and one throw stops all of the mod's patching. Now such a method is
+  left as the game has it, a line is logged, and the Wonders go back to frame time, as in 1.1.13, with every other
+  fix in place.
+- **Whether a Wonder can be activated is the host's answer.** The game's check reads the Wonder's animation state. The
+  host's answer is now written into the action (`WonderActivatedEvent.activated`) and every guest follows it.
+- **Deleted is gone at once, for everyone.** Something deleted during a tick (a tree an explosion took, a pilot) still
+  counted as there for the game's checks until the end of the frame, which is a different point in the tick on each
+  computer. A deletion in a tick or in a played action now ends that frame's ticking on every computer
+  (`EntityDeletionEndsFramePatcher`). The next frame carries on from there, and the buckets left over go back to the
+  game's clock, so the game runs no slower. A save waits for the end of the tick as before.
+- **Random numbers.** Which random generator a draw uses is now one rule (`RandomSourceRules`): a method marked as not
+  simulation keeps that mark while a game loads (it drew the game's numbers then), and a draw from another thread never
+  uses the game's. The walker debugger's path markers put the game's random state back. Desync reports name their files
+  without drawing the game's random numbers, and a real GUID asked for on one thread no longer turns the next entity
+  ID made on another into a real one. The multiplayer clock starts at tick 0 as a game loads, wherever the last game
+  left it.
+- **The walker check** leaves out walkers that are switched off, such as a pilot riding its plane, so a launch no longer
+  logs a walker mismatch.
+
+### A session that goes on
+
+- **A building setting for a building that is gone** (demolished between the click and the tick) is skipped on every
+  computer. It threw, and a throw stops the session for everyone.
+- **A building from a mod only one player has.** A guest placing or unlocking a building the host's game does not have
+  is refused by the host, and the game goes on; it used to stop for everyone. A guest that lacks a building the host
+  used leaves by itself, with a message naming the building and saying how to play together again, and the host and
+  the other players play on. MultiColony refuses the first through its colony rules; here the host's replay checks
+  it (`ReplayService.NamesMissingBuilding`), and the guest's quiet leave is new to the fork.
+
+### Behavior
+
+- **Spring-return levers.** The game switches a spring-return lever off in the tick through the method a click is
+  recorded from, so each computer took it for a click of its own: the host played it a tick late, and every guest sent
+  another. It now switches off in the tick, at once, the same on every computer. Holding a lever on never worked in
+  co-op and still does not.
+- **A paused building that is deleted** resumes itself first, also through the method a click is recorded from, and
+  every computer sent that on for a building already gone. It now runs as the simulation's own call.
+- **Saving waits for water and soil.** A co-op save at the end of a tick now waits for the water and soil simulations
+  still running on their own threads, instead of reading their data while it was being written.
+- **Only a pause by the players saves at once.** Any other stop (a guest waiting for the host, the host waiting for a
+  guest) can be in the middle of a tick, and now finishes it before saving.
+
+### Network
+
+- **Guests follow the host's pace.** While the host eases off for a slow guest, it now sends its pace with each tick
+  and every guest runs at it, instead of running ahead and standing still at the start of each tick. In a
+  frame-by-frame model, with the host eased to 85%, 70%, 50% and 30%, the other guests stood still in 4.6%, 19.7%,
+  42.7% and 65.5% of their frames; now in about none.
+- **A direct (IP) guest whose connection dies no longer freezes everyone.** The host wrote to every guest from its game
+  thread, so a guest that stopped reading (its computer asleep, its link gone without a word) stopped the host, and
+  every other player with it, for 3.6 s to over 20 s in measurements. Each direct guest now has a send queue with a
+  thread of its own (`TimberNet/SendLane.cs`). A guest that takes nothing for 30 seconds, or has 16 MB waiting, is
+  dropped, as over Steam, and the others play on. A joining guest's start message is written to that guest alone, and
+  the others get it in order with everything else.
+- **Messages are read on threads of their own**, above normal priority, instead of the shared thread pool, which the
+  game's own workers can keep busy: in a test under load, handing a received message on went from 28 ms to under
+  0.1 ms.
+- **Over Steam, what is sent while paused or waiting goes at once**, not at the next frame.
+- **Above speed 7** (with a speed boost) the host's easing counts a guest's lag in time rather than in ticks, so a host
+  that eased off once speeds back up again.
+- **Messages are compressed faster** (gzip's fastest level): several times quicker for a large action, on the host's
+  game thread, for a message at most a tenth larger.
+
+### Validation
+
+- `StabilityTests`: **274** passed (13 new: the random source rule; the send lanes, with frames in order, posting that
+  never waits, a stalled guest found and dropped, a real loopback session where one guest stops reading, and the
+  reading threads' priority; and a frame-by-frame model of guests behind an easing host).
+- `RuntimeChecks`: **176** passed against each of the Steam and non-Steam builds (35 new: 14 for the Wonders, run on the
+  game's own Wonder code at 10, 30 and 144 FPS, and 21 for the other fixes). 30 of the 35 fail against 1.1.13's build;
+  of the other five, three show the frame-rate problem on the game's own code and two are guards that hold before the
+  fix too. The members `HeartbeatEvent` carries now include `hostSpeed`, which is left out of the JSON while it is
+  empty.
+- 3 Python checks pass. Both builds compile with no warnings.
+
 ## 1.1.13
 
-The current release and the final feature release: from here the fork gets updates for new Timberborn versions and
+The final feature release: from here the fork gets updates for new Timberborn versions and
 bug fixes only, and new features go into BeaverBuddies MultiColony. On top of 1.1.12: two chat features taken from the BeaverBuddies MultiColony mod, a speed boost at
 the top of the chat and a color of your choice for your own name in the chat. The speed boost adds a network message,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.

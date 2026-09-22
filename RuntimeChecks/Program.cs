@@ -96,6 +96,7 @@ saving.SetValue(null, false);
 ScopeChecks.Run(assembly, Test);
 WaterChecks.Run(assembly, Test);
 TimingChecks.Run(assembly, Test);
+WonderChecks.Run(assembly, Test);
 DemolitionChecks.Run(assembly, Test);
 InputRecoveryChecks.Run(assembly, Test);
 MenuRecoveryChecks.Run(assembly, Test);
@@ -113,6 +114,7 @@ DevModeWarningChecks.Run(assembly, Test);
 JoinClosingChecks.Run(assembly, Test);
 DesyncCheckChecks.Run(assembly, Test);
 DesyncDialogChecks.Run(assembly, Test);
+ReviewFixChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

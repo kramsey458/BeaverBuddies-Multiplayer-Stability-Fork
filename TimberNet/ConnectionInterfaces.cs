@@ -13,6 +13,16 @@ namespace TimberNet
         void WaitForConnection(int timeoutMilliseconds);
     }
 
+    /// <summary>
+    /// Optional. A transport whose Write can wait for the other end to read (a direct TCP connection whose send buffer is
+    /// full). The host writes to such a guest from a thread of that guest's own (<see cref="SendLane"/>), never from its
+    /// game thread, so one guest that stops reading cannot stop the host and every other guest. A transport whose writes
+    /// only queue (Steam) is written to directly, which keeps a tick's events in the pump that follows the tick.
+    /// </summary>
+    public interface IBlockingWrites
+    {
+    }
+
     /// <summary>Optional. A transport that can explain why its connection ended.</summary>
     public interface IFailureDescriber
     {

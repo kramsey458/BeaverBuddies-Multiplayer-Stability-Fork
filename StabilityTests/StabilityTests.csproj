@@ -31,6 +31,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/DesyncDialogPlan.cs" Link="DesyncDialogPlan.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/RandomSourceRules.cs" Link="RandomSourceRules.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- The checkout the tests were built against: the Workshop checks run this checkout's PostBuild step. -->

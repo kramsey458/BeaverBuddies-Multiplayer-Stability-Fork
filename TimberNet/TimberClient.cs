@@ -127,8 +127,9 @@ namespace TimberNet
             {
                 throw new ConnectionFailureException();
             }
-            // Connect a TCP socket at the address
-            Task.Run(() =>
+            // Connect a TCP socket at the address, then read from it until it closes, on a thread of its own (see
+            // StartNetworkThread).
+            StartNetworkThread("BeaverBuddies receive from the host", () =>
             {
                 try
                 {
