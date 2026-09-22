@@ -103,6 +103,7 @@ ReplayEventChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
 DevKeyChecks.Run(assembly, Test);
+DevModeWarningChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

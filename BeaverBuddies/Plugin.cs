@@ -61,6 +61,7 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Panel.ConnectionPanelService>().AsSingleton();
             containerDefinition.Bind<BeaverBuddies.Activity.PlayerCursorSettingsUI>().AsSingleton();
             containerDefinition.Bind<ModMismatchWarningService>().AsSingleton();
+            containerDefinition.Bind<DevModeCoopWarning>().AsSingleton();
             // We can safely add this regardless of whether tracing is enabled
             // because it will only trace if the config is set to do so.
             containerDefinition.Bind<DesyncDetecterService>().AsSingleton();

@@ -53,7 +53,9 @@ Ctrl key is held, with the mod's prefixes in front of them in Harmony's order, i
 co-op game and in single player: before the fix the held key finished the building and
 dropped no goods in co-op. It also decodes the IL of the placing, deconstruction and
 planting assemblies and fails on any other method there that reads a key and has not
-been reviewed.
+been reviewed. The co-op dev mode notice is run against the game's own dev mode manager
+and notification service: shown once in a co-op game when dev mode is on at load or
+turned on, never in single player, and never an error when its text is missing.
 
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 
