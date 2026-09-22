@@ -153,14 +153,16 @@ internal static class DevKeyChecks
                     Require(Priority(prefix) == 0, $"{prefix.DeclaringType.Name}.Prefix can skip the game's method but is not [HarmonyPriority(Priority.Last)]");
             }
         });
-        test("Dev keys: every game method a replay or tick reaches that reads a key is reviewed", () =>
+        test("Dev keys: every key reader in the placing, demolishing, deconstruction and planting assemblies is reviewed", () =>
         {
             // InputService.IsKeyHeld or IsKeyDown read inside code that runs on every computer during a replay or a tick
-            // (placing a building, deconstructing one) reads that computer's keyboard. The two dev keys above did. Any
-            // other such reader in these assemblies must be reviewed and either patched or listed here.
+            // (placing a building, deconstructing one) reads that computer's keyboard. The two dev keys above did. Every
+            // reader in these assemblies, the tools' own input handling included, must be reviewed and either patched
+            // or listed below with the reason it is safe or a known local-only dev mode tool.
             var readers = new List<string>();
             foreach (string assemblyName in new[] { "Timberborn.BuildingTools", "Timberborn.RecoveredGoodSystem", "Timberborn.Demolishing",
-                "Timberborn.ConstructionSites", "Timberborn.BlockSystem", "Timberborn.EntitySystem", "Timberborn.PlantingUI", "Timberborn.Forestry" })
+                "Timberborn.DemolishingUI", "Timberborn.ConstructionSites", "Timberborn.BlockSystem", "Timberborn.EntitySystem",
+                "Timberborn.PlantingUI", "Timberborn.Forestry" })
             {
                 foreach (Type type in LoadableTypes(Assembly.Load(assemblyName)))
                 {
@@ -178,14 +180,26 @@ internal static class DevKeyChecks
                     }
                 }
             }
-            // Reviewed: the two dev keys, not read in a co-op game (Fixes/DevKeysCoopFix); the dev mode plant spawner,
-            // which only the planting tool calls on the player's own computer (the replayed planting event marks the area
-            // and nothing else: plants spawned by dev mode exist on that computer alone, one of the dev mode desyncs the
-            // co-op notice warns about); and the tools' own input handling, which only runs on the player's own computer
-            // (it records an action; the action is what is played everywhere).
+            // Patched: the two dev keys, not read in a co-op game (Fixes/DevKeysCoopFix).
             var patched = new[] { "BuildingGoodsRecoveryService.OnBuildingDeconstructed", "BuildingPlacer.ShouldBePlacedFinished" };
-            var reviewed = patched.Append("DevModePlantableSpawner.SpawnPlantables");
-            var unreviewed = readers.Except(reviewed).Where(r => !r.Contains("Tool") && !r.Contains("Picker") && !r.Contains("Cursor")).ToList();
+            var reviewed = patched.Concat(new[]
+            {
+                // Dev mode's plant spawner. Only the planting tool calls it, on the player's own computer: the replayed
+                // planting event marks the area and nothing else, so plants spawned by dev mode exist on that computer
+                // alone. A known local-only dev mode tool; the co-op notice (Fixes/DevModeCoopWarning) warns about it.
+                "DevModePlantableSpawner.SpawnPlantables",
+                // Dev mode's instant unlock (Ctrl-click on a locked building). The building tool calls it on the player's
+                // own computer, and it unlocks through BuildingUnlockingService.UnlockIgnoringCost, which this fork does
+                // not share (it shares Unlock): a known local-only dev mode tool the co-op notice warns about.
+                "BuildingToolLocker.TryToUnlock",
+                // The same key on a locked planting tool only lets that player open the tool on their own computer;
+                // nothing is unlocked, and the planting it leads to is recorded and played everywhere.
+                "PlantableToolLocker.TryToUnlock",
+                // The building panel's demolish shortcut: an input processor on the player's own computer. The
+                // ChangeDemolishState it calls is recorded and played everywhere (DemolishButtonClickedEvent).
+                "DemolishableFragment.ProcessInput",
+            });
+            var unreviewed = readers.Except(reviewed).ToList();
             Require(unreviewed.Count == 0, "review these key readers: " + string.Join(", ", unreviewed));
             foreach (string needed in patched)
                 Require(readers.Contains(needed), "the game no longer reads a key in " + needed + "; the patch in DevKeysCoopFix may be stale");

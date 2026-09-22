@@ -51,9 +51,11 @@ RuntimeChecks also runs the game's own `BuildingPlacer.ShouldBePlacedFinished` a
 `BuildingGoodsRecoveryService.OnBuildingDeconstructed` on a keyboard where dev mode's
 Ctrl key is held, with the mod's prefixes in front of them in Harmony's order, in a
 co-op game and in single player: before the fix the held key finished the building and
-dropped no goods in co-op. It also decodes the IL of the placing, deconstruction and
-planting assemblies and fails on any other method there that reads a key and has not
-been reviewed. The co-op dev mode notice is run against the game's own dev mode manager
+dropped no goods in co-op. It also decodes the IL of the placing, demolishing,
+deconstruction and planting assemblies and fails on any method there that reads a key,
+the tools' own input handling included, unless it is patched or listed as reviewed
+with its reason (dev mode's instant unlock and plant spawner are listed as known
+local-only dev mode tools). The co-op dev mode notice is run against the game's own dev mode manager
 and notification service: shown once in a co-op game when dev mode is on at load or
 turned on, never in single player, and never an error when its text is missing.
 
