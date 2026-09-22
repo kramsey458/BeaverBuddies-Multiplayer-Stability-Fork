@@ -158,7 +158,7 @@ panel carries on.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (210 checks) covers:
+`dotnet run --project StabilityTests` covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
