@@ -1,0 +1,30 @@
+name: Stability tests
+
+# The mod and RuntimeChecks need the game's assemblies, which cannot be redistributed, so only StabilityTests runs here.
+# It needs no game files: it builds TimberNet, links the mod's game-free sources and runs the mod project's PostBuild
+# step into a scratch folder (see StabilityTests/README.md).
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      # BeaverBuddies/NuGet.Config names only the BepInEx feed and applies only to the mod project. StabilityTests and
+      # TimberNet need Newtonsoft.Json from nuget.org, so name that source rather than rely on the runner's defaults.
+      - name: Restore
+        run: dotnet restore StabilityTests/StabilityTests.csproj --source https://api.nuget.org/v3/index.json
+      - name: Run StabilityTests
+        run: dotnet run --project StabilityTests --no-restore

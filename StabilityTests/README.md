@@ -27,6 +27,10 @@ it updates: a build never leaves the original project's item (3293380223) there,
 copy of it that an earlier build left, and keeps one the uploader wrote for a new item.
 They need the .NET SDK on the PATH, but no game files.
 
+GitHub Actions runs this suite on Windows for every push and pull request
+(`.github/workflows/tests.yml`), restoring its packages from nuget.org. RuntimeChecks needs
+the game's assemblies, which cannot be redistributed, so it runs only locally.
+
 `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam
 depends on the players' frame length, with Steam served once per frame and with it also served
 between the ticks of a frame. It runs the real transport, server, client and ping tracker over a
