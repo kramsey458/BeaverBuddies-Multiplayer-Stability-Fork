@@ -3,7 +3,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 // What a player does with a received frame it cannot read: one whose "$type" the binder refuses (see
-// FrameTypeChecks), one from a mod this game does not have, or one with no type at all. The frames are read by the
+// FrameTypeChecks), one from a mod this game does not have, one with no type at all, or a group of actions that
+// holds an empty entry or another group. The frames are read by the
 // real ClientEventIO and ServerEventIO over a real TimberClient and TimberServer, from ReadEvents, which runs inside a
 // tick with nothing to catch an exception, so it must never throw.
 internal static class UnreadableFrameChecks
@@ -47,14 +48,15 @@ internal static class UnreadableFrameChecks
             return e;
         }
         // One tick's actions, as the host sends them.
-        string Group(int tick, params object[] events)
+        object GroupOf(int tick, params object[] events)
         {
             var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(eventType));
             foreach (object e in events) list.Add(e);
             object group = Activator.CreateInstance(groupedType, list);
             eventType.GetField("ticksSinceLoad").SetValue(group, tick);
-            return Write(group);
+            return group;
         }
+        string Group(int tick, params object[] events) => Write(GroupOf(tick, events));
 
         string Renamed(string json, string from, string to) =>
             json.Contains($"\"{from}\"") ? json.Replace($"\"{from}\"", $"\"{to}\"") : throw new Exception($"{from} is not in {json}");
@@ -70,6 +72,9 @@ internal static class UnreadableFrameChecks
                     heartbeatType.FullName + ", " + heartbeatType.Assembly.GetName().Name, "MissingMod.Actions.MissingEvent, MissingMod.Actions")),
                 new[] { "MissingMod.Actions.MissingEvent", "MissingMod.Actions" }),
             ("a frame with no type", () => Frame($"{{\"ticksSinceLoad\": {Tick}}}"), Array.Empty<string>()),
+            // Both are read fine, but no action in them can be played: replaying them would fail and stop the session.
+            ("a group holding an empty entry", () => Frame(Group(Tick, Heartbeat(), null)), new[] { "group of actions" }),
+            ("a group inside a group", () => Frame(Group(Tick, Heartbeat(), GroupOf(Tick, Heartbeat()))), new[] { "group of actions" }),
         };
 
         // The real event IO around a real TimberClient or TimberServer that has received these frames. Nothing is

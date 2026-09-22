@@ -33,8 +33,9 @@ namespace BeaverBuddies.IO
 
         /// <summary>
         /// Reads one received frame, or returns null if it cannot be read: a "$type" in it was refused (see
-        /// ReplayEventBinder) or is not loaded on this computer, or it is not an action at all.
-        /// <paramref name="problem"/> then says why, naming the type and its assembly where there is one.
+        /// ReplayEventBinder) or is not loaded on this computer, it is not an action at all, or it is a group of
+        /// actions that no player could play. <paramref name="problem"/> then says why, naming the type and its
+        /// assembly where there is one.
         /// </summary>
         private static ReplayEvent ToEvent(JObject obj, out string problem)
         {
@@ -43,8 +44,13 @@ namespace BeaverBuddies.IO
             {
                 problem = null;
                 ReplayEvent replayEvent = JsonSettings.Deserialize<ReplayEvent>(obj.ToString());
-                if (replayEvent != null) return replayEvent;
-                problem = "The frame holds no action.";
+                // Groups are opened one level deep before replay (ReplayService.ReadEventsFromIO): an empty entry or
+                // a group inside would fail there, before it changed anything, and a failed replay stops the session.
+                // Nobody sends either, so it is dropped here like any other frame that cannot be read.
+                if (replayEvent is GroupedEvent group && (group.events == null || group.events.Any(e => e == null || e is GroupedEvent)))
+                    problem = "The frame's group of actions holds an empty entry or another group, which cannot be played.";
+                else if (replayEvent != null) return replayEvent;
+                else problem = "The frame holds no action.";
             }
             catch (Exception ex)
             {
