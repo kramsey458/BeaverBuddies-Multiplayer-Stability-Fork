@@ -29,6 +29,15 @@ namespace TimberNet
         public event MessageReceived? OnSessionFault;
         private readonly ConcurrentQueue<string> sessionFaults = new ConcurrentQueue<string>();
         public virtual void AbortSession(string reason) { Close(); }
+        /// <summary>
+        /// Ends the session over something found on this side, the way a fault reported by the other player does:
+        /// <see cref="OnSessionFault"/> is raised with <paramref name="reason"/> now, on the caller's thread. A handler
+        /// that fails is logged and never reaches the caller.
+        /// </summary>
+        public void RaiseSessionFault(string reason)
+        {
+            NotifyEach(OnSessionFault, handler => ((MessageReceived)handler)(reason), "a session fault");
+        }
         protected void SendSessionFault(ISocketStream stream, string reason)
         {
             SendEvent(stream, new JObject { [TYPE_KEY] = "SessionFault", [TICKS_KEY] = TickCount, ["reason"] = reason });
@@ -185,12 +194,14 @@ namespace TimberNet
             return message[TICKS_KEY]!.ToObject<int>();
         }
 
-        public static string GetType(JObject message)
+        /// <summary>
+        /// The frame's "type", or null if it has none or it is not a string. Frames come from the other player and
+        /// this is read inside a tick (ReadEvents), where an exception would stop the tick halfway: a frame without
+        /// a type is passed on like an action, and one that cannot be read is dealt with there.
+        /// </summary>
+        public static string? GetType(JObject message)
         {
-            var type = message["type"];
-            if (type == null)
-                throw new Exception($"Message does not contain type key");
-            return type.ToObject<string>()!;
+            return message[TYPE_KEY] is JValue { Type: JTokenType.String } type ? (string?)type : null;
         }
 
         protected void InsertInScript(JObject message, List<JObject> script)
@@ -606,7 +617,7 @@ namespace TimberNet
 
         private bool ShouldReadEvent(JObject message)
         { 
-            string type = GetType(message);
+            string? type = GetType(message);
             return !(type == SET_STATE_EVENT || type == HEARTBEAT_EVENT);
         }
 

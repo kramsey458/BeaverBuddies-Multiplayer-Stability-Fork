@@ -102,7 +102,17 @@ static class NetworkStatusChecks
         yield return ("Status traffic never changes the hash, the event script or tick progress", () =>
         {
             using var rig = new Rig(guestReplyDelays: new[] { 0 });
-            foreach (var g in rig.Guests) { Check(SpinWait.SpinUntil(() => g.HasEventsForTick(0), 2000)); g.ReadEvents(0); }
+            // The join sends the state and then the host's init event as separate frames: drain until the init event is
+            // in, so anything left afterwards can only have come from status traffic.
+            foreach (var g in rig.Guests)
+            {
+                var joined = new List<JObject>();
+                Check(SpinWait.SpinUntil(() =>
+                {
+                    if (g.HasEventsForTick(0)) joined.AddRange(g.ReadEvents(0));
+                    return joined.Any(e => (string?)e[TimberNetBase.TYPE_KEY] == "InitProbe");
+                }, 2000), "the guest never received the host's init event");
+            }
             int hostHash = rig.Host.Hash, guestHash = rig.Guests[0].Hash;
             rig.WaitFor(() => rig.Host.GetNetworkStatus(), s => s.Peers.Count == 1 && s.Peers[0].RttMs != null, "no ping");
             rig.Run(500);                                       // many more probe/reply/roster rounds

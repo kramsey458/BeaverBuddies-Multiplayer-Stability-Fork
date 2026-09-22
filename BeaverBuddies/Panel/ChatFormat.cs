@@ -14,9 +14,9 @@ namespace BeaverBuddies.Panel
         // The panel's ordinary text color, used when a color is not six hex digits.
         const string FallbackHex = "F2E8D0";
 
-        /// <summary>"Name: message", all of it in the sender's color. Only the color is markup.</summary>
+        /// <summary>"Name: message" with the name in the sender's color and the message in the panel's own text color. Only the color is markup.</summary>
         public static string Line(string name, string colorHex, string text) =>
-            "<color=#" + ReadableHex(colorHex) + ">" + Plain(name) + ": " + Plain(text) + "</color>";
+            "<color=#" + ReadableHex(colorHex) + ">" + Plain(name) + "</color>: " + Plain(text);
 
         // Rich text is on so the name can be colored, so nothing a player types may carry a tag of its own.
         // (Chat is already cleaned when it arrives; this keeps the line safe whatever calls it.)
