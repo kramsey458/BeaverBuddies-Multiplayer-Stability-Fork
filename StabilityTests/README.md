@@ -47,6 +47,17 @@ timing transpiler. It reproduces frame-rate-dependent output before the patch
 and checks matching ramp values after it. This tests the real ramp arithmetic
 and emitted patch, but not Harmony installation inside Unity or depth sensing.
 
+RuntimeChecks also runs the Wonders' timing (SF8, `BeaverBuddies/Doc/WonderTiming.md`).
+It decodes the installed game's plane catapult, runway and launcher rotation IL, runs the
+mod's timing transpilers on it, and drives it, with the game's own animator and Wonder
+animation controller, at 10, 30 and 144 FPS: the results differ before the fix and match
+bit for bit, ending on the same tick, behind the mod's per-frame gates and inside its tick
+scope. The animation runs through the mod's own tick step; the runway and the launcher run
+in the step's order from cloned IL, since their game methods call Unity. It also checks
+from the game's IL that planes are only spawned from the two frame updates the tick takes
+over. Curves and transforms are simple stand-ins, and Harmony is not installed, so a
+two-player game with one player's frame rate capped is still the final check.
+
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 
 ```

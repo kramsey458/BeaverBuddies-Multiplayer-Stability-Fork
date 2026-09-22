@@ -124,7 +124,7 @@ internal static class TimingChecks
 
     // Decode this small method with .NET reflection rather than Harmony's
     // Unity-targeted MethodCopier, which cannot execute under this .NET 8 host.
-    private static object ReadInstructions(MethodInfo method, ILGenerator il, Type codeType)
+    internal static object ReadInstructions(MethodInfo method, ILGenerator il, Type codeType)
     {
         var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Select(f => (OpCode)f.GetValue(null)).ToDictionary(o => (ushort)o.Value);

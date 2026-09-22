@@ -96,6 +96,7 @@ saving.SetValue(null, false);
 ScopeChecks.Run(assembly, Test);
 WaterChecks.Run(assembly, Test);
 TimingChecks.Run(assembly, Test);
+WonderChecks.Run(assembly, Test);
 DemolitionChecks.Run(assembly, Test);
 InputRecoveryChecks.Run(assembly, Test);
 MenuRecoveryChecks.Run(assembly, Test);

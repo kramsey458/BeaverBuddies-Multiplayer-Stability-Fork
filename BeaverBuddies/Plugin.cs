@@ -52,6 +52,7 @@ namespace BeaverBuddies
             containerDefinition.Bind<TickingService>().AsSingleton();
             containerDefinition.Bind<DeterminismService>().AsSingleton();
             containerDefinition.Bind<TickReplacerService>().AsSingleton();
+            containerDefinition.Bind<WonderTickService>().AsSingleton();
             containerDefinition.Bind<RehostingService>().AsSingleton();
             containerDefinition.Bind<MultiplayerInputRecovery>().AsSingleton();
             containerDefinition.Bind<ReportingService>().AsSingleton();
