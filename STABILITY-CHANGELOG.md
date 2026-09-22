@@ -5,9 +5,40 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.11
+
+The current release, on top of 1.1.10. It changes only how players are colored on the cursors and in the chat: nothing that is simulated, sent or
+saved changes. Every player should install this build: the join check compares the mod build, so it will not join a session running a different one.
+
+The fork owner played this change in multiplayer and reported that it works without issues. Because it only changes what is drawn, what has been
+learned from playing 1.1.10 (an hour or more in large colonies over Steam invites, with no desyncs recorded so far) applies to it too.
+
+### Every player gets a color of their own
+
+**Ping Color** starts as the same yellow for everyone, so until someone changed it, every cursor and every name in the chat was yellow. A player who
+has not changed it now gets a color by player number: the host is orange, and the guests are blue, green, pink, purple, teal, red and lime as they
+join, repeating after eight. It applies to that player's cursor, selection outline, name label and chat name, and to the swatch called Their color
+under Options, Player cursors. A color a player chose is never replaced, and a color you set for someone under Player cursors still wins. Exactly the
+default yellow counts as not chosen, so to keep yellow on purpose choose a slightly different yellow. Pings keep the Ping Color as set (yellow by
+default). Whoever is looking works the color out from the player number, so nothing new goes over the network, and a player who leaves and joins
+again gets a new number and so a new color.
+
+### Only the name is colored in the chat
+
+In 1.1.10 a whole chat line, name and message, took the player's color. Now only the name does, and the message is in the panel's normal text color.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 215 StabilityTests (5 new for the default colors: a different one for each of the
+  first eight players and none yellow, light enough to read without being pushed toward white, a chosen color kept and only the default yellow
+  replaced, and numbers past the palette; the chat line check now expects only the name to be colored), 69 RuntimeChecks against the built mod and
+  3 Python checks pass. None of them can draw the panel.
+- **Played:** the fork owner played this change (as 1.1.11-preview1) and reported that it works without issues.
+- **Not checked:** no screenshot of the new colors has been taken yet.
+
 ## 1.1.10
 
-The current release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
+On top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
 cheaper pass over every entity on each tick, a plainer connection panel, and chat drawn in the color of each player's cursor. Every player
 should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
 over the network.

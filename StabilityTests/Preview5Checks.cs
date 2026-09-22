@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using BeaverBuddies;
+using Newtonsoft.Json.Linq;
 using TimberNet;
 
 static class Preview5Checks
@@ -26,6 +27,25 @@ static class Preview5Checks
         });
         yield return ("Client replay failure notifies host on update thread", () => Session("same", "same", true, true));
         yield return ("Host replay failure reaches client before disconnect cleanup", () => Session("same", "same", true, false, true));
+        yield return ("A fault found on this side reaches every handler at once, and one that throws stays inside", () =>
+        {
+            // A guest that cannot read the host's action ends the session from inside a tick, where nothing may throw.
+            var client = new TimberClient(new ReadStream(Array.Empty<byte>()));
+            var reasons = new List<string>();
+            client.OnSessionFault += _ => throw new InvalidOperationException("a dialog with no UI behind it");
+            client.OnSessionFault += reason => reasons.Add(reason);
+            client.RaiseSessionFault("unreadable");
+            Check(reasons.SequenceEqual(new[] { "unreadable" }));
+            client.Update(); Check(reasons.Count == 1);
+        });
+        yield return ("A frame's type is read without throwing, whatever the other player sent", () =>
+        {
+            // Frames are filtered by type inside a tick; a guest's frame with no type used to throw out of it.
+            Check(TimberNetBase.GetType(new JObject { [TimberNetBase.TYPE_KEY] = "Heartbeat" }) == "Heartbeat");
+            Check(TimberNetBase.GetType(new JObject { [TimberNetBase.TICKS_KEY] = 1 }) == null);
+            Check(TimberNetBase.GetType(new JObject { [TimberNetBase.TYPE_KEY] = new JObject() }) == null);
+            Check(TimberNetBase.GetType(new JObject { [TimberNetBase.TYPE_KEY] = 5 }) == null);
+        });
         yield return ("Replay stops after partial mutation and restores flag", () =>
         {
             bool active = false; int changes = 0, failures = 0;
