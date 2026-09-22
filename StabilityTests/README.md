@@ -71,6 +71,25 @@ Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.
 
+The mod's Harmony prefixes follow one rule for their priority. A prefix that replaces the
+game's method (returns false to skip it) carries `[HarmonyPriority(Priority.Last)]`, so
+another mod's prefix on that method runs before it on every computer, whatever the load
+order. A prefix that records a multiplayer action (through `ReplayEvent.DoPrefix`,
+`DoEntityPrefix`, an event's own `DoPrefix` helper, or `ReplayService.RecordEvent` itself)
+carries `[HarmonyPriority(Priority.First)]`, also when it refuses or replaces the method in
+other cases. When the local player acts it records the action and skips the method, which
+then runs, with every other mod's prefix on it, while the action is played on every
+computer at the same tick. Ahead of it, another mod's prefix would run at the click on that
+computer only, and one that returned false would make Harmony skip the recording prefix, so
+the action would never be sent. MixedStorage's Priority.Last prefixes on
+`SingleGoodAllower.Allow` and `Disallow` rely on this. RuntimeChecks finds the recording
+prefixes in the compiled mod's instructions (through their lambdas and the events' helpers,
+and the automation prefix applied with harmony.Patch) and requires each to be
+Priority.First. It fails if it misses one of six it must find or finds fewer than 50 in
+all, if it takes a replacing prefix for a recording one, and if another of the mod's
+prefixes patches the same method as a recording prefix (the automation prefix's methods,
+listed in code, are not seen there).
+
 RuntimeChecks also runs the game's own DistrictPreviewsValidator on a preview
 building, with a district service standing in for this computer's preview road
 graph (which holds the local player's hovered tool previews). Outside a replay
@@ -127,7 +146,8 @@ shared game is paused, and record one shared pause instead when only this
 computer stands still (a guest waiting for the host, a host waiting for a
 guest). It must skip it with no notice after a failed multiplayer action, and
 let it run in single player. It also checks that the speed panel still calls
-Ticker.TickOnce, that the prefix is `[HarmonyPriority(Priority.Last)]`, that
+Ticker.TickOnce, that the prefix is `[HarmonyPriority(Priority.First)]` (it
+records the shared pause, so it is a recording prefix), that
 the game scene binds the notice, and that the notice text is in the built
 English localization. Harmony is not installed, so pressing the key in a live
 co-op game is still the final check.

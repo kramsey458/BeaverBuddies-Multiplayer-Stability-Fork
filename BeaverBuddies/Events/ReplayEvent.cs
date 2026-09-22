@@ -115,6 +115,14 @@ namespace BeaverBuddies.Events
 
         /// <summary>
         /// Helper method to make overriding recorded actions in game easier.
+        /// A prefix that records an action this way (or calls ReplayService.RecordEvent itself) carries
+        /// [HarmonyPriority(Priority.First)]. When the local player acts it records the action and skips the game's
+        /// method, which then runs while the action is played, on every computer at the same tick. Another mod's
+        /// prefix on the same method must run inside that replay, not at the click: ahead of this one it would run on
+        /// the acting computer only, and if it returned false Harmony would skip this prefix, so the action would
+        /// never be recorded or sent. First also puts this prefix in the same place on every computer, whatever the
+        /// load order. A prefix that replaces the game's method instead carries Priority.Last (StabilityTests/README.md).
+        /// RuntimeChecks (RecordingPriorityChecks) finds every recording prefix and fails if one is not First.
         /// </summary>
         /// <param name="getEvent">
         /// A function that returns the event to record, or null
