@@ -101,12 +101,27 @@ namespace BeaverBuddies.IO
             };
         }
 
-        public void StopAcceptingClients()
+        private bool stoppedAccepting;
+
+        /// <summary>
+        /// No more players from now on: the first tick has run, or (<paramref name="gameChanged"/>) an action that
+        /// changed the game was played before it (see ReplayService.CloseJoiningIfGameChanged). Either way a player
+        /// joining later would be missing something. The first reason is the one kept.
+        /// </summary>
+        public void StopAcceptingClients(bool gameChanged = false)
         {
-            Plugin.Log("Game started: no longer accepting clients");
-            string message = $"The Host has already started the game, and the game can no longer be joined. " +
-                $"Ask the Host to rehost and join before they unpause.";
-            NetBase.StopAcceptingClients(message);
+            if (stoppedAccepting) return;
+            stoppedAccepting = true;
+            Plugin.Log(gameChanged
+                ? "The game was changed before the first tick: no longer accepting clients"
+                : "Game started: no longer accepting clients");
+            string message = gameChanged
+                ? "The Host has already changed the game (placed or marked something, for example), so it can no longer be joined. " +
+                  "Ask the Host to save and rehost, and join before they change anything."
+                : $"The Host has already started the game, and the game can no longer be joined. " +
+                  $"Ask the Host to rehost and join before they unpause.";
+            // Called from inside a replay, so a server that never started must not throw here.
+            NetBase?.StopAcceptingClients(message);
             // Tell Steam friends too, so an old invite explains itself instead of hanging.
             (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
             // TODO: remove map from memory

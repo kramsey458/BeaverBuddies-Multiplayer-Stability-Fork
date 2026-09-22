@@ -113,6 +113,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 - **Equal-distance demolition jobs chosen deterministically**, by persistent target IDs. *Tested; not yet confirmed in a playtest.*
 - **Entity ID collisions handled explicitly.** A regenerated ID is now applied, and the game fails with a clear error if no unique ID can be found. *Tested.*
 - **Stuck-controls recovery.** Input state is reset after a desync, a failed action, a lost connection and when a multiplayer game loads. *Tested with a mocked device reset.*
+- **A late joiner no longer misses what was done while the game waited.** A player who joins gets the save the host loaded and then only what is played after they connect, but joining stayed open until the first tick. So a building placed, an area marked or a priority changed while the game waited paused for them was missing from their game: a placement usually ended in a desync soon after, and the rest drifted apart silently. The first such action now closes joining, as unpausing does, and a player still joining is told to ask the host to save and rehost. Speed changes, pings and the other messages that change nothing leave it open. *Tested (the real server and client, and which actions close joining, against the compiled mod); not yet played.*
 
 **Crashes**
 
@@ -136,7 +137,7 @@ Each item says how well it is confirmed: **confirmed** means the maintainer veri
 
 - **Everyone must run the exact same build.** The mod compares the game version and the mod's own files when someone joins. A copy someone compiled themselves can be refused even when the version number matches. If one player is on a different build over Steam, joining can look like it is hanging on "Receiving map...".
 - **Other mods should match; you get a warning when they do not.** When someone joins, both players are shown which mods are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation (a housing mod, for example) will make the games drift apart. Settings are not compared, so settings that affect the simulation (for example **Reduce the number of forced pauses**) should match too.
-- **Join before the host starts.** Nobody can join a game that has already started. After a desync the host uses **Save and Rehost**.
+- **Join before the host starts.** Nobody can join a game that has already started, or one in which a player has already placed, marked or changed something while it waited. After a desync the host uses **Save and Rehost**.
 - **Desyncs can still happen.** This fork reduces known causes, not all of them.
 - **Tested with two players**, on Windows, with the Steam version of Timberborn 1.1.2.4. Other stores, platforms and larger groups have not been tested by this fork. Steam invites need the Steam version of the game.
 - **"Post Bug Report" does not upload in this fork's builds.** The original's automatic upload needs an access token that these builds do not contain. If you hit a problem, keep the `Player.log` files from both players (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn`). **Always Use Detailed Logging** captures more but costs some performance; any diagnostic ZIPs are saved in the `BeaverBuddiesDiagnostics` folder next to the log.

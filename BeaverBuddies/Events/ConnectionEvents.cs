@@ -18,6 +18,9 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class InitializeClientEvent : ReplayEvent
     {
+        // Sent to every guest as it joins.
+        public override bool ChangesGame() => false;
+
         public string serverModVersion;
         public string serverGameVersion;
         //public string mapName;
@@ -69,6 +72,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class ClientDesyncedEvent : ReplayEvent
     {
+        public override bool ChangesGame() => false;
+
         public string desyncID;
         public string desyncTrace;
 

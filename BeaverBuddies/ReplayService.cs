@@ -69,6 +69,8 @@ namespace BeaverBuddies
 
     class HeartbeatEvent : ReplayEvent
     {
+        public override bool ChangesGame() => false;
+
         public override void Replay(IReplayContext context)
         {
             // No op
@@ -337,6 +339,7 @@ namespace BeaverBuddies
                 // Only broadcast successful events from an active session.
                 replayEvent.randomS0Before = UnityEngine.Random.state.s0;
                 replayEvent.Replay(this);
+                CloseJoiningIfGameChanged(io, currentTick, replayEvent);
                 if (CanAct && !EventIO.SkipRecording)
                 {
                     EnqueueEventForSending(replayEvent);
@@ -347,6 +350,21 @@ namespace BeaverBuddies
                 Plugin.LogError($"Failed to replay event {replayEvent?.type}: {error}");
                 AbortReplay("A multiplayer action could not be completed.");
             }, active => IsReplayingEvents = active, IsReplayingEvents);
+        }
+
+        /// <summary>
+        /// A player who joins loads the save the host started from (ServerEventIO serves the bytes it loaded) and is
+        /// sent only what is played after it connected. So the first action that changes the game, played while the
+        /// host waits at tick 0, closes joining, as the first tick does (DoTick). Called after the action is played
+        /// and before it is queued to be sent: a guest admitted before this gets it, and one still joining is refused
+        /// with the host's reason (TimberServer.StartQueuing checks again under the lock every broadcast takes).
+        /// </summary>
+        internal static void CloseJoiningIfGameChanged(EventIO io, int tick, ReplayEvent replayEvent)
+        {
+            if (io is ServerEventIO server && tick == 0 && replayEvent.ChangesGame())
+            {
+                server.StopAcceptingClients(gameChanged: true);
+            }
         }
 
         public void AbortReplay(string reason)

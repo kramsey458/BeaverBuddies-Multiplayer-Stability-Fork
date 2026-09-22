@@ -13,6 +13,9 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class SpeedSetEvent : ReplayEvent
     {
+        // Unpausing starts the first tick, which closes joining itself (ReplayService.DoTick).
+        public override bool ChangesGame() => false;
+
         public float speed;
 
         public override void Replay(IReplayContext context)

@@ -52,7 +52,8 @@ namespace TimberNet
 
         public int ClientCount { get { lock (queuedMessages) return clients.Count; } }
 
-        private string? errorMessage = null;
+        // Set on the game thread, read on the threads that accept guests.
+        private volatile string? errorMessage = null;
         public bool IsAcceptingClients => errorMessage == null;
 
         public List<string?> GetConnectedClients()
@@ -116,7 +117,14 @@ namespace TimberNet
                             }
 
                             if (CompatibilityIdentity != null) RunCompatibilityHandshake(client, true);
-                            if (IsStopped || !IsAcceptingClients) { client.Close(); return; }
+                            if (IsStopped) { client.Close(); return; }
+                            // Joining closed while the build check ran: say why, where the guest expects the save.
+                            if (!IsAcceptingClients)
+                            {
+                                SendErrorMessage(client);
+                                client.Close();
+                                return;
+                            }
                             await SendMap(client);
                             SendState(client);
                             if (initEventProvider != null)
@@ -149,12 +157,23 @@ namespace TimberNet
             lock (queuedMessages)
             {
                 if (IsStopped) { client.Close(); throw new IOException("Session closed while joining."); }
-                queuedMessages.TryAdd(client, new ConcurrentQueue<JObject>());
-                clients.Add(client);
-                // The host is player 0; the host, not the guest, chooses each guest's id.
-                playerIds[client] = Interlocked.Increment(ref lastPlayerId);
-                trackers[client] = new RttTracker(RttTracker.NowMs);
+                // Checked again here, under the lock every broadcast takes. Joining can close while the save is being
+                // prepared (the host played something that changed the game, or the first tick ran), and a guest added
+                // after that would load a save without it and never be sent it. Once closed it never reopens.
+                if (IsAcceptingClients)
+                {
+                    queuedMessages.TryAdd(client, new ConcurrentQueue<JObject>());
+                    clients.Add(client);
+                    // The host is player 0; the host, not the guest, chooses each guest's id.
+                    playerIds[client] = Interlocked.Increment(ref lastPlayerId);
+                    trackers[client] = new RttTracker(RttTracker.NowMs);
+                    return;
+                }
             }
+            // Refused outside the lock, so a slow guest cannot hold up what the host sends everyone else.
+            SendErrorMessage(client);
+            client.Close();
+            throw new IOException("Joining closed while the save was being prepared.");
         }
 
         private void RemoveActivity(ISocketStream client)
