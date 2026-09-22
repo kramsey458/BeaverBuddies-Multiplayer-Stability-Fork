@@ -6,11 +6,12 @@ using System.Runtime.CompilerServices;
 // SF8. Every Wonder's activation animation, and the Iron Teeth Earth Repopulator's plane launch
 // (animation, catapult, runway, launcher rotation), are simulation that the game advances on
 // render-frame time. In multiplayer the mod runs them once per tick instead, on the tick interval
-// (BeaverBuddies/Doc/WonderTiming.md). Harmony is not installed here: these checks decode the
-// installed game's IL, run the mod's transpilers on it, and call the mod's prefixes, postfix and
-// tick step the way Harmony and the game would. Unity's native calls in the cloned game methods
-// (curves, transforms, the frame clock) are replaced by the stand-ins below; everything else is
-// the game's own code.
+// (BeaverBuddies/Doc/WonderTiming.md). Harmony is not installed here (the workshop build cannot
+// patch under .NET 8): these checks decode the installed game's IL, run the mod's transpilers on
+// it, and call the mod's prefixes, postfixes and tick the way Harmony 2.4.1 and the game would,
+// including Harmony's priority order and its skipping of later bool prefixes (CallPatched). Unity's
+// native calls in the cloned game methods (curves, transforms, the frame clock) are replaced by the
+// stand-ins below; everything else is the game's own code.
 internal static class WonderChecks
 {
     private const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
@@ -21,6 +22,24 @@ internal static class WonderChecks
 
     public static float FrameDuration;
     public static float FrameDelta() => FrameDuration;
+    // True while RunFrames is in a tick rather than a frame: whatever the simulation decides must happen then.
+    public static bool TestTicking;
+    // Another mod's prefix on TimbermeshAnimator.UpdateAnimation that keeps the animator's time itself
+    // and skips the rest, as LateGamePerformance's AnimatorCulling does for an animator none of whose
+    // renderers is visible (every frame) or one far from the camera (AnimatorLod: some frames). It has
+    // no [HarmonyPriority], so Harmony's default, Normal. Culling picks the frames it acts on.
+    public static Func<bool> Culling;
+    private static MethodInfo updateTime;
+    public static bool CullingPrefix(object __instance, float deltaTime)
+    {
+        if (Culling == null || !Culling()) return true;
+        // LateGamePerformance's own guard: the game's.
+        if (!(bool)animatorType.GetProperty("Enabled").GetValue(__instance) || (float)animatorType.GetField("_speed", All).GetValue(__instance) == 0f ||
+            animatorType.GetField("_currentAnimation", All).GetValue(__instance) == null || (bool)animatorType.GetProperty("PlayingFinished").GetValue(__instance))
+            return true;
+        updateTime.Invoke(__instance, new object[] {deltaTime});
+        return false;
+    }
     public static float Degrees;
     public static float Runway;
     public static bool Disabled;
@@ -37,7 +56,7 @@ internal static class WonderChecks
 
     private static Assembly mod, harmony;
     private static Type codeType, time, vector3;
-    private static Type controllerType, wonderType, animatorType, catapultType, rotatorType, planeType;
+    private static Type controllerType, wonderType, animatorType, catapultType, rotatorType, planeType, saveWriterType;
 
     public static void Run(Assembly modAssembly, Action<string, Action> test)
     {
@@ -52,6 +71,8 @@ internal static class WonderChecks
         controllerType = wonders.GetType("Timberborn.Wonders.WonderAnimationController", true);
         wonderType = wonders.GetType("Timberborn.Wonders.Wonder", true);
         animatorType = Assembly.Load("Timberborn.TimbermeshAnimations").GetType("Timberborn.TimbermeshAnimations.TimbermeshAnimator", true);
+        updateTime = animatorType.GetMethod("UpdateTime", All) ?? throw new Exception("TimbermeshAnimator.UpdateTime is gone");
+        saveWriterType = Assembly.Load("Timberborn.SaveSystem").GetType("Timberborn.SaveSystem.SaveWriter", true);
         catapultType = planes.GetType("Timberborn.WonderPlanes.PlaneCatapult", true);
         rotatorType = planes.GetType("Timberborn.WonderPlanes.PlaneLauncherRotator", true);
         planeType = planes.GetType("Timberborn.WonderPlanes.Plane", true);
@@ -106,11 +127,14 @@ internal static class WonderChecks
             foreach (var (type, name) in gated)
             {
                 var prefixes = Patches(type, name, "Prefix");
-                if (prefixes.Count == 0) throw new Exception($"{type.Name}.{name} has no multiplayer gate");
+                if (!prefixes.Any(p => p.ReturnType == typeof(bool))) throw new Exception($"{type.Name}.{name} has no multiplayer gate");
                 foreach (var prefix in prefixes)
                 {
-                    if (prefix.ReturnType != typeof(bool)) throw new Exception($"{type.Name}.{name}'s prefix cannot skip the frame update");
-                    if (!HasLastPriority(prefix)) throw new Exception($"{type.Name}.{name}'s prefix replaces the original without [HarmonyPriority(Priority.Last)]");
+                    // A prefix that can skip the original (returns bool) goes last; any other one returns void.
+                    if (prefix.ReturnType == typeof(bool) && PriorityOf(prefix) != 0)
+                        throw new Exception($"{type.Name}.{name}'s prefix replaces the original without [HarmonyPriority(Priority.Last)]");
+                    if (prefix.ReturnType != typeof(bool) && prefix.ReturnType != typeof(void))
+                        throw new Exception($"{type.Name}.{name}'s prefix returns {prefix.ReturnType.Name}");
                 }
             }
             WithMultiplayer(() =>
@@ -135,7 +159,7 @@ internal static class WonderChecks
                 };
                 foreach (var (type, name, instance, inMultiplayer) in gates)
                 {
-                    bool runs = RunPrefixes(type, name, instance, 0.02f);
+                    bool runs = CallPatched(type, name, instance, 0.02f, null);
                     if (runs != inMultiplayer)
                         throw new Exception($"In multiplayer, {type.Name}.{name} {(runs ? "still runs" : "was skipped")} outside the tick");
                 }
@@ -145,7 +169,7 @@ internal static class WonderChecks
                 try
                 {
                     foreach (var (type, name, instance, _) in gates)
-                        if (!RunPrefixes(type, name, instance, 0.02f))
+                        if (!CallPatched(type, name, instance, 0.02f, null))
                             throw new Exception($"In single player, {type.Name}.{name} was skipped");
                 }
                 finally { io.SetValue(null, session); }
@@ -180,22 +204,82 @@ internal static class WonderChecks
                 if (Callers(ours, type, name).Any()) throw new Exception($"The mod calls {type.Name}.{name} directly");
         });
 
+        test("In multiplayer the tick runs every part of every Wonder, and saves and a session's end put the ticked poses back first", () =>
+        {
+            // The parts of the mod that only Unity can run (the Wonders' registry, transforms), from the mod's IL.
+            var ours = Scan(mod);
+            var timing = Timing();
+            var service = mod.GetType("BeaverBuddies.Fixes.WonderTickService", true);
+            var replay = mod.GetType("BeaverBuddies.ReplayService", true);
+            var eventIO = mod.GetType("BeaverBuddies.IO.EventIO", true);
+            var binders = BindersOf(ours, service).ToList();
+            if (binders.Count == 0) throw new Exception("Nothing binds WonderTickService");
+            if (!binders.All(m => BindersOf(ours, replay).Contains(m)))
+                throw new Exception("WonderTickService is not bound with the co-op services (next to ReplayService)");
+            ExpectCalls(ours, service, "Tick", (timing, "Tick"));
+            // A session that ended hands everything back before anything is stepped; otherwise the
+            // poses the frames drew are put back before the step reads them.
+            ExpectCalls(ours, timing, "Tick", (eventIO, "get_IsNull"), (timing, "Release"), (timing, "RestorePoses"), (timing, "RunTick"));
+            var steps = ours.Where(u => u.Method.DeclaringType == timing && u.Method.Name == "Tick" && u.Op == OpCodes.Ldftn)
+                .Select(u => u.Operand as MethodBase).Where(m => m != null && CallsOf(ours, m).Any(c => c.DeclaringType == timing && c.Name == "StepWonder")).ToList();
+            if (steps.Count == 0) throw new Exception("The tick's step does not run StepWonder");
+            ExpectCalls(ours, timing, "StepWonder", (timing, "StepAnimation"), (timing, "StepCatapult"), (timing, "StepRotator"));
+            ExpectCalls(ours, timing, "StepAnimation", (animatorType, "UpdateAnimation"), (controllerType, "Update"));
+            ExpectCalls(ours, timing, "StepCatapult", (catapultType, "Update"), (planeType, "Update"));
+            ExpectCalls(ours, timing, "StepRotator", (rotatorType, "Update"));
+            ExpectCalls(ours, timing, "Release", (timing, "RestorePoses"));
+            // Every save is written through SaveWriter.WriteToSaveStream; the poses go back before any
+            // entity is saved (the pilots, on the plane's seat, are saved before their plane), and before
+            // any other mod's prefix takes the save's snapshot.
+            var savePrefixes = Patches(saveWriterType, "WriteToSaveStream", "Prefix");
+            if (!savePrefixes.Any(p => p.ReturnType == typeof(void) && PriorityOf(p) == 800 &&
+                    CallsOf(ours, p).Any(c => c.DeclaringType == timing && c.Name == "RestorePosesForSave")))
+                throw new Exception("Nothing puts the ticked poses back before a save is written (a void Priority.First prefix on SaveWriter.WriteToSaveStream)");
+            ExpectCalls(ours, timing, "RestorePosesForSave", (eventIO, "get_IsNull"), (timing, "RestorePoses"));
+        });
+
         const float animationLength = 4.19f;
         test("Real Wonder animation finishes on a different tick at 10, 30 and 144 FPS before the timing fix", () =>
         {
-            var ticks = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, fixedStep: false).Tick).ToList();
+            var ticks = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, Mode.Game).Tick).ToList();
             Console.WriteLine($"  Animation of {animationLength}s ends on tick: " + string.Join(", ", FrameRates.Select((f, i) => $"{f} FPS -> {ticks[i]}")));
             if (ticks.Distinct().Count() == 1) throw new Exception("Frame-rate dependence was not reproduced");
         });
 
         test("With the timing fix, the Wonder animation ends on the same tick at every frame rate, with the same saved time", () =>
         {
-            var runs = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, fixedStep: true)).ToList();
+            var runs = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, Mode.Tick)).ToList();
             Console.WriteLine($"  Animation of {animationLength}s ends on tick: " + string.Join(", ", FrameRates.Select((f, i) => $"{f} FPS -> {runs[i].Tick}")));
-            if (runs.Select(r => r.Tick).Distinct().Count() != 1 || runs.Select(r => r.TimeBits).Distinct().Count() != 1)
-                throw new Exception("The animation's end or its saved time still depends on the frame rate");
-            // 7 ticks of 0.6 s are the first to reach 4.19 s.
-            if (runs[0].Tick != 7) throw new Exception($"Ended on tick {runs[0].Tick}, expected 7");
+            ExpectTickResult(runs, "The animation's end or its saved time still depends on the frame rate");
+        });
+
+        test("With another mod's animator culling ahead of the gate (LateGamePerformance), the Wonder animation still ends on the same tick", () =>
+        {
+            // What makes this hold: a prefix that cannot skip, before every other mod's, and a postfix.
+            var guard = Patches(animatorType, "UpdateAnimation", "Prefix").Where(p => p.ReturnType == typeof(void) && PriorityOf(p) == 800).ToList();
+            if (guard.Count == 0) throw new Exception("Nothing keeps a Wonder animator's clock before other mods' prefixes on UpdateAnimation run ([HarmonyPriority(Priority.First)], void)");
+            if (!guard.Any(p => PatchMethod(p.DeclaringType, "Postfix") is MethodInfo post && PriorityOf(post) == 800))
+                throw new Exception("Nothing puts a Wonder animator's clock back after the other mods' prefixes ran");
+            var reference = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, Mode.Tick)).ToList();
+            foreach (var (label, mode) in new[] {("off screen", Mode.TickOffScreen), ("far away", Mode.TickFarAway)})
+            {
+                var runs = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, mode)).ToList();
+                Console.WriteLine($"  {label}: ends on tick " + string.Join(", ", FrameRates.Select((f, i) => $"{f} FPS -> {runs[i].Tick}")) +
+                    $" (on screen: {reference[0].Tick})");
+                ExpectTickResult(runs, $"With the Wonder {label} on this player, the animation still depends on the frame rate");
+                if (runs.Select(r => r.TimeBits).Concat(reference.Select(r => r.TimeBits)).Distinct().Count() != 1)
+                    throw new Exception($"With the Wonder {label}, the animation's time differs from on screen");
+            }
+        });
+
+        test("After a co-op session ends mid-game, the Wonder animation runs on the game's frames alone, as in single player", () =>
+        {
+            var game = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, Mode.Game)).ToList();
+            var ended = FrameRates.Select(fps => AnimationFinishTick(fps, animationLength, Mode.SessionEnded)).ToList();
+            Console.WriteLine("  Ends on tick: " + string.Join(", ", FrameRates.Select((f, i) => $"{f} FPS -> {ended[i].Tick} (game: {game[i].Tick})")));
+            for (int i = 0; i < FrameRates.Length; i++)
+                if (ended[i] != game[i])
+                    throw new Exception($"At {FrameRates[i]} FPS the animation ended on tick {ended[i].Tick}, the game's own frames end it on tick {game[i].Tick}");
         });
 
         test("Real launcher rotation differs at 10, 30 and 144 FPS before the timing fix", () =>
@@ -252,34 +336,100 @@ internal static class WonderChecks
 
     private record struct AnimationRun(int Tick, int TimeBits);
 
+    private enum Mode
+    {
+        // The game as it is: no mod.
+        Game,
+        // Multiplayer with the mod, the Wonder on screen.
+        Tick,
+        // The same with another mod's culling prefix acting on every frame, or on every second one.
+        TickOffScreen,
+        TickFarAway,
+        // Multiplayer with the mod, the session ended (EventIO reset) just after the animation started.
+        SessionEnded,
+    }
+
+    private static void ExpectTickResult(List<AnimationRun> runs, string message)
+    {
+        if (runs.Select(r => r.Tick).Distinct().Count() != 1 || runs.Select(r => r.TimeBits).Distinct().Count() != 1) throw new Exception(message);
+        // 7 ticks of 0.6 s are the first to reach 4.19 s.
+        if (runs[0].Tick != 7) throw new Exception($"Ended on tick {runs[0].Tick}, expected 7");
+    }
+
     // A Wonder's animation of the given length, just started. Per frame the game advances every
     // animator (AnimatorRegistry.UpdateSingleton) and then the Wonder's controller checks for the
-    // end (BaseComponentUpdateUnityAdapter.Update).
-    private static AnimationRun AnimationFinishTick(int fps, float length, bool fixedStep)
+    // end (BaseComponentUpdateUnityAdapter.Update). With the mod, each tick runs the mod's own
+    // WonderTiming.Tick, as WonderTickService does, and each frame goes through the mod's patches
+    // as Harmony would call them.
+    private static AnimationRun AnimationFinishTick(int fps, float length, Mode mode)
     {
         AnimationRun result = default;
         Action run = () =>
         {
             var animator = NewAnimation(length, out object controller);
             int ticks = 0, finished = -1;
-            controllerType.GetEvent("StartAnimationFinished").AddEventHandler(controller, new EventHandler((_, _) => finished = ticks));
-            if (fixedStep) RunStartPostfix(controller);
+            bool outsideTick = false;
+            controllerType.GetEvent("StartAnimationFinished").AddEventHandler(controller, new EventHandler((_, _) =>
+            {
+                finished = ticks;
+                outsideTick |= !TestTicking;
+            }));
+            bool withMod = mode != Mode.Game;
+            if (withMod) RunStartPostfix(controller);
+            if (mode == Mode.SessionEnded) EventField().SetValue(null, null);
+            int frame = 0;
+            Culling = mode switch
+            {
+                Mode.TickOffScreen => () => true,
+                Mode.TickFarAway => () => frame % 2 == 1,
+                _ => null,
+            };
             var update = animatorType.GetMethod("UpdateAnimation", All);
             var check = controllerType.GetMethod("Update", All);
-            var stepWonder = fixedStep ? Timing().GetMethod("StepWonder", All) : null;
-            RunFrames(fps, () => finished >= 0, () =>
+            object wonders = withMod ? WonderList(controller) : null;
+            var foreign = mode is Mode.TickOffScreen or Mode.TickFarAway ? new[] {typeof(WonderChecks).GetMethod(nameof(CullingPrefix))} : Array.Empty<MethodInfo>();
+            try
             {
-                ticks++;
-                if (fixedStep) RunTick(() => stepWonder.Invoke(null, new[] {controller, null, null}));
-            }, () =>
-            {
-                if (!fixedStep || RunPrefixes(animatorType, "UpdateAnimation", animator, FrameDuration)) update.Invoke(animator, new object[] {FrameDuration});
-                if (!fixedStep || RunPrefixes(controllerType, "Update", controller, FrameDuration)) check.Invoke(controller, null);
-            });
+                RunFrames(fps, () => finished >= 0, () =>
+                {
+                    ticks++;
+                    if (withMod) WonderTick(wonders);
+                }, () =>
+                {
+                    frame++;
+                    if (!withMod)
+                    {
+                        update.Invoke(animator, new object[] {FrameDuration});
+                        check.Invoke(controller, null);
+                        return;
+                    }
+                    CallPatched(animatorType, "UpdateAnimation", animator, FrameDuration, () => update.Invoke(animator, new object[] {FrameDuration}), foreign);
+                    CallPatched(controllerType, "Update", controller, FrameDuration, () => check.Invoke(controller, null));
+                });
+            }
+            finally { Culling = null; }
+            if (withMod && mode != Mode.SessionEnded && outsideTick) throw new Exception("The animation's end was raised by a frame, outside the tick");
             result = new AnimationRun(finished, BitConverter.SingleToInt32Bits((float)animatorType.GetProperty("Time").GetValue(animator)));
         };
-        if (fixedStep) WithMultiplayer(run); else run();
+        if (mode != Mode.Game) WithMultiplayer(run); else run();
         return result;
+    }
+
+    // WonderTickService's list for WonderTiming.Tick: one Wonder with only the animation.
+    private static object WonderList(object controller)
+    {
+        var parts = Timing().GetNestedType("Parts", All) ?? throw new Exception("WonderTiming.Parts is gone");
+        var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(parts));
+        list.Add(Activator.CreateInstance(parts, All, null, new[] {controller, null, null}, null));
+        return list;
+    }
+
+    // What WonderTickService.Tick does once the Wonders are listed.
+    private static void WonderTick(object wonders)
+    {
+        var tick = Timing().GetMethod("Tick", All, new[] {wonders.GetType(), typeof(float)}) ?? throw new Exception("WonderTiming.Tick(List<Parts>, float) is gone");
+        try { tick.Invoke(null, new[] {wonders, TickSeconds}); }
+        catch (TargetInvocationException e) { throw e.InnerException; }
     }
 
     private record struct StepRun(int Tick, float Degrees, List<float> States);
@@ -296,7 +446,12 @@ internal static class WonderChecks
             rotatorType.GetField("_remainingRotation", All).SetValue(rotator, 45f);
             rotatorType.GetField("_rotationDuration", All).SetValue(rotator, 1.25f);
             int ticks = 0, finished = -1;
-            rotatorType.GetEvent("RotationFinished").AddEventHandler(rotator, new EventHandler((_, _) => finished = ticks));
+            bool outsideTick = false;
+            rotatorType.GetEvent("RotationFinished").AddEventHandler(rotator, new EventHandler((_, _) =>
+            {
+                finished = ticks;
+                outsideTick |= !TestTicking;
+            }));
             Degrees = 0; Disabled = false;
             var states = new List<float>();
             Action step = () => { if (!Disabled) update.Invoke(null, new[] {rotator}); };
@@ -308,8 +463,10 @@ internal static class WonderChecks
             }, () =>
             {
                 if (Disabled) return;
-                if (!fixedStep || RunPrefixes(rotatorType, "Update", rotator, FrameDuration)) step();
+                if (!fixedStep) step();
+                else CallPatched(rotatorType, "Update", rotator, FrameDuration, step);
             });
+            if (fixedStep && outsideTick) throw new Exception("The launcher's turn ended in a frame, outside the tick");
             result = new StepRun(finished, Degrees, states);
         };
         if (fixedStep) WithMultiplayer(run); else run();
@@ -332,7 +489,12 @@ internal static class WonderChecks
             current.SetValue(catapult, plane);
             catapultType.GetField("_remainingPlaneWaitTime", All).SetValue(catapult, 1f);
             int ticks = 0, finished = -1;
-            catapultType.GetEvent("PlaneCatapulted").AddEventHandler(catapult, new EventHandler((_, _) => finished = ticks));
+            bool outsideTick = false;
+            catapultType.GetEvent("PlaneCatapulted").AddEventHandler(catapult, new EventHandler((_, _) =>
+            {
+                finished = ticks;
+                outsideTick |= !TestTicking;
+            }));
             Runway = 0; Disabled = false;
             var states = new List<float>();
             RunFrames(fps, () => finished >= 0, () =>
@@ -347,9 +509,13 @@ internal static class WonderChecks
                 states.Add(Runway);
             }, () =>
             {
-                if (!Disabled && (!fixedStep || RunPrefixes(catapultType, "Update", catapult, FrameDuration))) catapultUpdate.Invoke(null, new[] {catapult});
-                if (!fixedStep || RunPrefixes(planeType, "Update", plane, FrameDuration)) planeUpdate.Invoke(null, new[] {plane});
+                Action catapultStep = () => { if (!Disabled) catapultUpdate.Invoke(null, new[] {catapult}); };
+                Action planeStep = () => planeUpdate.Invoke(null, new[] {plane});
+                if (!fixedStep) { catapultStep(); planeStep(); return; }
+                CallPatched(catapultType, "Update", catapult, FrameDuration, catapultStep);
+                CallPatched(planeType, "Update", plane, FrameDuration, planeStep);
             });
+            if (fixedStep && outsideTick) throw new Exception("The plane left the runway in a frame, outside the tick");
             result = new StepRun(finished, Runway, states);
         };
         if (fixedStep) WithMultiplayer(run); else run();
@@ -367,7 +533,9 @@ internal static class WonderChecks
             while (pending >= TickSeconds - 1e-6 && !done())
             {
                 pending -= TickSeconds;
-                tick();
+                TestTicking = true;
+                try { tick(); }
+                finally { TestTicking = false; }
             }
             if (!done()) frame();
         }
@@ -385,8 +553,13 @@ internal static class WonderChecks
         io.SetValue(null, DispatchProxy.Create(mod.GetType("BeaverBuddies.IO.EventIO", true), typeof(EmptyEventProxy)));
         var reset = mod.GetType("BeaverBuddies.Fixes.WonderTiming")?.GetMethod("Reset", All);
         reset?.Invoke(null, null);
+        // Unity's frame clock is native; outside the tick the mod reads this instead, so a frame
+        // update that reaches the logic shows up as frame-rate dependence, not as a crash.
+        var clock = mod.GetType("BeaverBuddies.Fixes.WonderTiming")?.GetField("FrameClock", All);
+        object priorClock = clock?.GetValue(null);
+        clock?.SetValue(null, (Func<float>)FrameDelta);
         try { action(); }
-        finally { reset?.Invoke(null, null); io.SetValue(null, prior); }
+        finally { reset?.Invoke(null, null); clock?.SetValue(null, priorClock); io.SetValue(null, prior); }
     }
 
     private static Type Timing() => mod.GetType("BeaverBuddies.Fixes.WonderTiming", true);
@@ -406,28 +579,47 @@ internal static class WonderChecks
         foreach (var postfix in postfixes) Invoke(postfix, controller, null);
     }
 
-    // Harmony's prefix semantics: the original runs only if every bool prefix returns true.
-    private static bool RunPrefixes(Type type, string name, object instance, float deltaTime)
+    // A call of a patched method as Harmony 2.4.1 makes it (MethodCreator; checked with Lib.Harmony
+    // 2.4.1 on .NET 8): prefixes by priority, highest first, the mod's and the given other mods' ones
+    // (default priority Normal); a prefix that returns bool runs only while every earlier one returned
+    // true, and decides whether the original runs; a void prefix always runs; then the original, if it
+    // runs; then every postfix by priority, whether or not the original ran. __state goes from a patch
+    // class's prefix to its postfix. Returns whether the original ran.
+    private static bool CallPatched(Type type, string name, object instance, float deltaTime, Action original, params MethodInfo[] foreign)
     {
-        bool runs = true;
-        foreach (var prefix in Patches(type, name, "Prefix"))
+        var prefixes = Patches(type, name, "Prefix").Concat(foreign).OrderByDescending(PriorityOf).ToList();
+        var states = new Dictionary<Type, object>();
+        bool runOriginal = true;
+        foreach (var prefix in prefixes)
         {
-            object result = Invoke(prefix, instance, deltaTime);
-            if (result is bool b && !b) runs = false;
+            bool skips = prefix.ReturnType == typeof(bool);
+            if (skips && !runOriginal) continue;
+            object result = Invoke(prefix, instance, deltaTime, states);
+            if (skips) runOriginal = (bool)result;
         }
-        return runs;
+        if (runOriginal) original?.Invoke();
+        foreach (var postfix in Patches(type, name, "Postfix").OrderByDescending(PriorityOf))
+            Invoke(postfix, instance, deltaTime, states);
+        return runOriginal;
     }
 
-    private static object Invoke(MethodInfo patch, object instance, float? deltaTime)
+    private static object Invoke(MethodInfo patch, object instance, float? deltaTime, Dictionary<Type, object> states = null)
     {
-        var args = patch.GetParameters().Select(p => p.Name switch
+        var parameters = patch.GetParameters();
+        var args = parameters.Select(p => p.Name switch
         {
             "__instance" => instance,
             "deltaTime" => (object)deltaTime,
+            "__state" => states != null && states.TryGetValue(patch.DeclaringType, out object state) ? state
+                : Activator.CreateInstance(p.ParameterType.IsByRef ? p.ParameterType.GetElementType() : p.ParameterType),
             _ => throw new Exception($"Unexpected patch parameter {p.Name} on {patch.DeclaringType.Name}"),
         }).ToArray();
-        try { return patch.Invoke(null, args); }
+        object result;
+        try { result = patch.Invoke(null, args); }
         catch (TargetInvocationException e) { throw e.InnerException; }
+        for (int i = 0; i < parameters.Length; i++)
+            if (parameters[i].Name == "__state" && parameters[i].ParameterType.IsByRef && states != null) states[patch.DeclaringType] = args[i];
+        return result;
     }
 
     // The mod's Harmony patches of one method, found from its [HarmonyPatch] attributes.
@@ -440,11 +632,12 @@ internal static class WonderChecks
             if (data.AttributeType.FullName != "HarmonyLib.HarmonyPatch") continue;
             var args = data.ConstructorArguments;
             if (args.Count < 2 || !Equals(args[0].Value, target) || !Equals(args[1].Value, method)) continue;
-            var patch = type.GetMethod(kind, All | BindingFlags.DeclaredOnly);
-            if (patch != null) result.Add(patch);
+            if (PatchMethod(type, kind) is MethodInfo patch) result.Add(patch);
         }
         return result;
     }
+
+    private static MethodInfo PatchMethod(Type patchClass, string kind) => patchClass.GetMethod(kind, All | BindingFlags.DeclaredOnly);
 
     private static IList<CustomAttributeData> Attributes(Type type)
     {
@@ -452,9 +645,10 @@ internal static class WonderChecks
         catch (Exception) { return Array.Empty<CustomAttributeData>(); }
     }
 
-    private static bool HasLastPriority(MethodInfo patch) => patch.GetCustomAttributesData().Any(a =>
-        a.AttributeType.FullName == "HarmonyLib.HarmonyPriority" && a.ConstructorArguments.Count == 1 &&
-        Convert.ToInt32(a.ConstructorArguments[0].Value) == 0);
+    // [HarmonyPriority] of a patch method: Priority.Last is 0, Normal 400 (the default), First 800.
+    private static int PriorityOf(MethodInfo patch) => patch.GetCustomAttributesData()
+        .Where(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPriority" && a.ConstructorArguments.Count == 1)
+        .Select(a => Convert.ToInt32(a.ConstructorArguments[0].Value)).DefaultIfEmpty(400).First();
 
     // ---- Game fixtures ----
 
@@ -636,6 +830,31 @@ internal static class WonderChecks
     private static IEnumerable<string> Readers(List<Use> uses, Type type, string field) =>
         uses.Where(u => u.Op == OpCodes.Ldfld && u.Operand is FieldInfo f && f.DeclaringType == type && f.Name == field &&
             u.Method.Name != "add_" + field && u.Method.Name != "remove_" + field).Select(u => Name(u.Method)).Distinct();
+
+    // The methods a method calls, in IL order.
+    private static List<MethodBase> CallsOf(List<Use> uses, MethodBase method) =>
+        uses.Where(u => u.Method == method && IsCall(u.Op) && u.Operand is MethodBase).Select(u => (MethodBase)u.Operand).ToList();
+
+    // type.method calls each of these, in this order (other calls may come between).
+    private static void ExpectCalls(List<Use> uses, Type type, string method, params (Type Type, string Name)[] calls)
+    {
+        var made = uses.Where(u => u.Method.DeclaringType == type && u.Method.Name == method && IsCall(u.Op) && u.Operand is MethodBase)
+            .Select(u => (MethodBase)u.Operand).ToList();
+        int at = -1;
+        foreach (var (callee, name) in calls)
+        {
+            int next = made.FindIndex(at + 1, m => m.DeclaringType == callee && m.Name == name);
+            if (next < 0)
+                throw new Exception($"{type.Name}.{method} does not call {callee.Name}.{name}" +
+                    (at >= 0 ? $" after {made[at].DeclaringType.Name}.{made[at].Name}" : ""));
+            at = next;
+        }
+    }
+
+    // The methods that bind this type as a singleton: containerDefinition.Bind<T>().
+    private static IEnumerable<MethodBase> BindersOf(List<Use> uses, Type bound) =>
+        uses.Where(u => IsCall(u.Op) && u.Operand is MethodInfo m && m.Name == "Bind" && m.IsGenericMethod &&
+            m.GetGenericArguments()[0] == bound).Select(u => u.Method).Distinct();
 
     private static void Expect(IEnumerable<string> actual, params string[] expected)
     {

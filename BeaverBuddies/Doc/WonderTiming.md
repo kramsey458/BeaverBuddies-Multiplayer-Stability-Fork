@@ -44,8 +44,8 @@ This fork does **(A)**.
 
 `WonderTickService` is an `ITickableSingleton`, bound with the other co-op services, so it runs in the
 singleton bucket at the start of every tick, after `ReplayService.DoTick` has replayed that tick's events.
-It takes the registered Wonders (`EntityComponentRegistry.GetAll<Wonder>()`) in entity ID order and, for
-each, in this order:
+It takes the registered Wonders (`EntityComponentRegistry.GetAll<Wonder>()`) in entity ID order and hands
+their parts to `WonderTiming.Tick`, which, for each, runs in this order:
 
 1. **Animation.** If the controller is animating: the game's own `TimbermeshAnimator.UpdateAnimation`
    with the tick interval, then the game's own `WonderAnimationController.Update` (the end check, which can
@@ -66,8 +66,21 @@ skip `WonderAnimationController.Update` and `PlaneCatapult.Update`, and draw ins
 `PlaneLauncherRotator.Update`, `Plane.Update` for a plane still on the runway, and
 `TimbermeshAnimator.UpdateAnimation` for a Wonder's animator from the moment its animation starts
 (a postfix on `WonderAnimationController.StartAnimation`, which covers activation, deactivation and load).
-Every other animator, and a plane in free flight, keep the game's frame clock. Single player is unchanged:
-every patch checks `EventIO.IsNull`, and the service is only bound in a co-op game.
+Every other animator, and a plane in free flight, keep the game's frame clock.
+
+A gate at `Priority.Last` only sees the call if every earlier prefix let it through, and other mods keep
+animator time themselves: see [Other mods](#other-mods). So a Wonder animator's clock (`Time`,
+`RepeatedTime`, `PlayingFinished`, what the game's `UpdateTime` changes) is also held around every frame
+update outside the tick: a void prefix at `Priority.First` remembers it, and a postfix at `Priority.First`
+(Harmony runs postfixes whether or not the original ran) puts it back and draws the pose. The void prefix
+cannot skip anything, so it is not a replacing prefix; `Priority.First` only lets it read the clock before
+anyone else changes it.
+
+Single player is unchanged: the service is only bound in a co-op game, and every patch and the tick itself
+stand down when `EventIO` is null. That also covers a co-op game played on after its session ended
+mid-game (`ReplayService.EndSession`, `HandleDesync` and `AbortReplay` reset `EventIO` and leave the game
+running): on its next tick `WonderTiming.Tick` puts every part where the last tick left it, draws each
+animation's tick pose and stops stepping, and the game's own frame updates carry on from there.
 
 `SpawnPlane` is reached only from `StartEjectingPlane`, which only the rotator's end and the animation's
 end call, and those are raised only from the two frame updates the tick now runs (checked from the game's
@@ -81,14 +94,14 @@ At 0.6 s a tick (speed 1), stepping the models once a tick would jerk. The frame
 the last two ticks' poses instead, by how far the current tick is through its buckets (0 right after the
 Wonders ticked, 1 when the tick is complete or none is running):
 
-- A Wonder's animation: the animator's updaters are driven directly at a time between the last two ticks'.
-  The animator's own time, `PlayingFinished` and `Enabled` are never touched, so what the game reads and
-  saves is the tick's.
+- A Wonder's animation: the animator's updaters are driven directly at a time between the last two ticks'
+  (in the clock postfix). The animator's own time and `PlayingFinished` end every frame as the tick left
+  them, and `Enabled` is never touched, so what the game reads and saves is the tick's.
 - The launcher's turning part (its local rotation) and a plane on the runway (its position): the
   transforms themselves are drawn, because that is what the game shows. The simulation reads them (the
   plane's spawn point turns with the launcher; the catapult measures the runway), so the tick hook first
   puts each one back exactly where the last tick left it, runs, and only then goes back to drawing. Saves
-  do the same first (prefixes on `PlaneLauncherRotator.Save` and `Plane.Save`).
+  do the same first (a prefix on `SaveWriter.WriteToSaveStream`, see below).
 
 ## Saves
 
@@ -96,7 +109,14 @@ No key is added, removed or renamed; the game writes the same keys from the same
 (`AnimationTime`/`IsAnimating`, `RemainingRotation`/`LoadedRotation`/`RotationTime`/`RotationDuration`,
 `CurrentPlane`, the plane's `Position`/`Rotation`/`Speed`/`IsFreeFlying`, `PilotsSent`,
 `PilotsDestructionProgress`). Saves from before this change load, and saves from a co-op game load in
-single player and back. A save made mid-launch stores the tick's pose, not the drawn one.
+single player and back.
+
+A save made mid-launch stores the tick's pose, not the drawn one. Every save (the game's own, the rehost
+save, the map sent to a joining player) is written by `SaveWriter.WriteToSaveStream`; a void prefix on it
+at `Priority.First` puts every tracked part back where the last tick left it before any entity is saved,
+and before any other mod's prefix takes a snapshot of the save (LateGamePerformance's background save
+does). That matters for the pilots as well as the plane: a pilot rides the plane's seat, and entities are
+saved in instantiation order, so the pilot is saved before its plane.
 
 ## Differences from single player (all the same on every player)
 
@@ -106,6 +126,21 @@ single player and back. A save made mid-launch stores the tick's pose, not the d
   30 units/s for 0.6 s). This only moves where free flight starts.
 - A Wonder's animation keeps playing when its model is hidden; the game's frame loop skips animators
   whose object is inactive.
+
+## Other mods
+
+LateGamePerformance's `AnimatorCulling` (on by default) has a prefix on `TimbermeshAnimator.UpdateAnimation`
+at Harmony's default priority. For an animator none of whose renderers is on screen, or on the frames it
+leaves out for an animator far from the camera (`AnimatorLod`), it calls the game's private `UpdateTime`
+with the frame's delta itself and returns false. Harmony 2.4.1 then skips every later prefix that returns
+bool, so a `Priority.Last` gate alone never saw those frames: a Wonder that one player had off screen
+moved on that player's frames as well as on the tick, finished on an earlier tick, and spawned its first
+plane (now inside the tick, from the game's random numbers) on a different tick than on a player looking
+at it. The clock hold above undoes that: whatever runs in between, the postfix puts the tick's clock back.
+Inside the tick the culling prefix may still take the step, but it calls the same `UpdateTime` with the
+same tick interval as the game's own `UpdateAnimation`, so the result is identical either way.
+`AnimatorCulling` needs no change; its note that the simulation reads animator time still holds, because
+in co-op a Wonder's animator time only moves on the tick.
 
 ## Limits and what is not changed
 
@@ -133,17 +168,33 @@ single player and back. A save made mid-launch stores the tick's pose, not the d
 
 ## Testing
 
-Offline (`RuntimeChecks`, against the installed game's assemblies; Harmony is not installed there):
-no Wonder logic method reads the frame clock once the mod's transpilers run; the transpilers refuse other
-bodies; in multiplayer each frame update is skipped or only draws outside the tick, and runs in single
-player; `SpawnPlane` is reachable only through the two frame updates the tick runs, and only the tick
-hook calls them; the game's animation, catapult/runway and rotation code, driven at 10, 30 and 144 FPS,
-differ before the fix and match bit for bit, ending on the same tick, after it; no Save or Load is
-replaced.
+Offline (`RuntimeChecks`, against the installed game's assemblies). Harmony is not installed there (the
+workshop build cannot patch under .NET 8), so the checks call the mod's patches the way Harmony 2.4.1
+does: by priority, skipping later bool prefixes once one returned false, running void prefixes and every
+postfix regardless, passing `__state`. That model was checked against Lib.Harmony 2.4.1 on .NET 8.
+
+- No Wonder logic method reads the frame clock once the mod's transpilers run; the transpilers refuse
+  other bodies.
+- In multiplayer each frame update is skipped or only draws outside the tick, and runs in single player;
+  every prefix that can skip the original has `Priority.Last`.
+- `SpawnPlane` is reachable only through the two frame updates the tick runs, and only the tick hook calls
+  them.
+- From the mod's IL: `WonderTickService` is bound with the co-op services and calls `WonderTiming.Tick`;
+  the tick hands everything back when the session has ended, otherwise puts the drawn poses back before
+  it steps; each Wonder's step runs the animation, the catapult and runway, and the launcher, calling the
+  game's methods in that order; saves put the ticked poses back first.
+- The game's animation (through the mod's own `WonderTiming.Tick` and patches), catapult/runway and
+  rotation code, driven at 10, 30 and 144 FPS, differ before the fix and match bit for bit, ending on the
+  same tick, after it, with every end raised inside a tick. The same holds with a LateGamePerformance-style
+  culling prefix acting on every frame (off screen) or every second frame (far away).
+- After the session ends, the animation runs on the game's frames alone and ends where the game ends it.
+- No Save or Load is replaced (a guard: this holds before the fix too).
 
 In game, **not safe to merge without it**: two players on an Iron Teeth map, one capped at a low frame
 rate (for example 15 FPS) and one uncapped, activate a finished Earth Repopulator with 8 pilots. Watch
 all 8 planes launch, the Wonder deactivate and the pilots disappear half an hour later with no desync;
 save and rehost once while a plane is on the runway and once while the launcher turns; and activate a
 Folktails Earth Recultivator once in co-op (its animation now runs on the tick too) and again after it
-deactivates. Also check that the launch looks smooth at speed 1.
+deactivates. Repeat the launch with LateGamePerformance installed on both computers (default settings) and
+one player's camera turned away from the Wonder while it activates. Also check that the launch looks smooth
+at speed 1.

@@ -52,11 +52,14 @@ It decodes the installed game's plane catapult, runway and launcher rotation IL,
 mod's timing transpilers on it, and drives it, with the game's own animator and Wonder
 animation controller, at 10, 30 and 144 FPS: the results differ before the fix and match
 bit for bit, ending on the same tick, behind the mod's per-frame gates and inside its tick
-scope. The animation runs through the mod's own tick step; the runway and the launcher run
-in the step's order from cloned IL, since their game methods call Unity. It also checks
-from the game's IL that planes are only spawned from the two frame updates the tick takes
-over. Curves and transforms are simple stand-ins, and Harmony is not installed, so a
-two-player game with one player's frame rate capped is still the final check.
+scope. The animation runs through the mod's own `WonderTiming.Tick`, also with a
+LateGamePerformance-style culling prefix ahead of the gate and after the session has ended;
+the runway and the launcher run in the step's order from cloned IL, since their game methods
+call Unity, and the mod's IL is checked to call them in that order. It also checks from the
+game's IL that planes are only spawned from the two frame updates the tick takes over.
+Harmony is not installed (the workshop build cannot patch under .NET 8): the checks call the
+mod's patches in Harmony 2.4.1's order and skipping rules. Curves and transforms are simple
+stand-ins, so a two-player game with one player's frame rate capped is still the final check.
 
 Water diagnostic ZIPs can be compared with Python (no extra packages):
 

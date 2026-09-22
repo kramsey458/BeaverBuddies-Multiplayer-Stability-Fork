@@ -6,6 +6,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Timberborn.BaseComponentSystem;
 using Timberborn.EntitySystem;
+using Timberborn.SaveSystem;
 using Timberborn.TickSystem;
 using Timberborn.TimbermeshAnimations;
 using Timberborn.WonderPlanes;
@@ -39,6 +40,7 @@ namespace BeaverBuddies.Fixes
         private readonly EntityComponentRegistry _entityComponentRegistry;
         private readonly ITickService _tickService;
         private readonly List<Wonder> _wonders = new List<Wonder>();
+        private readonly List<WonderTiming.Parts> _parts = new List<WonderTiming.Parts>();
 
         public WonderTickService(EntityComponentRegistry entityComponentRegistry, ITickService tickService,
             ITickableBucketService tickableBucketService)
@@ -51,6 +53,7 @@ namespace BeaverBuddies.Fixes
         public void Tick()
         {
             _wonders.Clear();
+            _parts.Clear();
             foreach (Wonder wonder in _entityComponentRegistry.GetAll<Wonder>())
             {
                 _wonders.Add(wonder);
@@ -58,7 +61,12 @@ namespace BeaverBuddies.Fixes
             // Every player has the same Wonders. In entity ID order, the planes they create take
             // their IDs in the same order however the Wonders were loaded or built.
             _wonders.Sort(ByEntityId);
-            WonderTiming.Tick(_wonders, _tickService.TickIntervalInSeconds);
+            foreach (Wonder wonder in _wonders)
+            {
+                _parts.Add(new WonderTiming.Parts(wonder.GetComponent<WonderAnimationController>(),
+                    wonder.GetComponent<PlaneCatapult>(), wonder.GetComponent<PlaneLauncherRotator>()));
+            }
+            WonderTiming.Tick(_parts, _tickService.TickIntervalInSeconds);
         }
 
         public void Reset()
@@ -90,22 +98,45 @@ namespace BeaverBuddies.Fixes
             poses.Clear();
         }
 
-        internal static void Tick(List<Wonder> wonders, float seconds)
+        /// <summary>The parts of one Wonder that the tick runs; the catapult and launcher only exist on the Earth Repopulator.</summary>
+        internal readonly struct Parts
         {
-            // A deleted Wonder's animator is not drawn any more.
+            public readonly WonderAnimationController Controller;
+            public readonly PlaneCatapult Catapult;
+            public readonly PlaneLauncherRotator Rotator;
+
+            public Parts(WonderAnimationController controller, PlaneCatapult catapult, PlaneLauncherRotator rotator)
+            {
+                Controller = controller;
+                Catapult = catapult;
+                Rotator = rotator;
+            }
+        }
+
+        /// <summary>One tick of every registered Wonder, in the given (entity ID) order.</summary>
+        internal static void Tick(List<Parts> wonders, float seconds)
+        {
+            // A deleted Wonder is no longer registered: its animation is not drawn any more.
             for (int i = animations.Count - 1; i >= 0; i--)
             {
-                if (!animations[i].Animator) animations.RemoveAt(i);
+                if (!IsListed(animations[i].Animator, wonders)) animations.RemoveAt(i);
+            }
+            if (EventIO.IsNull)
+            {
+                // The session ended mid-game (the connection dropped, or a desync let this player play on):
+                // the game runs on its own again, as in single player, and every gate lets its frame
+                // updates through. Hand each part back where the last tick left it and stop stepping.
+                Release();
+                return;
             }
             RestorePoses();
             RunTick(seconds, () =>
             {
-                foreach (Wonder wonder in wonders)
+                foreach (Parts wonder in wonders)
                 {
                     try
                     {
-                        StepWonder(wonder.GetComponent<WonderAnimationController>(),
-                            wonder.GetComponent<PlaneCatapult>(), wonder.GetComponent<PlaneLauncherRotator>());
+                        StepWonder(wonder.Controller, wonder.Catapult, wonder.Rotator);
                     }
                     catch (Exception e)
                     {
@@ -117,6 +148,31 @@ namespace BeaverBuddies.Fixes
             });
             // Start drawing this tick from where the last one was drawn.
             ShowPoses(0f);
+        }
+
+        /// <summary>
+        /// Stops taking over: every moving part is put where the last tick left it and each animation
+        /// shows the tick's pose, so the game's own frame updates carry on from the simulated state.
+        /// </summary>
+        internal static void Release()
+        {
+            if (animations.Count == 0 && poses.Count == 0) return;
+            RestorePoses();
+            poses.Clear();
+            foreach (AnimationView view in animations)
+            {
+                view.Show(1f);
+            }
+            animations.Clear();
+        }
+
+        private static bool IsListed(TimbermeshAnimator animator, List<Parts> wonders)
+        {
+            foreach (Parts wonder in wonders)
+            {
+                if (wonder.Controller != null && ReferenceEquals(wonder.Controller._animator, animator)) return true;
+            }
+            return false;
         }
 
         internal static void RunTick(float seconds, Action step)
@@ -225,14 +281,47 @@ namespace BeaverBuddies.Fixes
 
         internal static bool RunsThisFrame => InTick || EventIO.IsNull;
 
-        /// <summary>The frame update of an animator: a Wonder's is drawn only, every other one runs as in the game.</summary>
+        /// <summary>The frame update of an animator: a Wonder's only draws (see HoldClock), every other one runs as in the game.</summary>
         internal static bool AnimatorRunsThisFrame(TimbermeshAnimator animator)
         {
             if (animations.Count == 0 || RunsThisFrame) return true;
-            AnimationView view = Find(animator);
-            if (view == null) return true;
-            view.Show(Progress());
-            return false;
+            return Find(animator) == null;
+        }
+
+        /// <summary>A Wonder animator's clock as the last tick left it: what UpdateTime changes.</summary>
+        internal struct AnimatorClock
+        {
+            public bool Held;
+            public float Time, RepeatedTime;
+            public bool PlayingFinished;
+        }
+
+        /// <summary>
+        /// Before a frame update of a Wonder's animator, and before any other mod's prefix on it: the
+        /// tick's clock, to be put back afterwards. Other mods may advance the animator's time themselves
+        /// and skip the rest (LateGamePerformance's AnimatorCulling does, off screen and far away); that
+        /// frame time must not reach the simulation either.
+        /// </summary>
+        internal static AnimatorClock HoldClock(TimbermeshAnimator animator)
+        {
+            if (animations.Count == 0 || RunsThisFrame || Find(animator) == null) return default;
+            return new AnimatorClock
+            {
+                Held = true,
+                Time = animator.Time,
+                RepeatedTime = animator.RepeatedTime,
+                PlayingFinished = animator.PlayingFinished,
+            };
+        }
+
+        /// <summary>After that frame update: the tick's clock back, whatever ran, and the pose between the last two ticks drawn.</summary>
+        internal static void ReleaseClock(TimbermeshAnimator animator, AnimatorClock clock)
+        {
+            if (!clock.Held) return;
+            animator.Time = clock.Time;
+            animator.RepeatedTime = clock.RepeatedTime;
+            animator.PlayingFinished = clock.PlayingFinished;
+            Find(animator)?.Show(Progress());
         }
 
         internal static void ShowPose(BaseComponent owner)
@@ -241,17 +330,22 @@ namespace BeaverBuddies.Fixes
             if (pose != null) pose.Show(Progress());
         }
 
-        internal static void RestorePose(BaseComponent owner)
+        /// <summary>Before a save writes anything: every moving part as the last tick left it, so every entity (the pilot on the plane's seat too) saves the tick's pose.</summary>
+        internal static void RestorePosesForSave()
         {
-            PoseView pose = FindPose(owner);
-            if (pose != null) pose.Restore();
+            if (EventIO.IsNull) return;
+            RestorePoses();
         }
 
         internal static float GetDeltaTime()
         {
             if (InTick && !EventIO.IsNull) return tickSeconds;
-            return GetFrameDeltaTime();
+            return FrameClock();
         }
+
+        // The game's frame clock, outside the multiplayer tick. A field so that RuntimeChecks, which has
+        // no Unity, can stand in for it; nothing in the game changes it.
+        internal static Func<float> FrameClock = GetFrameDeltaTime;
 
         // Keep the Unity native call outside the multiplayer path.
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -439,6 +533,29 @@ namespace BeaverBuddies.Fixes
         }
     }
 
+    // The gate above only sees the frame update if every earlier prefix let it through. Another mod's
+    // prefix that keeps the animator's time itself and returns false (LateGamePerformance's
+    // AnimatorCulling, for an animator off screen or far away) skips it, and would move the Wonder's
+    // animation on frame time. So, for a Wonder's animator outside the tick, the tick's clock is kept
+    // first and put back last. This prefix never skips anything (it returns void, so it is not a
+    // replacing prefix); Priority.First only makes it see the clock before anyone else changes it.
+    [HarmonyPatch(typeof(TimbermeshAnimator), nameof(TimbermeshAnimator.UpdateAnimation))]
+    static class TimbermeshAnimatorClockPatcher
+    {
+        [HarmonyPriority(Priority.First)]
+        static void Prefix(TimbermeshAnimator __instance, out WonderTiming.AnimatorClock __state)
+        {
+            __state = WonderTiming.HoldClock(__instance);
+        }
+
+        // Postfixes run whether or not a prefix skipped the original.
+        [HarmonyPriority(Priority.First)]
+        static void Postfix(TimbermeshAnimator __instance, WonderTiming.AnimatorClock __state)
+        {
+            WonderTiming.ReleaseClock(__instance, __state);
+        }
+    }
+
     [HarmonyPatch(typeof(WonderAnimationController), nameof(WonderAnimationController.StartAnimation))]
     static class WonderAnimationControllerStartAnimationPatcher
     {
@@ -514,24 +631,17 @@ namespace BeaverBuddies.Fixes
     }
 
     // A save stores the tick's pose, whatever the frames have drawn since. The keys are the game's.
+    // Every save (the game's, the rehost save, the map sent to a joining player) is written here,
+    // before any entity's Save runs; the pilots ride the plane's seat and are saved before the plane.
 
-    [HarmonyPatch(typeof(PlaneLauncherRotator), nameof(PlaneLauncherRotator.Save))]
-    static class PlaneLauncherRotatorSavePatcher
+    [HarmonyPatch(typeof(SaveWriter), nameof(SaveWriter.WriteToSaveStream))]
+    static class SaveWriterWonderPosePatcher
     {
-        static void Prefix(PlaneLauncherRotator __instance)
+        // Before any other mod's prefix, which may take the save's snapshot.
+        [HarmonyPriority(Priority.First)]
+        static void Prefix()
         {
-            if (EventIO.IsNull) return;
-            WonderTiming.RestorePose(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(WonderPlane), nameof(WonderPlane.Save))]
-    static class PlaneSavePatcher
-    {
-        static void Prefix(WonderPlane __instance)
-        {
-            if (EventIO.IsNull) return;
-            WonderTiming.RestorePose(__instance);
+            WonderTiming.RestorePosesForSave();
         }
     }
 }
