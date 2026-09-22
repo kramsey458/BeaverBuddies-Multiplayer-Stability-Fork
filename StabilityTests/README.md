@@ -19,6 +19,14 @@ connection panel model, player cursor preferences and animation patch source. St
 Steam client is required. Animation tests model a forward-only path cursor and
 invalid visual coordinates, not a running Unity water simulation.
 
+The Workshop checks run the mod project's real PostBuild step (`dotnet msbuild
+BeaverBuddies/BeaverBuddies.csproj -t:PostBuild`) into a scratch Documents folder in the
+system temp directory, never the one in `env.props`. They check the `workshop_data.json` a
+build leaves beside the mod, which Timberborn's Workshop uploader reads to choose the item
+it updates: a build never leaves the original project's item (3293380223) there, removes a
+copy of it that an earlier build left, and keeps one the uploader wrote for a new item.
+They need the .NET SDK on the PATH, but no game files.
+
 `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam
 depends on the players' frame length, with Steam served once per frame and with it also served
 between the ticks of a frame. It runs the real transport, server, client and ping tracker over a
