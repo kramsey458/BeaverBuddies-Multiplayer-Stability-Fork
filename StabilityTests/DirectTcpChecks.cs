@@ -80,7 +80,7 @@ static class DirectTcpChecks
                 Check(guest.ConnectAsync().Wait(2000) && accept.Wait(2000), "loopback connection never completed");
                 Check(guest.Connected && accepted!.Connected);
                 Check(guest.NoDelay, "the guest's connected socket has Nagle's algorithm on");
-                Check(accepted.NoDelay, "the host's accepted socket has Nagle's algorithm on");
+                Check(accepted!.NoDelay, "the host's accepted socket has Nagle's algorithm on");
             }
             finally { guest.Close(); accepted?.Close(); listener.Stop(); }
         });
@@ -123,6 +123,33 @@ static class DirectTcpChecks
                 Check(mapTime >= TimeSpan.FromMilliseconds(400), $"the save arrived in {mapTime.TotalMilliseconds:F0} ms: it was not paced");
             }
             finally { host.Close(); guest.Close(); }
+        });
+        yield return ("Ending the session while a guest downloads the save does not wait for the paced save", () =>
+        {
+            // 1 KB chunks at 1 KB/s: the 20 KB save takes about 19 s to send.
+            var (hostStream, guestStream) = PipeStream.Pair();
+            var host = new TimberServer(new PipeListener(new RatedStream(hostStream, chunk: 1024, bytesPerSecond: 1024)),
+                () => Task.FromResult(Noise(20 * 1024, 7)), null);
+            var guest = new TimberClient(guestStream);
+            Task? abort = null;
+            try
+            {
+                host.Start(); guest.Start();
+                // The guest counts as connected once its save has started (TimberServer.StartQueuing).
+                Check(SpinWait.SpinUntil(() => { host.Update(); guest.Update(); return host.ClientCount == 1; }, 2000),
+                    "the guest never started receiving the save");
+                // The save send now holds the guest's stream, asleep between chunks.
+                Thread.Sleep(100);
+                // What ReplayService.AbortReplay does on the host's game thread when a replayed action fails.
+                abort = Task.Run(() => host.AbortSession("test"));
+                Check(abort.Wait(1000), "ending the session waited for the joining guest's paced save");
+                Check(!hostStream.Connected, "the joining guest's connection was left open");
+            }
+            finally
+            {
+                guest.Close();
+                if (abort == null || abort.IsCompleted) host.Close();
+            }
         });
     }
 }

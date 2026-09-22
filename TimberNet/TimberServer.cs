@@ -444,7 +444,14 @@ namespace TimberNet
             try
             {
                 lock (queuedMessages)
-                    foreach (var client in clients.ToArray()) SendSessionFault(client, reason);
+                    foreach (var client in clients.ToArray())
+                    {
+                        // A guest still receiving the save gets no reason, only the close below. Its join thread holds
+                        // its stream for the whole paced save (about 1 MB/s over a direct connection), and this runs on
+                        // the host's game thread (ReplayService.AbortReplay), which would wait for the rest of the save.
+                        if (queuedMessages.ContainsKey(client)) continue;
+                        SendSessionFault(client, reason);
+                    }
             }
             finally { Close(); }
         }
