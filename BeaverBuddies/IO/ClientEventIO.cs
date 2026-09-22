@@ -63,8 +63,8 @@ namespace BeaverBuddies.IO
         protected override bool HandleUnreadableFrame(string problem)
         {
             Plugin.LogError("Could not read an action from the host: " + problem);
-            NetBase?.RaiseSessionFault("The host sent a multiplayer action that this game could not read, " +
-                "so the two games would no longer match. " + problem);
+            NetBase?.RaiseSessionFault("An action from the host could not be read, so this game would no longer " +
+                "match the host's. " + problem);
             return false;
         }
 

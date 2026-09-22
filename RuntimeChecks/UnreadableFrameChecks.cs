@@ -3,8 +3,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 // What a player does with a received frame it cannot read: one whose "$type" the binder refuses (see
-// FrameTypeChecks), one from a mod this game does not have, one with no type at all, or a group of actions that
-// holds an empty entry or another group. The frames are read by the
+// FrameTypeChecks), one from a mod this game does not have, one with no type at all, a group of actions that holds
+// an empty entry or another group, or an action with a value of the wrong kind. The frames are read by the
 // real ClientEventIO and ServerEventIO over a real TimberClient and TimberServer, from ReadEvents, which runs inside a
 // tick with nothing to catch an exception, so it must never throw.
 internal static class UnreadableFrameChecks
@@ -38,7 +38,12 @@ internal static class UnreadableFrameChecks
         string Write(object replayEvent) =>
             (string)jsonType.GetMethod("Serialize").MakeGenericMethod(eventType).Invoke(null, new[] { replayEvent });
         object Frame(string json) => jObject.GetMethod("Parse", new[] { typeof(string) }).Invoke(null, new object[] { json });
-        object Heartbeat() => Activator.CreateInstance(heartbeatType, true);
+        object Heartbeat(int? randomS0Before = null)
+        {
+            object e = Activator.CreateInstance(heartbeatType, true);
+            eventType.GetField("randomS0Before").SetValue(e, randomS0Before);
+            return e;
+        }
         object Automation(params object[] arguments)
         {
             object e = Activator.CreateInstance(automationType);
@@ -59,7 +64,9 @@ internal static class UnreadableFrameChecks
         string Group(int tick, params object[] events) => Write(GroupOf(tick, events));
 
         string Renamed(string json, string from, string to) =>
-            json.Contains($"\"{from}\"") ? json.Replace($"\"{from}\"", $"\"{to}\"") : throw new Exception($"{from} is not in {json}");
+            Replaced(json, $"\"{from}\"", $"\"{to}\"");
+        string Replaced(string json, string from, string to) =>
+            json.Contains(from) ? json.Replace(from, to) : throw new Exception($"{from} is not in {json}");
 
         const int Tick = 3;
         object Readable() => Frame(Group(Tick, Heartbeat()));
@@ -75,6 +82,10 @@ internal static class UnreadableFrameChecks
             // Both are read fine, but no action in them can be played: replaying them would fail and stop the session.
             ("a group holding an empty entry", () => Frame(Group(Tick, Heartbeat(), null)), new[] { "group of actions" }),
             ("a group inside a group", () => Frame(Group(Tick, Heartbeat(), GroupOf(Tick, Heartbeat()))), new[] { "group of actions" }),
+            // randomS0Before is a number (int?). Only the heartbeat's is set, so only it is given text; the group's is null.
+            ("an action with a value of the wrong kind", () => Frame(Replaced(Group(Tick, Heartbeat(12345)),
+                    "\"randomS0Before\": 12345", "\"randomS0Before\": \"x\"")),
+                new[] { "randomS0Before" }),
         };
 
         // The real event IO around a real TimberClient or TimberServer that has received these frames. Nothing is
@@ -124,6 +135,9 @@ internal static class UnreadableFrameChecks
                 if (faults.Count != 1) throw new Exception($"With {bad.Kind}, the session fault was raised {faults.Count} times");
                 // Nothing of that tick is played: the session is over and part of the tick would be worse.
                 if (events.Count != 0) throw new Exception($"With {bad.Kind}, {events.Count} actions of the tick were still played");
+                // The same words as BeaverBuddies-MultiColony, then why.
+                if (!faults[0].StartsWith("An action from the host could not be read"))
+                    throw new Exception($"With {bad.Kind}, the reason does not say what happened: {faults[0]}");
                 foreach (string name in bad.Named)
                     if (!faults[0].Contains(name)) throw new Exception($"With {bad.Kind}, the reason does not name {name}: {faults[0]}");
                 if (!log.Any(line => line.StartsWith("LogError"))) throw new Exception($"With {bad.Kind}, no error was logged");
