@@ -222,13 +222,16 @@ namespace BeaverBuddies.Panel
         // color they chose for themselves, or the one you set for them in the player cursors settings.
         string ChatColorOf(ChatMessage message)
         {
-            // Nobody sets a color for their own cursor: others see your Ping Color.
-            if (myPlayerIdKnown && message.PlayerId == myPlayerId) return ColorUtility.ToHtmlStringRGB(Settings.PingColorValue);
+            // Nobody sets a color for their own cursor: others see your Ping Color, or the color for your player
+            // number while it is still the default.
+            if (myPlayerIdKnown && message.PlayerId == myPlayerId)
+                return PlayerColors.Effective(ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), myPlayerId);
             var activity = SingletonManager.GetSingleton<PlayerActivityService>();
             if (activity != null && activity.TryGetCursorColor(message.PlayerId, out Color cursor)) return ColorUtility.ToHtmlStringRGB(cursor);
             // No cursor for them now (they left, or player activity is off): the color you saved for them, if any,
-            // else the one they sent with the message.
-            return PlayerActivityService.Preferences.SavedColorFor(message.Name, message.PlayerId) ?? message.Color;
+            // else the one they sent with the message (by player number if it is still the default).
+            return PlayerActivityService.Preferences.SavedColorFor(message.Name, message.PlayerId)
+                ?? PlayerColors.Effective(message.Color, message.PlayerId);
         }
 
         void RefreshChatColors()

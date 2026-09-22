@@ -399,10 +399,15 @@ static class PingCadenceChecks
             double perFrame = 0, between = 0;
             WithFastProbes(() =>
             {
-            var first = Task.Run(() => { using var s = new Session(3); perFrame = s.MeasurePing(new FrameShape(50, false), new FrameShape(50, false), 900, 700); });
-            var second = Task.Run(() => { using var s = new Session(3); between = s.MeasurePing(new FrameShape(50, true), new FrameShape(50, true), 900, 700); });
-            Check(Task.WaitAll(new[] { first, second }, 4500), "the measurements took too long");
-            first.GetAwaiter().GetResult(); second.GetAwaiter().GetResult();
+            // One session after the other: each keeps two game threads busy for the whole run, and two sessions at once
+            // leave a 4-core machine (a GitHub Windows runner) no time for the network threads. About 3.6 s in all.
+            var both = Task.Run(() =>
+            {
+                using (var s = new Session(3)) perFrame = s.MeasurePing(new FrameShape(50, false), new FrameShape(50, false), 900, 700);
+                using (var s = new Session(3)) between = s.MeasurePing(new FrameShape(50, true), new FrameShape(50, true), 900, 700);
+            });
+            Check(both.Wait(4500), "the measurements took too long");
+            both.GetAwaiter().GetResult();
             });
             Check(perFrame > 90, $"once per frame the ping should follow the frame length, but it was {perFrame:0} ms");
             Check(between < 40, $"pumping between ticks should keep the ping near the network, but it was {between:0} ms");
