@@ -5,9 +5,88 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.12 (pre-release)
+
+On top of 1.1.11: fixes for several ways a shared co-op game could fall out of step, a network reader that only creates multiplayer
+actions, and a fuller desync check. It changes what is sent over the network, so every player must install this build (the join check
+refuses a different one). Nothing saved changes.
+
+**Not played yet.** Everything below is covered by automated checks only; each item says what they cover. It is a pre-release until it
+has been played in a two-player game.
+
+### Desyncs fixed
+
+- **Planting with different layer views.** The planting and cancel-planting tools find the height of the dragged area with the game's
+  terrain picker, which stops at the layer each player has sliced the view to. Every computer worked that height out again with its own
+  view, so a player whose view was sliced at another layer got the marks, or removed them, at a different height. The planting action now
+  carries the tiles the marking player saw highlighted, and every computer marks or unmarks exactly those; the game's own checks of which
+  tiles may be planted still run. The action no longer sends the dragged area as well, so it is about half the size. *Tested: the game's
+  own levelling over a made-up terraced map seen through two layer views, recorded, sent and played through the mod.*
+- **A building refused while you hover a path that joins two districts.** Every computer checks a replayed building on a preview copy,
+  and one of those checks asks whether this computer's preview roads, which include whatever the local player is hovering or dragging,
+  join two districts. A player holding such a path preview (red, "Districts in conflict") refused another player's building while the
+  others placed it. That check now passes while actions are replayed; every other placement check still runs, and your own tool still
+  refuses a district-joining building before you click. *Tested: the game's own validator, with and without a conflicting preview.*
+- **Tick once (the period key) is off in co-op.** It ran a whole tick on one computer only, without the shared actions, and the desync
+  check could not see it. In co-op it now pauses the game for everyone, or shows a notice if the game is already paused. *Tested.*
+- **Dev mode's Ctrl keys are not read in co-op.** The game reads "place finished" and "don't recover goods" while a placement or deletion
+  is played, which in co-op happens on every computer, so a player holding Ctrl changed someone else's building on their own computer
+  only. In co-op both keys now do nothing; single player is unchanged. A notice says that most dev mode tools change only your own game
+  when dev mode is turned on in a co-op game. *Tested: the game's own placement and goods recovery code with Ctrl held.*
+- **No joining after the game was changed at the start.** A player who joins gets the save the host loaded and then only what is played
+  after they connect, but joining stayed open until the first tick. The first action that changes the game (a building, a marked area, a
+  priority) now closes joining, as unpausing does, and a player still joining is told to ask the host to save and rehost. Speed changes,
+  pings and other messages that change nothing leave it open. *Tested: the real server and client, and a table of every action type.*
+
+### A fuller desync check
+
+- Each guest used to compare only the first of the four words of the host's random-number state. It now compares all four, and a
+  difference in any of them stops the session as before (the log line for a first-word difference is unchanged).
+- On every tick it also compares how many entities tick in each batch (with one ID in eight, a different eighth each tick) and exactly
+  where every walking character stands. A difference there is written to the log once per game and the game goes on: this comparison is
+  new, and a character that something moves on the frame (an Earth Repopulator pilot in flight, for example) would otherwise end a game
+  whose simulation still agrees. If the games really went apart, the random state follows and stops the session, and that earlier line
+  says when the walkers first differed.
+- The host's log now names what differed when a guest desyncs. *Tested: the comparison over the real transport with games that differ in
+  only one of these, and that the compiled mod wires it up.*
+
+### Network
+
+- **Only multiplayer actions can be created from a received frame.** Frames are read with type names switched on, and there was no limit
+  on which type a name could pick: a type name anywhere in a frame could make the receiving game create any loaded type, which the other
+  player, or anyone who reached a direct-IP host's port, could use. A frame can now only create actions (including other mods' actions,
+  such as MixedStorage's) and the values they carry. What is sent is byte for byte the same. *Tested: every action round-trips unchanged;
+  refused types at any depth, in lists and arrays; the real MixedStorage bridge.*
+- **An action that cannot be read is no longer skipped silently.** A guest that receives an action it cannot read (most likely from a mod
+  only the host has) now stops the session with a message naming it, where it used to skip that tick's actions and drift out of step. A
+  host ignores a guest's unreadable action and logs it. The unused record-to-file replay code is removed. *Tested.*
+- **Direct connections send at once.** Nagle's algorithm is off on direct (IP) connections, as it already was over Steam, and the host's
+  game thread no longer sleeps between the chunks of a large tick; only the save sent to a joining player is paced. Ending a session no
+  longer waits for a joining player's save. *Tested over loopback.*
+- **The desync dialog.** It no longer asks players to press Enable Logging in builds that have no such button, and a guest's
+  **Reconnect (wait for Rehost)** joins the way it joined: the address it typed, or the host's new Steam lobby if Steam shows it (it
+  asks the guest to accept the host's new invite otherwise). It used to dial the saved direct-IP address, 127.0.0.1 by default, even for
+  Steam guests. *Tested: the dialog's decisions, and that the compiled dialog and reconnect use them.*
+
+### Building the mod
+
+- Builds no longer put the original project's `workshop_data.json` next to the mod, and remove a copy an earlier build left there, so
+  the game's Workshop uploader cannot be pointed at the original project's item. A `workshop_data.json` for your own item is kept.
+- StabilityTests run on GitHub Actions for every push and pull request.
+
+### Validation
+
+- Release Steam and non-Steam builds succeed with no warnings. 249 StabilityTests, 138 RuntimeChecks (run against both the Release and
+  the Release Steam builds of the mod) and 3 Python checks pass. None of them can start the game.
+- **Not played.** To check in a two-player game: planting across a terrace edge with different layer views; a building placed while the
+  other player holds a red district-joining path preview; the period key while paused and while running; joining after the host placed
+  something at the start (refused) and before (allowed); a host with MixedStorage and a guest without it (the guest stops with a named
+  reason); Reconnect after Save and Rehost over Steam; and a long session, whose logs should have no "Entity mismatch" or "Walker
+  mismatch" line.
+
 ## 1.1.11
 
-The current release, on top of 1.1.10. It changes only how players are colored on the cursors and in the chat: nothing that is simulated, sent or
+The current stable release, on top of 1.1.10. It changes only how players are colored on the cursors and in the chat: nothing that is simulated, sent or
 saved changes. Every player should install this build: the join check compares the mod build, so it will not join a session running a different one.
 
 The fork owner played this change in multiplayer and reported that it works without issues. Because it only changes what is drawn, what has been
