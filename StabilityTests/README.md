@@ -46,7 +46,10 @@ building, with a district service standing in for this computer's preview road
 graph (which holds the local player's hovered tool previews). Outside a replay
 it must refuse the building while those roads join two districts; while events
 replay the mod's prefix must accept it without reading them, at
-Priority.Last, and no other placement check may be overridden. Harmony is not
+Priority.Last. It must be the mod's only patch on that method (no postfix or
+second prefix under any name), and no other placement check may be
+overridden. Patches applied with harmony.Patch at run time are not seen by
+these checks. Harmony is not
 installed: the checks run the mod's prefixes the way Harmony would, so a live
 two-player game with one player hovering a district-joining path is still the
 final check.

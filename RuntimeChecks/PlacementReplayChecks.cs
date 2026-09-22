@@ -56,35 +56,51 @@ internal static class PlacementReplayChecks
             try { return mod.GetTypes().ToList(); }
             catch (ReflectionTypeLoadException e) { return e.Types.OfType<Type>().ToList(); }
         }
-        // What a patch class patches: [HarmonyPatch(type, method)] on the class or on its methods, or the type on the
-        // class and the method name on a method.
+        // What a [HarmonyPatch] attribute names: the type and the method, either of which may be left to another one.
         List<(Type type, string method)> HarmonyPatches(MemberInfo member) => member.GetCustomAttributesData()
             .Where(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch")
             .Select(a => (a.ConstructorArguments.Select(c => c.Value).OfType<Type>().FirstOrDefault(),
                 a.ConstructorArguments.Select(c => c.Value).OfType<string>().FirstOrDefault()))
             .ToList();
-        IEnumerable<(Type type, string method)> Targets(Type patchClass)
-        {
-            var outer = HarmonyPatches(patchClass);
-            Type classType = outer.Select(t => t.type).FirstOrDefault(t => t != null);
-            string className = outer.Select(t => t.method).FirstOrDefault(m => m != null);
-            if (classType != null) yield return (classType, className);
-            foreach (MethodInfo method in patchClass.GetMethods(all | BindingFlags.DeclaredOnly))
-            foreach (var (type, name) in HarmonyPatches(method))
-                yield return (type ?? classType, name ?? className);
-        }
+        // Every patch method the mod declares by attribute, the way Harmony's PatchAll finds them: a method named
+        // Prefix, Postfix, Transpiler, Finalizer or ILManipulator, or one marked [HarmonyPrefix] and so on. Its target
+        // is its own [HarmonyPatch] attributes merged onto its class's. (Patches applied with harmony.Patch at run time
+        // are not seen here; none of the mod's targets a placement check.)
+        string[] kinds = { "Prefix", "Postfix", "Transpiler", "Finalizer", "ILManipulator" };
+        string Kind(MethodInfo method) => kinds.FirstOrDefault(k => method.GetCustomAttributesData()
+            .Any(a => a.AttributeType.FullName == "HarmonyLib.Harmony" + k)) ?? kinds.FirstOrDefault(k => method.Name == k);
+        List<(MethodInfo method, string kind, Type type, string target)> PatchMethods() => ModTypes()
+            .SelectMany(patchClass =>
+            {
+                var outer = HarmonyPatches(patchClass);
+                return patchClass.GetMethods(all | BindingFlags.DeclaredOnly)
+                    .Select(method => (method, kind: Kind(method), inner: HarmonyPatches(method)))
+                    .Where(m => m.kind != null)
+                    .Select(m => (m.method, m.kind,
+                        m.inner.Concat(outer).Select(t => t.type).FirstOrDefault(t => t != null),
+                        m.inner.Concat(outer).Select(t => t.method).FirstOrDefault(n => n != null)));
+            })
+            .ToList();
+        List<(MethodInfo method, string kind, Type type, string target)> ValidatorPatches() =>
+            PatchMethods().Where(p => p.type == validatorType && p.target == "IsValid").ToList();
         int? DeclaredPriority(MemberInfo member) => member.GetCustomAttributesData()
             .Where(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPriority")
             .Select(a => (int?)(int)a.ConstructorArguments[0].Value).FirstOrDefault();
         int Priority(MethodInfo prefix) => DeclaredPriority(prefix) ?? DeclaredPriority(prefix.DeclaringType) ?? 400;
-        List<MethodInfo> Prefixes() => ModTypes()
-            .Where(t => Targets(t).Contains((validatorType, "IsValid")))
-            .Select(t => t.GetMethod("Prefix", all))
-            .OfType<MethodInfo>()
+        List<MethodInfo> Prefixes() => ValidatorPatches()
+            .Where(p => p.kind == "Prefix")
+            .Select(p => p.method)
             .OrderByDescending(Priority)
             .ToList();
-        MethodInfo Override() => Prefixes().SingleOrDefault()
-            ?? throw new Exception("the mod does not patch DistrictPreviewsValidator.IsValid with exactly one prefix");
+        // The one override, and nothing else on this method: a postfix or a second prefix could undo it.
+        MethodInfo Override()
+        {
+            var patches = ValidatorPatches();
+            if (patches.Count != 1 || patches[0].kind != "Prefix")
+                throw new Exception("the mod does not patch DistrictPreviewsValidator.IsValid with exactly one prefix and nothing else: "
+                    + (patches.Count == 0 ? "no patch" : string.Join(", ", patches.Select(p => $"{p.method.DeclaringType.Name}.{p.method.Name} ({p.kind})"))));
+            return patches[0].method;
+        }
 
         // The prefixes share the call's result and out argument, as Harmony's generated method does.
         (bool valid, string error) Validate(object validator, object blockObject)
@@ -189,13 +205,13 @@ internal static class PlacementReplayChecks
             // and other mods bind still judge the replayed building on every computer.
             var guarded = new HashSet<Type> { blockObjectType, blockSystem.GetType("Timberborn.BlockSystem.BlockObjectValidationService", true),
                 blockSystem.GetType("Timberborn.BlockSystem.BlockValidator", true) };
-            foreach (Type type in ModTypes())
-            foreach (var (target, method) in Targets(type))
+            foreach (var (method, kind, target, name) in PatchMethods())
             {
-                if (target == null || target == validatorType) continue;
-                if (guarded.Contains(target) && (target != blockObjectType || method == "IsValid")
+                // The override itself is checked above (exactly one prefix, Priority.Last).
+                if (target == null || target == validatorType && name == "IsValid") continue;
+                if (guarded.Contains(target) && (target != blockObjectType || name == "IsValid")
                     || validatorInterface.IsAssignableFrom(target))
-                    throw new Exception($"{type.Name} patches {target.Name}.{method}, a placement check");
+                    throw new Exception($"{method.DeclaringType.Name}.{method.Name} ({kind}) patches {target.Name}.{name}, a placement check");
             }
         });
     }
