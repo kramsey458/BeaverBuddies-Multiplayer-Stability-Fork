@@ -57,6 +57,17 @@ namespace BeaverBuddies.IO
             }
         }
 
+        // Everything a guest plays comes from the host, which has already played it, so an action this game cannot
+        // read leaves it behind the host's for good. The session stops the way it does when an action fails, and
+        // nothing more of that tick is played.
+        protected override bool HandleUnreadableFrame(string problem)
+        {
+            Plugin.LogError("Could not read an action from the host: " + problem);
+            NetBase?.RaiseSessionFault("An action from the host could not be read, so this game would no longer " +
+                "match the host's. " + problem);
+            return false;
+        }
+
         // Only once the game has been told to load the save: if that throws, this stays a join attempt that failed,
         // and the error that follows is reported to whoever is joining.
         private void OnMapReceivedByNet(byte[] mapBytes)

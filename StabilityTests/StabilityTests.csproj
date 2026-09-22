@@ -21,6 +21,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/DesyncDetecter/WalkerTrace.cs" Link="WalkerTrace.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/DesyncDetecter/DesyncCheck.cs" Link="DesyncCheck.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerCursorPreferences.cs" Link="PlayerCursorPreferences.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Activity/PlayerColors.cs" Link="PlayerColors.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ConnectionStatusModel.cs" Link="ConnectionStatusModel.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/ChatFormat.cs" Link="ChatFormat.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Panel/PanelLayout.cs" Link="PanelLayout.cs" />
@@ -29,5 +30,9 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/DesyncDialogPlan.cs" Link="DesyncDialogPlan.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The checkout the tests were built against: the Workshop checks run this checkout's PostBuild step. -->
+    <AssemblyMetadata Include="SourceRoot" Value="$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(SourceRoot)'))" />
   </ItemGroup>
 </Project>

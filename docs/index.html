@@ -37,26 +37,26 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow">Timberborn co-op mod &middot; <span data-release="tag">v1.1.10</span></div>
+      <div class="eyebrow">Timberborn co-op mod &middot; <span data-release="tag">v1.1.11</span></div>
       <h1>Build your colony together.</h1>
       <p class="lede">BeaverBuddies Stability Fork lets you and your friends run one Timberborn colony at the same time, with Steam friend invites, a live connection panel, and fixes for the crashes and desyncs that make multiplayer painful.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.1.10</span></span>
+          <span>Download <span data-release="version">1.1.11</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Read the install guide</a>
       </div>
       <p class="hero-note">Free and open source. Tested on Windows with the Steam version of Timberborn 1.1.2.4.</p>
-      <div class="callout tip" data-release-pinned="1.1.10" style="margin-top:1.4rem">
+      <div class="callout tip" data-release-pinned="1.1.11" style="margin-top:1.4rem">
         <strong class="label">Stable</strong>
-        <p><b>1.1.10 is stable and working.</b> It has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
+        <p><b>1.1.11 is stable and working.</b> 1.1.10 has been tested extensively in multiplayer, including in large colonies, and no desyncs have been recorded so far. 1.1.11 is that release with a visual change on top (each player gets a color of their own, and only the name is colored in the chat), and it is working without issues. That is a record of what has been played, not a promise: see <a href="#limits">what has not been tried</a> and <a href="#stability">how sure we are of each fix</a>.</p>
       </div>
     </div>
 
     <figure class="panel-demo">
       <img class="panel-shot" src="assets/connection-panel.png" width="383" height="558" alt="Screenshot of the in-game connection panel as the host sees it: status In sync, the host's own row das it mane in bold with a dash, sarawr at 19 ms, tick rate 11.7 ticks per second, speed 7x, 1 tick behind, connection Steam, and a chat with a yellow line from das it mane and a pink line from sarawr.">
-      <figcaption class="demo-caption">The in-game connection panel, as the host sees it during a Steam co-op session. Chat lines take each player's cursor color.</figcaption>
+      <figcaption class="demo-caption">The in-game connection panel, as the host sees it during a Steam co-op session (a screenshot from 1.1.10, where the whole chat line took the player's color; since 1.1.11 only the name does).</figcaption>
     </figure>
   </div>
 </div>
@@ -64,7 +64,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.1.10</span></b><span>Latest release</span></li>
+      <li><b><span data-release="version">1.1.11</span></b><span>Latest release</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built and tested against</span></li>
       <li><b>Windows + Steam</b><span>Tested platform</span></li>
       <li><b>Two players</b><span>Tested group size</span></li>
@@ -191,7 +191,7 @@
           <li><b>Tick rate</b> and <b>speed</b> show how fast the simulation is really running, and guests see how many ticks they are <b>behind the host</b> (0 or 1 is normal).</li>
           <li><b>Connection</b> shows whether players are connected directly or through Steam.</li>
           <li>The host also sees how far behind the slowest guest is and the lowest <b>guest frame rate</b>, and can click <b>Ease off below</b> to slow the game a little while a guest stays under a frame rate (Off, 20, 30, 45 or 60 fps).</li>
-          <li>A <b>chat box</b> sits below the panel. Everyone sees messages in the same order, and a player who joins later gets the whole conversation. Each line is drawn in the sender's cursor color.</li>
+          <li>A <b>chat box</b> sits below the panel. Everyone sees messages in the same order, and a player who joins later gets the whole conversation. Each name is drawn in the sender's cursor color, and the message stays in the normal text color.</li>
           <li><b>Click the title</b> to collapse it to a single line. Your choice is remembered.</li>
           <li>Hide it or move it to any corner in <b>Mod Settings</b>, or bind the optional <b>Toggle connection panel</b> key.</li>
         </ul>
@@ -209,7 +209,7 @@
       <h2>See what your teammates are doing</h2>
       <p class="lede" style="max-width:none">Other players' cursors, selections and building edits show up on your screen, so you stop building on top of each other.</p>
       <ul>
-        <li><b>Cursors</b> are colored and translucent, with a name label. They are shared in world space, so cameras can be anywhere.</li>
+        <li><b>Cursors</b> are colored and translucent, with a name label. Each player starts with a color of their own (the host orange, then blue, green, pink, purple, teal, red and lime for the guests), and you can change any of them. They are shared in world space, so cameras can be anywhere.</li>
         <li><b>Selection outlines</b> use the game's own outline in that player's color.</li>
         <li><b>Viewing / Editing</b> labels appear on buildings. It is an advisory notice, not a lock: both players can still change a building.</li>
       </ul>
@@ -315,7 +315,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.10</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.11</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>

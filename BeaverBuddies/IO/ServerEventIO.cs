@@ -101,14 +101,47 @@ namespace BeaverBuddies.IO
             };
         }
 
-        public void StopAcceptingClients()
+        // A guest's action only happens once the host has read it, played it and sent it back, so one the host cannot
+        // read is lost for every player alike and nobody goes out of step. Ending the session for it would let any
+        // guest end it.
+        protected override bool HandleUnreadableFrame(string problem)
         {
-            Plugin.Log("Game started: no longer accepting clients");
-            string message = $"The Host has already started the game, and the game can no longer be joined. " +
-                $"Ask the Host to rehost and join before they unpause.";
-            NetBase.StopAcceptingClients(message);
-            // Tell Steam friends too, so an old invite explains itself instead of hanging.
-            (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
+            Plugin.LogWarning("Ignored an action from a guest that could not be read: " + problem);
+            return true;
+        }
+
+        private bool stoppedAccepting;
+
+        /// <summary>
+        /// No more players from now on: the first tick has run, or (<paramref name="gameChanged"/>) an action that
+        /// changed the game was played before it (see ReplayService.CloseJoiningIfGameChanged). Either way a player
+        /// joining later would be missing something. The first reason is the one kept.
+        /// </summary>
+        public void StopAcceptingClients(bool gameChanged = false)
+        {
+            if (stoppedAccepting) return;
+            stoppedAccepting = true;
+            Plugin.Log(gameChanged
+                ? "The game was changed before the first tick: no longer accepting clients"
+                : "Game started: no longer accepting clients");
+            string message = gameChanged
+                ? "The Host has already changed the game (placed or marked something, for example), so it can no longer be joined. " +
+                  "Ask the Host to save and rehost, and join before they change anything."
+                : $"The Host has already started the game, and the game can no longer be joined. " +
+                  $"Ask the Host to rehost and join before they unpause.";
+            // Called from inside a replay, so a server that never started must not throw here.
+            NetBase?.StopAcceptingClients(message);
+            // Tell Steam friends too, so an old invite explains itself instead of hanging. This can run inside a
+            // replay, where a throw would end the session. The server above already refuses guests, so the lobby
+            // is only a courtesy and a Steam failure is logged instead.
+            try
+            {
+                (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
+            }
+            catch (Exception e)
+            {
+                Plugin.LogWarning("Could not close the Steam lobby to new guests: " + e.Message);
+            }
             // TODO: remove map from memory
         }
 

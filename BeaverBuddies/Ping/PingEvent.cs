@@ -8,6 +8,7 @@ namespace BeaverBuddies.Ping
     [Serializable]
     public class PingEvent : ReplayEvent
     {
+        public override bool ChangesGame() => false;
 
         public float worldX;
         public float worldY;
