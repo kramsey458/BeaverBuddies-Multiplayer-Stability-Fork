@@ -40,9 +40,11 @@ dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timber
 RuntimeChecks also checks which types a multiplayer frame may create. Frames are read with
 Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to create, and the
 `ReplayEventBinder` only lets actions and what they carry through. A frame that names any other type
-(a harmless sentinel stands in for a dangerous one), or a list, array or map of it, even with the
-elements' own types left out, is refused before anything is created. So are Unity objects, delegates
-and reflection types, and a generic action whose type arguments no action carries. Every action the
+(a harmless sentinel stands in for a dangerous one), or a list, array, map or Nullable of it, even
+with the elements' own types left out, is refused before anything is created. So are Unity objects,
+delegates and reflection types, and a generic action whose type arguments no action carries. Because
+a frame that leaves a `$type` out gets the declared type without the binder being asked, no action
+may declare a Unity object, a delegate or a reflection type at any depth either. Every action the
 mod sends reads back unchanged, with every field filled in, and is written exactly as it is without
 the binder, so the event hash does not change. Actions from another mod's assembly loaded from bytes
 (standing in for MixedStorage's `StorageAllocationEvent`) pass, with the classes they declare. A frame

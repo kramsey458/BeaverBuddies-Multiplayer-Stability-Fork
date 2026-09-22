@@ -136,6 +136,26 @@ internal static class FrameTypeChecks
             if (untyped != 3) throw new Exception($"Only {untyped} of the list, array and map could be sent with untyped elements");
         }));
 
+        test("A Nullable of a refused struct is refused as well", () => Quietly(() =>
+        {
+            // Newtonsoft never writes a Nullable's name, but a frame can give one in an object slot, and the struct
+            // inside is then made and its setters run.
+            string name = $"{typeof(FrameStructSentinel).FullName}, {typeof(FrameStructSentinel).Assembly.GetName().Name}";
+            string nullable = $"System.Nullable`1[[{name}]], {typeof(Nullable<>).Assembly.GetName().Name}";
+            string typed = Write(Grouped(Automation(new FrameStructSentinel { Value = 1 })));
+            if (!typed.Contains($"\"{name}\"")) throw new Exception("The struct is not named the way this check expects:\n" + typed);
+            string json = typed.Replace($"\"{name}\"", $"\"{nullable}\"");
+            int before = FrameStructSentinel.Set;
+            if (Refusal(json) == null) throw new Exception($"A frame carrying {nullable} was read and set {FrameStructSentinel.Set - before} values");
+            if (FrameStructSentinel.Set != before) throw new Exception("A value was set before the Nullable was refused");
+            // The same frame, with the struct given to the binder as an extra payload type: read, the struct made.
+            object settings = Fresh();
+            settingsBase.GetProperty("SerializationBinder").SetValue(settings,
+                Activator.CreateInstance(Binder(), new object[] { new[] { typeof(FrameStructSentinel) } }));
+            Read(json, settings);
+            if (FrameStructSentinel.Set == before) throw new Exception("The Nullable frame does not make the struct even when it is allowed");
+        }));
+
         test("A type given to the binder as an extra payload type passes; without it the same frame is refused", () => Quietly(() =>
         {
             string json = Write(Grouped(Automation(new FrameSentinel())));
@@ -157,12 +177,59 @@ internal static class FrameTypeChecks
             var unexpected = found.Where(t => t.Assembly != mod && !t.IsValueType && t != typeof(string) && !t.IsArray &&
                 !(t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))).Select(t => t.FullName).ToList();
             if (unexpected.Count > 0) throw new Exception("Unexpected types are allowed: " + string.Join(", ", unexpected));
-            // Not even one of this mod's own: a Unity object, a delegate or a reflection type does something when made.
-            var never = found.Where(t => unityObject.IsAssignableFrom(t) || typeof(Delegate).IsAssignableFrom(t) ||
-                typeof(MemberInfo).IsAssignableFrom(t) || typeof(Assembly).IsAssignableFrom(t)).Select(t => t.FullName).ToList();
-            if (never.Count > 0) throw new Exception("Types that must never be created are allowed: " + string.Join(", ", never));
             foreach (Type expected in new[] { traceType, ray, vector3Int, typeof(object[]), typeof(List<>).MakeGenericType(vector3Int) })
                 if (!found.Contains(expected)) throw new Exception($"{expected} was not found in the actions' members");
+        });
+
+        // A Unity object, a delegate or a reflection type does something when it is made.
+        bool NeverMade(Type type) => unityObject.IsAssignableFrom(type) || typeof(Delegate).IsAssignableFrom(type) ||
+            typeof(MemberInfo).IsAssignableFrom(type) || typeof(Assembly).IsAssignableFrom(type);
+        // Where a frame leaves a "$type" out, Newtonsoft makes the declared type without asking the binder. From each
+        // root, follows what Newtonsoft reads (members, constructor parameters, list and map elements) as the contract
+        // resolver that reads frames sees it, and returns the path to every type that must never be made. A value in
+        // a slot declared as object is not followed: it names its own type, which the binder checks.
+        object resolver = settingsBase.GetProperty("ContractResolver").GetValue(Fresh())
+            ?? Activator.CreateInstance(newtonsoft.GetType("Newtonsoft.Json.Serialization.DefaultContractResolver", true));
+        var resolveContract = resolver.GetType().GetMethod("ResolveContract");
+        List<string> NeverMadeReachable(IEnumerable<Type> roots)
+        {
+            var reached = new List<string>();
+            var seen = new HashSet<Type>();
+            var pending = new Queue<(Type Type, string Path)>(roots.Select(t => (t, t.FullName)));
+            while (pending.Count > 0)
+            {
+                var (type, path) = pending.Dequeue();
+                if (type == typeof(object) || type.ContainsGenericParameters || !seen.Add(type)) continue;
+                if (NeverMade(type)) { reached.Add($"{path} ({type})"); continue; }
+                object contract = resolveContract.Invoke(resolver, new object[] { type });
+                object Get(string name) => contract.GetType().GetProperty(name)?.GetValue(contract);
+                foreach (string members in new[] { "Properties", "CreatorParameters" })
+                {
+                    if (Get(members) is not IEnumerable properties) continue;
+                    foreach (object property in properties)
+                    {
+                        Type p = property.GetType();
+                        if ((bool)p.GetProperty("Ignored").GetValue(property)) continue;
+                        if (p.GetProperty("PropertyType").GetValue(property) is Type memberType)
+                            pending.Enqueue((memberType, $"{path}.{p.GetProperty("PropertyName").GetValue(property)}"));
+                    }
+                }
+                foreach (string element in new[] { "CollectionItemType", "DictionaryKeyType", "DictionaryValueType" })
+                    if (Get(element) is Type elementType) pending.Enqueue((elementType, $"{path}[{element}]"));
+            }
+            return reached;
+        }
+
+        test("Nothing an action declares, at any depth, is a Unity object, a delegate or a reflection type", () =>
+        {
+            // The binder refuses these types by name, but a member that declares one is made from a frame that leaves
+            // its "$type" out. First, that the walk finds such members: a field, a list element and a map value.
+            var control = NeverMadeReachable(new[] { typeof(FrameNeverHolder) });
+            if (control.Count != 3) throw new Exception("The walk found only: " + string.Join(", ", control));
+            var roots = mod.GetTypes().Where(t => eventType.IsAssignableFrom(t) && !t.ContainsGenericParameters)
+                .Concat(new[] { ray, vector3, vector3Int }).OrderBy(t => t.FullName, StringComparer.Ordinal).ToList();
+            var reached = NeverMadeReachable(roots);
+            if (reached.Count > 0) throw new Exception("A frame can make these without the binder: " + string.Join(", ", reached));
         });
 
         // Resolves a type by the name a frame would give it, as Newtonsoft does. True if the binder let it through.
@@ -393,4 +460,22 @@ public class FrameSentinel
     public static int Created;
     public int value = 1;
     public FrameSentinel() { Interlocked.Increment(ref Created); }
+}
+
+// A struct stand-in: a struct has no constructor to run, but reading one runs its setters. It counts them.
+public struct FrameStructSentinel
+{
+    public static int Set;
+    int value;
+    public int Value { get => value; set { this.value = value; Interlocked.Increment(ref Set); } }
+}
+
+// What an action must never declare, for the walk in FrameTypeChecks to find: a delegate, and reflection types as a
+// list element and a map value.
+public class FrameNeverHolder
+{
+    public Action callback;
+    public List<MethodInfo> methods;
+    public Dictionary<string, Assembly> assemblies;
+    public int amount;
 }
