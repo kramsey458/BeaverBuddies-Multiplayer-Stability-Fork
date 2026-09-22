@@ -24,7 +24,8 @@ BeaverBuddies/BeaverBuddies.csproj -t:PostBuild`) into a scratch Documents folde
 system temp directory, never the one in `env.props`. They check the `workshop_data.json` a
 build leaves beside the mod, which Timberborn's Workshop uploader reads to choose the item
 it updates: a build never leaves the original project's item (3293380223) there, removes a
-copy of it that an earlier build left, and keeps one the uploader wrote for a new item.
+copy of it that an earlier build left, and keeps one the uploader wrote for a new item, even
+when that item's id or name contains the original id.
 They need the .NET SDK on the PATH, but no game files.
 
 GitHub Actions runs this suite on Windows for every push and pull request

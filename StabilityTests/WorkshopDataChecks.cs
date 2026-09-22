@@ -22,12 +22,12 @@ static class WorkshopDataChecks
         public void Dispose() { try { Directory.Delete(Root, true); } catch { } }
 
         // Written the way the game's uploader writes it after it creates an item.
-        public string Write(string itemId)
+        public string Write(string itemId, string name = "BeaverBuddies")
         {
             Directory.CreateDirectory(ModFolder);
             string text = new JObject
             {
-                ["ItemId"] = itemId, ["Name"] = "BeaverBuddies", ["Visibility"] = "Public", ["UpdateDescription"] = true,
+                ["ItemId"] = itemId, ["Name"] = name, ["Visibility"] = "Public", ["UpdateDescription"] = true,
                 ["UpdateVisibility"] = true, ["UpdatePreview"] = true, ["UpdateTags"] = true, ["Tags"] = new JArray("Mod"),
             }.ToString();
             File.WriteAllText(WorkshopData, text);
@@ -98,6 +98,23 @@ static class WorkshopDataChecks
             PostBuild(docs);
             Check(File.Exists(docs.WorkshopData) && File.ReadAllText(docs.WorkshopData) == own,
                 $"the uploader's workshop_data.json was replaced or removed (ItemId now {docs.ItemId ?? "missing"})");
+        });
+        yield return ("A build keeps a Workshop item of its own that only mentions the original project's id", () =>
+        {
+            // Only the ItemId decides which item the uploader updates: a longer id that contains the original one, or
+            // a name that mentions it, is someone's own item.
+            foreach (var (itemId, name) in new[]
+            {
+                ("13293380223", "BeaverBuddies"),
+                ("3512345678", $"BeaverBuddies fork (based on {UpstreamItemId})"),
+            })
+            {
+                using var docs = new ScratchDocuments();
+                string own = docs.Write(itemId, name);
+                PostBuild(docs);
+                Check(File.Exists(docs.WorkshopData) && File.ReadAllText(docs.WorkshopData) == own,
+                    $"the workshop_data.json for item {itemId} named \"{name}\" was replaced or removed");
+            }
         });
     }
 }

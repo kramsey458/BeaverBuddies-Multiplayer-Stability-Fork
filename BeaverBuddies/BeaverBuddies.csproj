@@ -150,7 +150,8 @@
     <Copy SourceFiles="@(RootDirFilesToCopy)" DestinationFolder="$(BeaverBuddiesModsPath)" SkipUnchangedFiles="true" />
     <!-- This fork is not on the Steam Workshop. Earlier builds also copied the original project's
          workshop_data.json here, which points the game's Workshop uploader at thomaswp's item: remove that copy.
-         A workshop_data.json the uploader wrote for an item of your own is kept. -->
+         A workshop_data.json the uploader wrote for an item of your own is kept: only a file whose ItemId is
+         exactly the original project's item is removed. -->
     <PropertyGroup>
       <UpstreamWorkshopItemId>3293380223</UpstreamWorkshopItemId>
       <WorkshopDataPath>$(BeaverBuddiesModsPath)workshop_data.json</WorkshopDataPath>
@@ -158,7 +159,7 @@
     <ReadLinesFromFile File="$(WorkshopDataPath)" Condition="Exists('$(WorkshopDataPath)')">
       <Output TaskParameter="Lines" PropertyName="WorkshopDataText" />
     </ReadLinesFromFile>
-    <Delete Files="$(WorkshopDataPath)" Condition="$(WorkshopDataText.Contains('$(UpstreamWorkshopItemId)'))" />
+    <Delete Files="$(WorkshopDataPath)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(WorkshopDataText)', '&quot;ItemId&quot;\s*:\s*&quot;?$(UpstreamWorkshopItemId)\b'))" />
   </Target>
 
 </Project>
