@@ -68,13 +68,15 @@ internal static class TickOnceChecks
         }
         bool RunPrefix() => (bool)Prefix().Invoke(null, null)!;
 
-        test("Tick once: the mod's prefix on Ticker.TickOnce replaces it with Priority.Last", () =>
+        // It replaces the method in a co-op game but also records the shared pause, so it is a recording prefix and
+        // runs first (see RecordingPriorityChecks): no other mod's prefix runs on the pressing computer alone.
+        test("Tick once: the mod's prefix on Ticker.TickOnce runs first (Priority.First)", () =>
         {
             var priority = Prefix().GetCustomAttributesData()
                 .Where(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPriority")
                 .Select(a => (int?)(int)a.ConstructorArguments[0].Value!).FirstOrDefault();
-            // HarmonyLib.Priority.Last
-            Require(priority == 0, "the prefix that skips Ticker.TickOnce is not [HarmonyPriority(Priority.Last)]");
+            // HarmonyLib.Priority.First
+            Require(priority == 800, "the prefix that skips Ticker.TickOnce and records the pause is not [HarmonyPriority(Priority.First)]");
         });
 
         // Stands in for the game's objects the notice uses: the localization service and the notification service.

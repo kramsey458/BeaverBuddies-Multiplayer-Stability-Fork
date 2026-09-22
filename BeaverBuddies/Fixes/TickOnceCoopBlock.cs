@@ -44,12 +44,14 @@ namespace BeaverBuddies.Fixes
         }
     }
 
-    // Priority.Last, the rule for a prefix that replaces the original: another mod's prefix on Ticker.TickOnce runs
-    // first. If that prefix skips the original itself, Harmony skips this one too.
+    // Priority.First, the rule for a prefix that records an action (see ReplayEvent.DoPrefix): it replaces the original
+    // in a co-op game, but it also records the shared pause, so it runs before any other mod's prefix on
+    // Ticker.TickOnce. In a co-op game no other mod's prefix then runs on this computer alone when the key is pressed,
+    // because this one returns false and Harmony skips the prefixes after it.
     [HarmonyPatch(typeof(Ticker), nameof(Ticker.TickOnce))]
     static class TickerTickOncePatcher
     {
-        [HarmonyPriority(Priority.Last)]
+        [HarmonyPriority(Priority.First)]
         static bool Prefix()
         {
             // The same hard stop as TickBuckets: after a failed multiplayer action the session is gone (EventIO is
