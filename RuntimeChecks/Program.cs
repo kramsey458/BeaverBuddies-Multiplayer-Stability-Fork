@@ -102,6 +102,8 @@ MenuRecoveryChecks.Run(assembly, Test);
 ReplayEventChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
+FrameTypeChecks.Run(assembly, Test);
+UnreadableFrameChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

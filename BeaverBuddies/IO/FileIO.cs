@@ -69,6 +69,10 @@ namespace BeaverBuddies.IO
             // TODO: Undo for production
             Formatting = Formatting.Indented;
             TypeNameHandling = TypeNameHandling.All;
+            // Every frame from the other player is read with these settings, and TypeNameHandling.All lets each
+            // "$type" in it pick a type to create: only actions and what they carry may be created. The JSON that is
+            // written is unchanged. A type that travels in an object slot but that no action declares goes here.
+            SerializationBinder = new ReplayEventBinder(/* extraPayloadTypes: none in this build */);
             Converters.Add(new Vector3Converter());
             Converters.Add(new Vector3IntConverter());
         }
