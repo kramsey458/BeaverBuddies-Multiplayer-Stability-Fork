@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Troubleshooting: BeaverBuddies Stability Fork</title>
   <meta name="description" content="Fixes for BeaverBuddies Stability Fork problems: the mod not loading, refused joins, Steam invites, direct IP, desyncs, lag, and how to collect logs.">
-  <meta name="theme-color" content="#b9530f">
+  <meta name="theme-color" content="#161b20">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/zilla-slab-latin-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -15,7 +16,7 @@
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M14 46V18h15c6 0 9.5 3 9.5 7.6 0 3-1.7 5.3-4.4 6.4 3.6 1 5.7 3.6 5.7 7.2 0 5-3.9 7.8-10 7.8H14z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="49.5" cy="41" r="4.5" fill="#fff"/></svg>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#e3c285" stroke="#4a3322" stroke-width="5"/><circle cx="32" cy="32" r="20" fill="none" stroke="#b98d4e" stroke-width="2"/><circle cx="32" cy="32" r="11" fill="none" stroke="#b98d4e" stroke-width="2"/><path d="M4 30h56v6H4z" fill="#c7cdd2"/><path d="M8 36l3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4" fill="none" stroke="#c7cdd2" stroke-width="2"/><rect x="0" y="27" width="7" height="12" rx="2" fill="#f0a04b"/><rect x="57" y="27" width="7" height="12" rx="2" fill="#6fb3ee"/></svg>
       <span>BeaverBuddies<small>Stability Fork</small></span>
     </a>
     <nav class="nav" aria-label="Main">
@@ -31,6 +32,7 @@
 <main id="main">
 <div class="page-hero">
   <div class="container">
+    <span class="round" aria-hidden="true"></span>
     <h1>Troubleshooting</h1>
     <p>Find your symptom, try the fixes in order, and if it is still broken, collect the logs and ask for help.</p>
   </div>
@@ -101,7 +103,7 @@
           <p>When someone joins, the mod compares the game version, the mod version and the mod's own files, before the save is sent. It refuses any difference, because two different builds cannot stay in sync. A copy someone compiled themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Have everyone download the <b>same zip</b> from the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a>.</li>
+            <li>Have everyone install the <b>same zip</b>: the host's, or the one from the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a>.</li>
             <li>Replace the <code>BeaverBuddies-Stability-Fork</code> folder, then <b>fully restart</b> Timberborn on every computer.</li>
             <li>Check that the game versions match.</li>
           </ol>
@@ -157,7 +159,7 @@
             <li>Read the message. It says what Steam reported.</li>
             <li>Make sure you are both on the <a href="#mismatch">exact same build</a>. If joining sits on a loading message and never finishes, that is the first thing to rule out.</li>
             <li>Try again. If it repeats, use <a href="install.html#host">direct IP or Hamachi</a>.</li>
-            <li>If it keeps failing, <a href="#logs">collect both players' logs</a> and ask for help.</li>
+            <li>If it keeps failing, <a href="#logs">collect every player's logs</a> and ask for help.</li>
           </ol>
         </div>
       </details>
@@ -214,7 +216,7 @@
             <li><b>Different mods, or different mod versions.</b> The game warns you about this when someone joins (see <a href="#mods-differ">the mod warning</a>), so take that warning seriously. This is a classic cause.</li>
             <li><b>Different settings that affect the simulation</b>, for example <b>Reduce the number of forced pauses</b>. Keep them identical.</li>
           </ul>
-          <p>Keep backups of your saves. If it keeps happening, <a href="#logs">collect both players' logs</a>.</p>
+          <p>Keep backups of your saves. If it keeps happening, <a href="#logs">collect every player's logs</a>.</p>
         </div>
       </details>
 
@@ -254,7 +256,7 @@
             <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
             <li>Try a lower game speed if a slower computer keeps falling behind. As the host, you can also click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
             <li>If the host turned on <b>Remove the large colony speed limit</b>, the game runs at the full chosen speed in a big colony, which a slower computer may not keep up with. Turn it off, or use a lower speed.</li>
-            <li>Make sure both players run the latest release, which has the newest performance fixes.</li>
+            <li>Make sure every player runs the same release; the latest one has the newest performance fixes.</li>
           </ol>
         </div>
       </details>
@@ -301,8 +303,7 @@
         <li>If a desync happened with detailed logging on, water and walker diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. Include that folder too. The files are written only on your computer and are never uploaded.</li>
       </ol>
       <div class="callout">
-        <strong class="label">Before you share</strong>
-        <p>Logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
+        <p><b>Before you share:</b> logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
       </div>
       <p>The <b>Post Bug Report</b> button in the desync dialog does not upload anything in this fork's builds, because they contain no upload token. Send the files by hand instead.</p>
       <p>Leave <b>Always Use Detailed Logging</b> off unless you are asked to turn it on. It costs performance.</p>
@@ -310,11 +311,12 @@
 
     <section id="help">
       <h2>Getting help</h2>
-      <p>Open an issue on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">project's GitHub page</a> and include:</p>
+      <p>Open an issue on <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">this fork's GitHub page</a> (not the original BeaverBuddies project) and include:</p>
       <ul>
         <li>what you were doing and what you expected,</li>
         <li>the mod version, the game version, and whether you connected over Steam or direct IP,</li>
-        <li>both players' <code>Player.log</code> files.</li>
+        <li>every player's <code>Player.log</code>, and <code>Player-prev.log</code> if it happened in an earlier session,</li>
+        <li>after a desync with detailed logging on, the <code>BeaverBuddiesDiagnostics</code> folder next to the logs.</li>
       </ul>
       <p>Also check the <a href="faq.html">FAQ</a>, which answers the common questions.</p>
     </section>
@@ -349,7 +351,7 @@
         </ul>
       </div>
     </div>
-    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry. Report problems with this fork on <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">this fork's GitHub issues</a>, not to the original project.</p>
   </div>
 </footer>
 <script>

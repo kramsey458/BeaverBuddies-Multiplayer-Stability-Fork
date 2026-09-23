@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FAQ: BeaverBuddies Stability Fork</title>
   <meta name="description" content="Answers about BeaverBuddies Stability Fork: what it is, how it differs from the original, who can play, compatibility with other mods, privacy, and known limits.">
-  <meta name="theme-color" content="#b9530f">
+  <meta name="theme-color" content="#161b20">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/zilla-slab-latin-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -15,7 +16,7 @@
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M14 46V18h15c6 0 9.5 3 9.5 7.6 0 3-1.7 5.3-4.4 6.4 3.6 1 5.7 3.6 5.7 7.2 0 5-3.9 7.8-10 7.8H14z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="49.5" cy="41" r="4.5" fill="#fff"/></svg>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#e3c285" stroke="#4a3322" stroke-width="5"/><circle cx="32" cy="32" r="20" fill="none" stroke="#b98d4e" stroke-width="2"/><circle cx="32" cy="32" r="11" fill="none" stroke="#b98d4e" stroke-width="2"/><path d="M4 30h56v6H4z" fill="#c7cdd2"/><path d="M8 36l3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4" fill="none" stroke="#c7cdd2" stroke-width="2"/><rect x="0" y="27" width="7" height="12" rx="2" fill="#f0a04b"/><rect x="57" y="27" width="7" height="12" rx="2" fill="#6fb3ee"/></svg>
       <span>BeaverBuddies<small>Stability Fork</small></span>
     </a>
     <nav class="nav" aria-label="Main">
@@ -31,6 +32,7 @@
 <main id="main">
 <div class="page-hero">
   <div class="container">
+    <span class="round" aria-hidden="true"></span>
     <h1>Frequently asked questions</h1>
     <p>Quick answers about what the mod is, who can play, and what it can and cannot do.</p>
   </div>
@@ -189,9 +191,9 @@
       </details>
 
       <details class="q">
-        <summary>I installed an earlier download. What do I do about the old folder?</summary>
+        <summary>I have a BeaverBuddies-StabilityPreview folder. What do I do?</summary>
         <div class="answer">
-          <p>Earlier downloads used a folder named <code>BeaverBuddies-StabilityPreview</code>. Delete it from <code>Documents\Timberborn\Mods</code> before you copy in the new <code>BeaverBuddies-Stability-Fork</code> folder. The two share a mod ID, so having both would conflict.</p>
+          <p>That's an old name for this mod. Delete it from <code>Documents\Timberborn\Mods</code> before you copy in the new <code>BeaverBuddies-Stability-Fork</code> folder. The two share a mod ID, so having both would conflict.</p>
         </div>
       </details>
     </section>
@@ -259,14 +261,14 @@
       <details class="q">
         <summary>How do I update?</summary>
         <div class="answer">
-          <p>Download the new zip, close the game, and replace the <code>BeaverBuddies-Stability-Fork</code> folder (delete the old <code>BeaverBuddies-StabilityPreview</code> folder too if you still have it). Everyone updates together, because different builds will not join each other.</p>
+          <p>Download the new zip, close the game, and replace the <code>BeaverBuddies-Stability-Fork</code> folder (delete any <code>BeaverBuddies-StabilityPreview</code> folder too). Everyone updates together, because different builds will not join each other.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>How do I report a bug?</summary>
         <div class="answer">
-          <p>Open an issue on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">project's GitHub page</a> and attach both players' <code>Player.log</code>. <a href="troubleshooting.html#logs">Collecting logs</a> explains where to find them.</p>
+          <p>Open an issue on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">project's GitHub page</a> and attach every player's <code>Player.log</code>. <a href="troubleshooting.html#logs">Collecting logs</a> explains where to find them.</p>
         </div>
       </details>
 
@@ -279,7 +281,7 @@
             <li>Desyncs can still happen.</li>
             <li>Tested with two players on Windows and Steam only.</li>
             <li>Text added by this fork is English only. Other languages show the English text for those strings.</li>
-            <li>One fix, for a demolition selection that includes already-demolished buildings, has automated tests but has not been confirmed in a live session, and the situations the 1.1.12 fixes are for have not been set up on purpose in play (see the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>).</li>
+            <li>One fix, for a demolition selection that includes already-demolished buildings, has automated tests but has not been confirmed in a live session, and the newest fixes have not been played yet; several others were in builds that were played but their exact situations were never set up on purpose (see the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>).</li>
           </ul>
         </div>
       </details>
@@ -322,7 +324,7 @@
         </ul>
       </div>
     </div>
-    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry. Report problems with this fork on <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">this fork's GitHub issues</a>, not to the original project.</p>
   </div>
 </footer>
 <script src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-Stability-Fork" data-asset="^BeaverBuddies-Stability-Fork-[\d.]+\.zip$"></script>
