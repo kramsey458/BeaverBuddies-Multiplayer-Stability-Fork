@@ -206,7 +206,7 @@ A cold, low-chroma blued-steel ground under warm pine and a single hot red, with
 - **Link Blue** (link): inline links, underlined 1px, 2px on hover.
 
 ### Status
-- **Good / Warn / Bad** (good, warn, bad): only to name the in-game connection panel's own green, yellow and red where the copy describes them.
+- **Good / Warn / Bad** (good, warn, bad): to name the in-game connection panel's own green, yellow and red where the copy describes them. Warn has one more use: the 3px top rule of a warning callout (see Components).
 
 ### Named Rules
 **The Download Red Rule.** Competition red is spent on Download buttons only. A second red element anywhere on a page is a defect.
@@ -260,7 +260,7 @@ Flat and tonal. Depth comes from the steel stack (ground to band to plate) and f
 ### Shadow Vocabulary
 - **Button lift** (`box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .8)`): the primary Download button only.
 - **Screenshot drop** (`box-shadow: 0 0 0 1px var(--edge), 0 24px 40px -20px rgba(0, 0, 0, .8)`): the real connection-panel screenshot.
-- **Plate hairline** (`box-shadow: inset 0 0 0 1px var(--edge)`): status plate, callouts, table wraps, questions (pine-deep when open), TOC on narrow screens.
+- **Plate hairline** (`box-shadow: inset 0 0 0 1px var(--edge)`): status plate, callouts, table wraps, questions (pine-deep when open), TOC on narrow screens. A warning callout adds `inset 0 3px 0 var(--warn)`.
 - **Outline ring** (`box-shadow: inset 0 0 0 1.5px var(--edge)`): secondary button, GitHub nav link, Copy button; the ring turns pine on hover.
 - **Knock-out ring** (`box-shadow: 0 0 0 5px var(--ground)` or `var(--band)`): lifts step number discs off the rail in the section's own background.
 
@@ -290,6 +290,7 @@ Solid, slab-lettered and chunky enough to press with a thumb.
 - **Shadow Strategy:** inset 1px edge hairline only (see Elevation).
 - **Internal Padding:** 16px 18px.
 - Used for the hero status plate, callouts, table wraps. Callouts carry no label or kicker; they open with a bold lead sentence.
+- **Warning callout** (`.callout.warn`): the same plate with a 3px warn rule across its top (`box-shadow: inset 0 0 0 1px var(--edge), inset 0 3px 0 var(--warn)`). Used twice in the install guide, for the same-build rule and the old `BeaverBuddies-StabilityPreview` folder; keep it for must-not-miss install warnings.
 
 ### Questions (FAQ and Troubleshooting)
 A plate that opens. Summary in system 650 1.05rem, 52px min height, a pine chevron drawn from two 2.5px borders that turns from down to up (.2s). Hover turns the summary pine; open swaps the hairline to pine-deep. Answers may use pine sub-heads (650 .95rem) that name the block after them ("Why", "Try this"); a table inside an answer drops its plate for a hairline above.

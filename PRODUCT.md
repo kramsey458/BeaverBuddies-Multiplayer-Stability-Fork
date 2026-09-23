@@ -114,7 +114,8 @@ Success, in order:
 **Stack and hosting:**
 - The site is plain static HTML, CSS and a little vanilla JS in `docs/` on `main`, with no build step. Four pages:
   `index.html` (features), `install.html`, `troubleshooting.html`, `faq.html`. Assets are `assets/style.css`,
-  `release.js`, `site.js` (the optional Copy buttons; install page only), `favicon.svg` and `connection-panel.png`.
+  `release.js`, `site.js` (the optional Copy buttons; install page only), `favicon.svg`, `connection-panel.png`, the
+  procedural `log-round.webp` and `log-round-mark.webp` (made by `make_log.py`) and the Zilla Slab fonts.
 - The site is dark only (blued-steel ground). It self-hosts Zilla Slab (OFL, `assets/fonts/`) for headings and loads no
   external fonts, scripts or images. There is no `404.html`.
 - GitHub Pages ("legacy" build) serves `main:/docs` at https://timbermods.github.io/BeaverBuddies-Stability-Fork/, and
@@ -136,9 +137,9 @@ Success, in order:
 - The Download buttons use `data-release-href="download"`; their fallback `href` stays `/releases/latest`.
 - **`docs/assets/connection-panel.png` is embedded by the repo README.** Renaming or moving it breaks the README. The
   issue template `question.md` links the site's root URL.
-- **Per release** the release checklist edits: the home page's status plate, both Download buttons, the pinned callout,
-  the facts line and the stability cards; the version numbers on install, troubleshooting and FAQ; and the README
-  status note.
+- **Per release** the release checklist edits: the home page's status plate (`div.status[data-release-pinned]`), its
+  two Download buttons and the stability scorecard (items and the Confirmed / Tested counts); the version fallbacks on
+  install and troubleshooting (the FAQ states no version number); and the README status note.
 - **`docs/assets/release.js` is shared across timbermods sites** (byte-identical to MixedStorage's copy). **Replace it
   with a newer shared copy, never edit it.**
 

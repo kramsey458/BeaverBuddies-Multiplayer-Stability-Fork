@@ -346,7 +346,7 @@
       {
         "name": "plate-hairline",
         "value": "inset 0 0 0 1px var(--edge)",
-        "purpose": "Plates: status, callouts, table wraps, questions (pine-deep when open), narrow TOC."
+        "purpose": "Plates: status, callouts, table wraps, questions (pine-deep when open), narrow TOC. A warning callout adds inset 0 3px 0 var(--warn)."
       },
       {
         "name": "outline-ring",
@@ -449,6 +449,14 @@
       "description": "Flat plate with an inset edge hairline: version status, callouts, table wraps. No label; a bold lead sentence.",
       "html": "<div class=\"ds-plate\"><p><b>1.1.14 is fixes only.</b> 453 automated checks pass; it hasn't been played in a real game yet.</p><p>1.1.13, the last release with new features, was played and is stable.</p></div>",
       "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-plate{max-width:58ch;padding:16px 18px;background:var(--plate);color:var(--ink);border-radius:8px;box-shadow:inset 0 0 0 1px var(--edge);font:17px/1.65 var(--font)}.ds-plate p{margin:0}.ds-plate b{font-weight:650}.ds-plate p+p{margin-top:.5em;color:var(--muted);font-size:.96rem}"
+    },
+    {
+      "name": "Warning Callout",
+      "kind": "card",
+      "refersTo": "plate",
+      "description": "A plate with a 3px warn rule across its top (.callout.warn), for must-not-miss install warnings. No label; a bold lead sentence.",
+      "html": "<div class=\"ds-warn\"><p><b>Every player installs the same version of the mod (the same download) and runs the same game version.</b> The mod refuses mismatches when someone joins.</p></div>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--warn:#f0c060;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-warn{max-width:58ch;padding:16px 18px;background:var(--plate);color:var(--ink);border-radius:8px;box-shadow:inset 0 0 0 1px var(--edge),inset 0 3px 0 var(--warn);font:17px/1.65 var(--font)}.ds-warn p{margin:0}.ds-warn b{font-weight:650}"
     },
     {
       "name": "Question",
