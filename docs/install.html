@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install guide: BeaverBuddies Stability Fork</title>
   <meta name="description" content="How to install BeaverBuddies Stability Fork for Timberborn, host or join a co-op game over Steam, direct IP or Hamachi, and what each setting does.">
-  <meta name="theme-color" content="#b9530f">
+  <meta name="theme-color" content="#161b20">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/zilla-slab-latin-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -15,7 +16,7 @@
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M14 46V18h15c6 0 9.5 3 9.5 7.6 0 3-1.7 5.3-4.4 6.4 3.6 1 5.7 3.6 5.7 7.2 0 5-3.9 7.8-10 7.8H14z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="49.5" cy="41" r="4.5" fill="#fff"/></svg>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#e3c285" stroke="#4a3322" stroke-width="5"/><circle cx="32" cy="32" r="20" fill="none" stroke="#b98d4e" stroke-width="2"/><circle cx="32" cy="32" r="11" fill="none" stroke="#b98d4e" stroke-width="2"/><path d="M4 30h56v6H4z" fill="#c7cdd2"/><path d="M8 36l3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4" fill="none" stroke="#c7cdd2" stroke-width="2"/><rect x="0" y="27" width="7" height="12" rx="2" fill="#f0a04b"/><rect x="57" y="27" width="7" height="12" rx="2" fill="#6fb3ee"/></svg>
       <span>BeaverBuddies<small>Stability Fork</small></span>
     </a>
     <nav class="nav" aria-label="Main">
@@ -31,6 +32,7 @@
 <main id="main">
 <div class="page-hero">
   <div class="container">
+    <span class="round" aria-hidden="true"></span>
     <h1>Install guide</h1>
     <p>From download to your first co-op session. Every player follows the install steps; only the host needs to load a save.</p>
   </div>
@@ -62,7 +64,6 @@
         <li>For <b>Steam invites</b>: both players online in Steam and both owning Timberborn on Steam.</li>
       </ul>
       <div class="callout warn">
-        <strong class="label">Important</strong>
         <p><b>Every player installs the same version of the mod (the same download) and runs the same game version.</b> The mod checks the game version and its own files when someone joins, and it refuses mismatches. A mismatch is the most common cause of trouble.</p>
       </div>
     </section>
@@ -72,7 +73,9 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.14.zip</span></code> under <b>Assets</b> (not the "Source code" archives). The release also has a <code><span data-release="version">1.1.14</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.14.zip</span></code> under <b>Assets</b> (not the "Source code" archives).</p>
+          <p><a class="btn btn-primary" data-release-href="download" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.14</span></span></a></p>
+          <p><b>Joining a friend?</b> Use the same release as your host: ask which version their mod list shows, or use the zip they sent you. Every player needs the exact same download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -86,7 +89,7 @@
         </li>
         <li>
           <h3>Keep only one BeaverBuddies</h3>
-          <p>Unsubscribe from or remove the Workshop BeaverBuddies and any other copy, including an old <code>BeaverBuddies-StabilityPreview</code> folder from an earlier download. They share the same mod ID and will conflict.</p>
+          <p>Unsubscribe from or remove the Workshop BeaverBuddies and any other copy, including a <code>BeaverBuddies-StabilityPreview</code> folder (an old name for this mod). They share the same mod ID and will conflict.</p>
         </li>
         <li>
           <h3>Start Timberborn and enable the mods</h3>
@@ -98,10 +101,9 @@
         </li>
       </ol>
       <div class="callout warn">
-        <strong class="label">Updating from an earlier download?</strong>
-        <p>Earlier downloads used a folder named <code>BeaverBuddies-StabilityPreview</code>. Delete it from <code>Mods</code> before you copy in the new folder. The two share a mod ID, so having both would conflict.</p>
+        <p><b>Have a <code>BeaverBuddies-StabilityPreview</code> folder?</b> That's an old name for this mod. Delete it from <code>Mods</code> before you copy in the new folder. The two share a mod ID, so having both would conflict.</p>
       </div>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.1.14</span>-SHA256SUMS.txt</code>:</p>
+      <p>Optional: to check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.1.14</span>-SHA256SUMS.txt</code>:</p>
       <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.14.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
@@ -228,7 +230,7 @@
         </ul>
       </div>
     </div>
-    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
+    <p class="fineprint">Maintained by Timbermods. An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry. Report problems with this fork on <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues">this fork's GitHub issues</a>, not to the original project.</p>
   </div>
 </footer>
 <script src="assets/site.js" defer></script>

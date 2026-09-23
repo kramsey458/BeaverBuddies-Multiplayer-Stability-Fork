@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T19:20:49Z",
+  "title": "Design System: BeaverBuddies Stability Fork",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Blued-Steel Ground",
+        "canonical": "oklch(21.9% 0.012 248)",
+        "tonalRamp": [
+          "#090b0e",
+          "#1f252a",
+          "#3b4046",
+          "#585e64",
+          "#787e84",
+          "#999fa6",
+          "#bec5cc",
+          "#ebeff3"
+        ]
+      },
+      "band": {
+        "role": "neutral",
+        "displayName": "Band",
+        "canonical": "oklch(25.2% 0.015 244)",
+        "tonalRamp": [
+          "#080c0f",
+          "#1e252b",
+          "#394147",
+          "#575f66",
+          "#767e86",
+          "#97a0a7",
+          "#bcc5cd",
+          "#eaeff4"
+        ]
+      },
+      "plate": {
+        "role": "neutral",
+        "displayName": "Plate",
+        "canonical": "oklch(29.6% 0.019 245)",
+        "tonalRamp": [
+          "#070c10",
+          "#1c252d",
+          "#384149",
+          "#555f68",
+          "#747f88",
+          "#95a0aa",
+          "#bac6d0",
+          "#e8eff6"
+        ]
+      },
+      "edge": {
+        "role": "neutral",
+        "displayName": "Edge",
+        "canonical": "oklch(38.5% 0.022 246)",
+        "tonalRamp": [
+          "#070c11",
+          "#1b252e",
+          "#36414b",
+          "#545f6a",
+          "#737f8a",
+          "#94a0ac",
+          "#b9c6d2",
+          "#e7f0f7"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(94.7% 0.006 129)",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#232522",
+          "#3f403d",
+          "#5d5e5b",
+          "#7c7e7a",
+          "#9d9f9b",
+          "#c3c5c1",
+          "#eeefec"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Steel",
+        "canonical": "oklch(77.4% 0.013 237)",
+        "tonalRamp": [
+          "#080c0e",
+          "#1e252a",
+          "#394146",
+          "#575f64",
+          "#767f84",
+          "#97a0a6",
+          "#bcc6cc",
+          "#eaeff3"
+        ]
+      },
+      "heartwood": {
+        "role": "neutral",
+        "displayName": "Heartwood Ink",
+        "canonical": "oklch(18.6% 0.015 60)",
+        "tonalRamp": [
+          "#0a0806",
+          "#1b1510",
+          "#3a2f25",
+          "#5a4a3b",
+          "#7c6a58",
+          "#9f8c78",
+          "#c6b39e",
+          "#f0e3d2"
+        ]
+      },
+      "pine": {
+        "role": "primary",
+        "displayName": "Fresh-Cut Pine",
+        "canonical": "oklch(82.9% 0.087 82)",
+        "tonalRamp": [
+          "#160800",
+          "#381d00",
+          "#563a00",
+          "#765819",
+          "#97783c",
+          "#b9995d",
+          "#e0bf82",
+          "#ffecc8"
+        ]
+      },
+      "pine-deep": {
+        "role": "primary",
+        "displayName": "Pine Heartwood",
+        "canonical": "oklch(67.2% 0.097 75)",
+        "tonalRamp": [
+          "#190600",
+          "#3e1900",
+          "#5d3600",
+          "#7d540c",
+          "#9f7434",
+          "#c29657",
+          "#e9bb7c",
+          "#ffeac4"
+        ]
+      },
+      "bark": {
+        "role": "tertiary",
+        "displayName": "Bark",
+        "canonical": "oklch(34.3% 0.043 57)",
+        "tonalRamp": [
+          "#130802",
+          "#341e0e",
+          "#513a29",
+          "#715846",
+          "#927764",
+          "#b49885",
+          "#dbbea9",
+          "#fdebde"
+        ]
+      },
+      "saw-steel": {
+        "role": "tertiary",
+        "displayName": "Saw Steel",
+        "canonical": "oklch(84.5% 0.010 243)",
+        "tonalRamp": [
+          "#090b0d",
+          "#202528",
+          "#3c4044",
+          "#595e63",
+          "#797e83",
+          "#999fa4",
+          "#bfc5ca",
+          "#ebeff2"
+        ]
+      },
+      "red": {
+        "role": "secondary",
+        "displayName": "Competition Red",
+        "canonical": "oklch(52.2% 0.172 28)",
+        "tonalRamp": [
+          "#290000",
+          "#5e0000",
+          "#840000",
+          "#a9221d",
+          "#d0493e",
+          "#f76d5f",
+          "#ff9483",
+          "#ffd4c8"
+        ]
+      },
+      "red-hi": {
+        "role": "secondary",
+        "displayName": "Competition Red, hover",
+        "canonical": "oklch(57.4% 0.184 28)",
+        "tonalRamp": [
+          "#2b0000",
+          "#620000",
+          "#880000",
+          "#ae1614",
+          "#d54338",
+          "#fc6859",
+          "#ff8f7e",
+          "#ffd2c5"
+        ]
+      },
+      "link": {
+        "role": "neutral",
+        "displayName": "Link Blue",
+        "canonical": "oklch(80.1% 0.075 236)",
+        "tonalRamp": [
+          "#000d1b",
+          "#002843",
+          "#094562",
+          "#2e6482",
+          "#4f84a4",
+          "#70a6c7",
+          "#95ccee",
+          "#d3f4ff"
+        ]
+      },
+      "host": {
+        "role": "tertiary",
+        "displayName": "Host Orange",
+        "canonical": "oklch(77.0% 0.138 65)",
+        "tonalRamp": [
+          "#200000",
+          "#4c0200",
+          "#6e2700",
+          "#904800",
+          "#b46800",
+          "#d88a32",
+          "#ffb05c",
+          "#ffe4b5"
+        ]
+      },
+      "guest": {
+        "role": "tertiary",
+        "displayName": "Guest Blue",
+        "canonical": "oklch(74.5% 0.110 246)",
+        "tonalRamp": [
+          "#000b25",
+          "#002455",
+          "#004276",
+          "#1a6298",
+          "#3f83bb",
+          "#61a5df",
+          "#87cbff",
+          "#cbf4ff"
+        ]
+      },
+      "good": {
+        "role": "status",
+        "displayName": "Good",
+        "canonical": "oklch(79.6% 0.117 143)",
+        "tonalRamp": [
+          "#001100",
+          "#003000",
+          "#094e09",
+          "#2f6e2c",
+          "#508f4c",
+          "#71b16d",
+          "#96d891",
+          "#d4fbd0"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Warn",
+        "canonical": "oklch(83.2% 0.126 83)",
+        "tonalRamp": [
+          "#1a0500",
+          "#401700",
+          "#5f3500",
+          "#805400",
+          "#a27500",
+          "#c59631",
+          "#ecbc5c",
+          "#ffebb5"
+        ]
+      },
+      "bad": {
+        "role": "status",
+        "displayName": "Bad",
+        "canonical": "oklch(73.2% 0.165 28)",
+        "tonalRamp": [
+          "#280000",
+          "#5c0000",
+          "#810000",
+          "#a72720",
+          "#cd4d41",
+          "#f47061",
+          "#ff9686",
+          "#ffd6c9"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home title only; the product name sits inside it as a smaller pine line."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "Guide page heads, under the log-round marker, over a 3px pine rule."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section h2s, under the log-round marker."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "h3s in steps, tally, scorecard and prose."
+      },
+      "pitch": {
+        "displayName": "Pitch",
+        "purpose": "The hero's one-sentence promise, max 32ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All reading text at a 70-74ch measure; 16.5px under 640px."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Nav, table heads, TOC heading, Copy button; sentence case."
+      },
+      "chip": {
+        "displayName": "Chip",
+        "purpose": "Confirmed / Tested chips."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Primary and secondary buttons in Zilla Slab."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Inline code, paths and pre blocks on plate."
+      }
+    },
+    "shadows": [
+      {
+        "name": "button-lift",
+        "value": "0 10px 22px -12px rgba(0, 0, 0, .8)",
+        "purpose": "The Download button only."
+      },
+      {
+        "name": "screenshot-drop",
+        "value": "0 0 0 1px var(--edge), 0 24px 40px -20px rgba(0, 0, 0, .8)",
+        "purpose": "The real connection-panel screenshot."
+      },
+      {
+        "name": "plate-hairline",
+        "value": "inset 0 0 0 1px var(--edge)",
+        "purpose": "Plates: status, callouts, table wraps, questions (pine-deep when open), narrow TOC."
+      },
+      {
+        "name": "outline-ring",
+        "value": "inset 0 0 0 1.5px var(--edge)",
+        "purpose": "Secondary button, GitHub nav link, Copy button; pine on hover."
+      },
+      {
+        "name": "knock-out-ring",
+        "value": "0 0 0 5px var(--ground)",
+        "purpose": "Step discs on the rail; var(--band) inside band sections."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 3px solid var(--pine); outline-offset: 3px",
+        "purpose": "Global :focus-visible."
+      }
+    ],
+    "motion": [
+      {
+        "name": "saw-pull",
+        "value": "3.2s cubic-bezier(.45, 0, .55, 1) infinite; translateX(-24px) to translateX(24px)",
+        "purpose": "The hero blade group; only under prefers-reduced-motion: no-preference."
+      },
+      {
+        "name": "sawdust",
+        "value": "3.2s ease-out infinite; appears at 50%, falls 26px and fades",
+        "purpose": "Six flecks under the cut, on the pull's beat."
+      },
+      {
+        "name": "button-lift",
+        "value": "transform .15s cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "Buttons rise 1px on hover."
+      },
+      {
+        "name": "chevron",
+        "value": "transform .2s",
+        "purpose": "Question chevron turns on open."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none; scroll-behavior: auto",
+        "purpose": "Under prefers-reduced-motion: reduce, every transition and smooth scrolling is off."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px",
+        "purpose": "Header static, full-width nav, full-width buttons, tables unstack, 16.5px body."
+      },
+      {
+        "name": "md",
+        "value": "900px",
+        "purpose": "Hero, grids, tally and scorecard stack; Confirmed column unsticks; step rail turns vertical; footer two columns."
+      },
+      {
+        "name": "doc",
+        "value": "1000px",
+        "purpose": "Guide pages gain the 230px sticky TOC column."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Download Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Competition red, slab-lettered; the only red on a page, always Download with the version.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16\"/></svg><span>Download 1.1.14</span></a>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;font:700 1.12rem/1 var(--display);text-decoration:none;border-radius:6px;background:var(--red);color:#fff;box-shadow:0 10px 22px -12px rgba(0,0,0,.8);transition:transform .15s cubic-bezier(.2,.7,.2,1),background .15s}.ds-btn-primary svg{width:1.15em;height:1.15em;flex:none}.ds-btn-primary:hover{background:var(--red-hi);transform:translateY(-1px)}.ds-btn-primary:focus-visible{outline:3px solid var(--pine);outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Transparent with a 1.5px edge ring that turns pine on hover; the Install guide link beside Download.",
+      "html": "<a class=\"ds-btn-secondary\" href=\"#\">Install guide</a>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 24px;font:700 1.12rem/1 var(--display);text-decoration:none;border-radius:6px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--edge);transition:transform .15s cubic-bezier(.2,.7,.2,1)}.ds-btn-secondary:hover{box-shadow:inset 0 0 0 1.5px var(--pine);transform:translateY(-1px)}.ds-btn-secondary:focus-visible{outline:3px solid var(--pine);outline-offset:3px}"
+    },
+    {
+      "name": "Header Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Log-and-saw mark with the two-line brand; muted system links, current page underlined 3px in pine, GitHub ringed.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-brand\" href=\"#\"><svg viewBox=\"0 0 64 64\" aria-hidden=\"true\"><circle cx=\"32\" cy=\"32\" r=\"29\" fill=\"#e3c285\" stroke=\"#4a3322\" stroke-width=\"5\"/><circle cx=\"32\" cy=\"32\" r=\"20\" fill=\"none\" stroke=\"#b98d4e\" stroke-width=\"2\"/><circle cx=\"32\" cy=\"32\" r=\"11\" fill=\"none\" stroke=\"#b98d4e\" stroke-width=\"2\"/><path d=\"M4 30h56v6H4z\" fill=\"#c7cdd2\"/><path d=\"M8 36l3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4\" fill=\"none\" stroke=\"#c7cdd2\" stroke-width=\"2\"/><rect x=\"0\" y=\"27\" width=\"7\" height=\"12\" rx=\"2\" fill=\"#f0a04b\"/><rect x=\"57\" y=\"27\" width=\"7\" height=\"12\" rx=\"2\" fill=\"#6fb3ee\"/></svg><span>BeaverBuddies<small>Stability Fork</small></span></a><div class=\"ds-links\"><a href=\"#\" aria-current=\"page\">Features</a><a href=\"#\">Install</a><a href=\"#\">FAQ</a><a class=\"ds-cta\" href=\"#\">GitHub</a></div></nav>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-nav{display:flex;align-items:center;gap:16px;min-height:64px;padding:0 16px;background:var(--ground);border-bottom:1px solid var(--edge)}.ds-brand{display:inline-flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font:700 1.25rem/1.05 var(--display)}.ds-brand svg{width:38px;height:38px;flex:none}.ds-brand small{display:block;font:600 .82rem/1.2 var(--font);color:var(--muted)}.ds-links{display:flex;gap:2px;margin-left:auto}.ds-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:var(--muted);text-decoration:none;font:600 1rem/1 var(--font);border-radius:4px}.ds-links a:hover{color:var(--ink);background:var(--plate)}.ds-links a[aria-current=page]{color:var(--ink);box-shadow:inset 0 -3px 0 var(--pine);border-radius:0}.ds-links .ds-cta{margin-left:6px;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--edge)}.ds-links a:focus-visible,.ds-brand:focus-visible{outline:3px solid var(--pine);outline-offset:3px}"
+    },
+    {
+      "name": "Status Chips",
+      "kind": "chip",
+      "refersTo": "chip-confirmed",
+      "description": "Confirmed is solid pine; Tested is a muted ring. They sit side by side.",
+      "html": "<span class=\"ds-chip ds-ok\">Confirmed · 4</span> <span class=\"ds-chip ds-tested\">Tested · 10</span>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-chip{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font:700 .8rem/1 var(--font);letter-spacing:.03em}.ds-ok{background:var(--pine);color:#1b1510}.ds-tested{box-shadow:inset 0 0 0 1.5px var(--muted);color:var(--muted)}"
+    },
+    {
+      "name": "Status Plate",
+      "kind": "card",
+      "refersTo": "plate",
+      "description": "Flat plate with an inset edge hairline: version status, callouts, table wraps. No label; a bold lead sentence.",
+      "html": "<div class=\"ds-plate\"><p><b>1.1.14 is fixes only.</b> 453 automated checks pass; it hasn't been played in a real game yet.</p><p>1.1.13, the last release with new features, was played and is stable.</p></div>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-plate{max-width:58ch;padding:16px 18px;background:var(--plate);color:var(--ink);border-radius:8px;box-shadow:inset 0 0 0 1px var(--edge);font:17px/1.65 var(--font)}.ds-plate p{margin:0}.ds-plate b{font-weight:650}.ds-plate p+p{margin-top:.5em;color:var(--muted);font-size:.96rem}"
+    },
+    {
+      "name": "Question",
+      "kind": "custom",
+      "refersTo": "question",
+      "description": "FAQ and Troubleshooting entry: a plate that opens, pine chevron, pine-deep hairline when open, pine sub-heads naming the answer's blocks.",
+      "html": "<details class=\"ds-q\" open><summary>The game desynced. What now?</summary><div class=\"ds-a\"><p class=\"ds-sub\">Try this</p><p>Choose Save and Rehost, then have everyone rejoin.</p></div></details>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-q{background:var(--plate);color:var(--ink);border-radius:8px;box-shadow:inset 0 0 0 1px var(--edge);font:17px/1.65 var(--font)}.ds-q[open]{box-shadow:inset 0 0 0 1px var(--pine-deep)}.ds-q>summary{position:relative;list-style:none;cursor:pointer;min-height:52px;padding:14px 52px 14px 18px;font:650 1.05rem/1.4 var(--font)}.ds-q>summary::-webkit-details-marker{display:none}.ds-q>summary::after{content:'';position:absolute;right:20px;top:50%;width:11px;height:11px;margin-top:-8px;border-right:2.5px solid var(--pine);border-bottom:2.5px solid var(--pine);transform:rotate(45deg);transition:transform .2s}.ds-q[open]>summary::after{transform:rotate(225deg);margin-top:-2px}.ds-q>summary:hover{color:var(--pine)}.ds-q>summary:focus-visible{outline:3px solid var(--pine);outline-offset:3px}.ds-a{padding:0 18px 16px}.ds-a p{margin:0 0 1em}.ds-a>:last-child{margin-bottom:0}.ds-a .ds-sub{margin:14px 0 4px;font:650 .95rem/1.2 var(--font);color:var(--pine)}"
+    },
+    {
+      "name": "Scorecard Column",
+      "kind": "custom",
+      "refersTo": "chip-confirmed",
+      "description": "A ruled list under a slab head with a 3px rule: pine for Confirmed in play, edge for Covered by checks.",
+      "html": "<div class=\"ds-score\"><h3>Confirmed in play <span class=\"ds-chip\">Confirmed · 4</span></h3><ul><li><b>Water no longer depends on frame rate</b><p>The water now follows the simulation's own clock.</p></li><li><b>Animation crash fixed</b><p>Non-finite visual coordinates no longer crash the game.</p></li></ul></div>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-score{color:var(--ink);font:17px/1.65 var(--font);max-width:30rem}.ds-score h3{display:flex;align-items:center;gap:10px;margin:0;font:700 1.5rem/1.1 var(--display);padding-bottom:12px;border-bottom:3px solid var(--pine)}.ds-chip{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font:700 .8rem/1 var(--font);letter-spacing:.03em;background:var(--pine);color:#1b1510}.ds-score ul{list-style:none;margin:0;padding:0}.ds-score li{padding:16px 0;border-bottom:1px solid var(--edge)}.ds-score li b{display:block;font-weight:650;font-size:1.05rem}.ds-score li p{margin:0;color:var(--muted);font-size:.98rem}"
+    },
+    {
+      "name": "Steps Along the Cut",
+      "kind": "custom",
+      "refersTo": "step-number",
+      "description": "Three steps on a 3px edge rail with pine number discs knocked out of the ground.",
+      "html": "<ol class=\"ds-steps\"><li><h3>Everyone installs the mod</h3><p>The same download, the same game version.</p></li><li><h3>The host invites a friend</h3><p>Host co-op game, then Invite Friends.</p></li><li><h3>Your friend joins, you start</h3><p>The host chooses Start Game.</p></li></ol>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-steps{list-style:none;margin:28px 0 0;padding:0;counter-reset:s;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:3px solid var(--edge);color:var(--ink);font:17px/1.65 var(--font);background:var(--ground)}.ds-steps>li{counter-increment:s;padding:20px 24px 8px 0}.ds-steps>li::before{content:counter(s);display:grid;place-items:center;width:44px;height:44px;margin:-44px 0 14px;border-radius:50%;background:var(--pine);color:#1b1510;font:700 1.3rem/1 var(--display);box-shadow:0 0 0 5px var(--ground)}.ds-steps h3{margin:0 0 .3em;font:700 1.3rem/1.1 var(--display)}.ds-steps p{margin:0;color:var(--muted)}"
+    },
+    {
+      "name": "Copy Path",
+      "kind": "input",
+      "refersTo": "copy-button",
+      "description": "A code path with a Copy button; the button reads Copied for 1.6s and hides without a clipboard API.",
+      "html": "<div class=\"ds-path\"><code>Documents\\Timberborn\\Mods</code><button class=\"ds-copy\" type=\"button\">Copy</button></div>",
+      "css": ":host{--ground:#161b20;--band:#1c2329;--plate:#252e36;--edge:#3a454f;--ink:#eceeea;--muted:#aeb7bd;--pine:#e3c285;--pine-deep:#b98d4e;--red:#b8322a;--red-hi:#cf3d33;--link:#8fc6e8;--display:'Zilla Slab',Rockwell,'Roboto Slab',Georgia,serif;--font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--mono:ui-monospace,'Cascadia Code',Consolas,monospace} .ds-path{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}.ds-path code{display:flex;align-items:center;flex:1 1 16rem;padding:10px 12px;font:.95rem var(--mono);color:var(--ink);background:var(--plate);border:1px solid var(--edge);border-radius:4px}.ds-copy{min-height:44px;padding:0 16px;font:600 .95rem/1 var(--font);color:var(--ink);background:var(--plate);border:0;border-radius:4px;box-shadow:inset 0 0 0 1.5px var(--edge);cursor:pointer}.ds-copy:hover{box-shadow:inset 0 0 0 1.5px var(--pine)}.ds-copy:focus-visible{outline:3px solid var(--pine);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Crosscut Saw Team",
+    "overview": "Two sawyers on one blade, pulling in rhythm; out of step, the saw binds. The site is that saw laid across a fresh-cut log at dusk: a blued-steel ground, fresh-cut pine for what is solid and played, and one competition red for the single thing to do, Download. The host's orange and the guest's blue live only on the two ends of the saw. It is dark only, chosen for evening co-op sessions, and loads nothing from elsewhere.\n\nDensity is that of a working guide, not a brochure. Content reads as ruled sheets: a tally of features split by hairlines, a scorecard with Confirmed in play beside Tested, steps read along a 3px rail like a cut line. Containers are flat plates distinguished by tone and a 1px inset hairline, never by floating shadows. The one moving thing is the saw in the hero, pulled back and forth in a slow loop with sawdust falling; everything else is still.\n\nThe world explicitly refuses the SaaS template the old site wore: eyebrow labels, stat strips, icon tiles and grids of identical cards.",
+    "keyCharacteristics": [
+      "Blued-steel tonal stack (ground, band, plate, edge) carries all depth; no light mode.",
+      "Pine marks what is played, current and focused; red appears only on Download.",
+      "Zilla Slab 700 for headings, the brand, buttons and step numbers; everything else in the system face.",
+      "Ruled sheets (hairlines and 3px rules) instead of card grids.",
+      "A small end-grain log round marks each section; the header mark and favicon are a log round with the saw across it.",
+      "One signature motion (the saw pull), switched off under reduced motion."
+    ],
+    "rules": [
+      {
+        "name": "The Download Red Rule",
+        "body": "Competition red is spent on Download buttons only. A second red element anywhere on a page is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Handles Rule",
+        "body": "Host orange and guest blue belong to the two ends of the saw. They never tint text, borders, buttons or backgrounds.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pine Is Solid Rule",
+        "body": "Pine means played, current or focused. What is only tested is muted steel, never pine.",
+        "section": "colors"
+      },
+      {
+        "name": "The Slab Is Stencil Rule",
+        "body": "Zilla Slab is for headings, the brand, buttons and step numbers. Labels, tables and body stay in the system face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "No uppercase, no tracked-out small labels. The only letter-spacing in the system is the chip's .03em.",
+        "section": "typography"
+      },
+      {
+        "name": "The Plate Not Card Rule",
+        "body": "Containers are flat plates with an inset hairline. No drop shadows on plates, no hard offset shadows, no glow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** build depth from the steel stack (ground, band, plate) and a 1px inset edge hairline.",
+      "**Do** read lists as ruled sheets: hairline-separated items, 3px rules for emphasis.",
+      "**Do** mark played and confirmed things in pine and tested-only things in muted steel, side by side.",
+      "**Do** put the end-grain log round above section and page headings as the marker.",
+      "**Do** keep the saw the only moving element, and keep it off under reduced motion.",
+      "**Do** keep touch targets at 44px or more (nav, TOC on mobile, footer links, Copy) and the 3px pine focus ring.",
+      "**Do** self-host every font and image; the site loads nothing from elsewhere."
+    ],
+    "donts": [
+      "**Don't** use competition red for anything but Download.",
+      "**Don't** paint UI with host orange or guest blue; they are the saw's handles.",
+      "**Don't** add eyebrow or kicker labels above headings, or label callouts; the log round is the only thing above a heading.",
+      "**Don't** build stat strips, icon tiles or grids of identical cards.",
+      "**Don't** put drop shadows on plates, or use hard offset shadows or glows.",
+      "**Don't** uppercase or track out labels.",
+      "**Don't** add a light theme.",
+      "**Don't** use Timberborn's official logos or key art, or the original project's art as this fork's brand."
+    ]
+  }
+}
