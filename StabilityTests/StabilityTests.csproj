@@ -32,6 +32,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/RandomSourceRules.cs" Link="RandomSourceRules.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Util/LinkHelper.cs" Link="LinkHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- The checkout the tests were built against: the Workshop checks run this checkout's PostBuild step. -->

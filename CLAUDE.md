@@ -11,12 +11,12 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 - The fork is **feature-complete**: fixes and new Timberborn versions only. New features go into BeaverBuddies
   Timber Together (https://github.com/timbermods/TimberTogether); point there, never sell against it.
 - Assume fresh games: no old-save compatibility notes. Keep thomaswp's credit and the GPL everywhere.
-- Mod tests, as `.github/workflows/tests.yml` runs them (.NET 8; 276/276 pass):
+- Mod tests, as `.github/workflows/tests.yml` runs them (.NET 8; 278/278 pass):
   `dotnet restore StabilityTests/StabilityTests.csproj --source https://api.nuget.org/v3/index.json`, then
   `dotnet run --project StabilityTests --no-restore`. Python checks: `python -m unittest discover -s RuntimeChecks -p
   "test_water_snapshots.py"` and `python RuntimeChecks/compare_walker_traces.py --self-test`. RuntimeChecks needs a
   local game install; see `StabilityTests/README.md`.
-- Release (no script; how 1.1.13 to 1.1.15 were cut): bump `<Version>` in `BeaverBuddies/BeaverBuddies.csproj` and
+- Release (no script; how 1.1.13 to 1.1.16 were cut): bump `<Version>` in `BeaverBuddies/BeaverBuddies.csproj` and
   `BeaverBuddies/manifest.json`; add `## X` on top of `STABILITY-CHANGELOG.md`; update the README status note, install
   lines and check counts; update the site (below). PR → CI green → merge → annotated tag `vX` on the **merge commit**
   ("BeaverBuddies Stability Fork X") → `gh release create vX --repo timbermods/BeaverBuddies-Stability-Fork
@@ -117,7 +117,7 @@ builds show no bug-report button.
 - Describe the mod as it is now. No "New in", "added in <version>" or version history on player pages; that lives in
   `STABILITY-CHANGELOG.md` and the release notes. The one upgrade fact kept: delete an old
   `BeaverBuddies-StabilityPreview` folder.
-- Played/not-played status matches the README's status note exactly (e.g. "1.1.15 has not been played"; 1.1.13, the
+- Played/not-played status matches the README's status note exactly (e.g. "1.1.16 has not been played"; 1.1.13, the
   last feature release, was played and stays linked). Never invent numbers, reviews, player counts or screenshots.
   PRODUCT.md "Evidence on Hand" lists what does not exist.
 - Credits on every page footer: an independent fork of BeaverBuddies by thomaswp and contributors; maintained by

@@ -5,9 +5,27 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.16
+
+The current release. It changes only the links the mod opens, and has not been played. 1.1.15 was played and works.
+Every player must install this build, since the join check refuses a different one. Nothing saved in the game changes.
+
+- **The in-game links lead to this fork.** The first-time guide and the troubleshooting guide after a failed join
+  opened the original project's wiki, and the bug-report address (`LinkHelper.BugReportURL`) was the original
+  author's. They now open this fork's [install guide](https://timbermods.github.io/BeaverBuddies-Stability-Fork/install.html),
+  [troubleshooting guide](https://timbermods.github.io/BeaverBuddies-Stability-Fork/troubleshooting.html) and
+  [issues](https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues).
+
+### Validation
+
+- `StabilityTests`: **278** passed (2 new: every in-game link leads to this fork, and each site page it names exists;
+  the first fails against 1.1.15's links).
+- `RuntimeChecks`: **185** passed against each of the Steam and non-Steam builds.
+- 3 Python checks pass. Both builds compile with no warnings.
+
 ## 1.1.15
 
-The current release: bug fixes on top of 1.1.14, and no new features. Each was fixed in Timber Together
+Bug fixes on top of 1.1.14, and no new features. Each was fixed in Timber Together
 first and is taken from there, with anything about separate colonies left out. Four more game methods are shared (the
 panel controls below), so every player must install this build (the join check refuses a different one). Nothing saved
 in the game changes.

@@ -8,10 +8,10 @@ Multiplayer co-op for Timberborn: build one colony together in real time. With *
 **[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [More mods from Timbermods](https://timbermods.github.io/)
 
 > [!NOTE]
-> **Stable and feature-complete.** 1.1.15 has been played and works. The fork still gets fixes and updates for new
-> Timberborn versions, but no new features: those go into
-> [Timber Together](https://github.com/timbermods/TimberTogether), which is built on this fork and
-> can also give each player a colony of their own. Install one or the other, never both.
+> **Stable and feature-complete.** 1.1.16 only fixes the in-game links and has not been played; 1.1.15 has been
+> played and works. The fork still gets fixes and updates for new Timberborn versions, but no new features: those go
+> into [Timber Together](https://github.com/timbermods/TimberTogether), which is built on this fork and can also give
+> each player a colony of their own. Install one or the other, never both.
 
 An independent fork of [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by thomaswp and contributors, the
 original multiplayer mod. Everything the original does still works: one shared colony, each player with their own
@@ -36,12 +36,12 @@ fork [here](https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues), 
 
 **You need:** Timberborn **1.1.2.4**, with the **Harmony** and **Mod Settings** mods enabled.
 
-1. Download `BeaverBuddies-Stability-Fork-1.1.15.zip` under **Assets** on the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) (not the "Source code" archives). <!-- latest -->
+1. Download `BeaverBuddies-Stability-Fork-1.1.16.zip` under **Assets** on the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) (not the "Source code" archives). <!-- latest -->
 2. **Close Timberborn.**
 3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`.
 4. **Keep only one BeaverBuddies.** Unsubscribe from the Workshop BeaverBuddies and delete any other copy, including an
    old `BeaverBuddies-StabilityPreview` folder. They share a mod ID and conflict.
-5. Start Timberborn and enable **BeaverBuddies - Stability Fork** (version 1.1.15) in the mod list. <!-- latest -->
+5. Start Timberborn and enable **BeaverBuddies - Stability Fork** (version 1.1.16) in the mod list. <!-- latest -->
 6. **Every player installs the same download and runs the same game version.** A mismatch is the most common cause of
    trouble.
 
