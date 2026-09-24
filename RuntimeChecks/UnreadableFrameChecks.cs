@@ -135,7 +135,7 @@ internal static class UnreadableFrameChecks
                 if (faults.Count != 1) throw new Exception($"With {bad.Kind}, the session fault was raised {faults.Count} times");
                 // Nothing of that tick is played: the session is over and part of the tick would be worse.
                 if (events.Count != 0) throw new Exception($"With {bad.Kind}, {events.Count} actions of the tick were still played");
-                // The same words as BeaverBuddies-MultiColony, then why. The whole shared sentence is checked, so the
+                // The same words as TimberTogether, then why. The whole shared sentence is checked, so the
                 // two forks cannot drift apart in its second half without this failing.
                 if (!faults[0].StartsWith("An action from the host could not be read, so this game would no longer match the host's. "))
                     throw new Exception($"With {bad.Kind}, the reason does not say what happened: {faults[0]}");

@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-// 1.1.14's fixes (from the review of MultiColony 1.4.0-beta11, whose shared-colony code is this fork's), against the
+// 1.1.14's fixes (from the review of Timber Together 1.4.0-beta11, whose shared-colony code is this fork's), against the
 // compiled mod: saves wait for the water and soil threads, a stop that is not a pause finishes its tick before saving, the
 // multiplayer clock starts at tick 0 as a game loads, loading keeps the non-game random marks, desync reports draw no game
 // random numbers, and a replay whose building or entity this game lacks neither throws for everyone nor plays on one

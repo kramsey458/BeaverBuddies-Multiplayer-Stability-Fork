@@ -3,7 +3,7 @@
 Code: `BeaverBuddies/Fixes/WonderTimingFix.cs`. Checks: `RuntimeChecks/WonderChecks.cs`.
 
 In 1.1.14. This is PR #46 (branch `claude/wonder-plane-ticks`, `7391560`), which was closed without merging, as
-BeaverBuddies MultiColony 1.4.0-beta12 reworked it. What changed from #46 is in [In 1.1.14](#in-1114) at the end.
+Timber Together 1.4.0-beta12 reworked it. What changed from #46 is in [In 1.1.14](#in-1114) at the end.
 
 ## The problem
 
@@ -206,7 +206,7 @@ at speed 1.
 
 ## In 1.1.14
 
-What 1.1.14 (first in MultiColony 1.4.0-beta12) changed from PR #46, and what it added around it:
+What 1.1.14 (first in Timber Together 1.4.0-beta12) changed from PR #46, and what it added around it:
 
 - **A game update can't leave the mod half patched.** PR #46's three timing transpilers threw when a method read the
   frame clock a different number of times than expected. The mod applies its patches with one `harmony.PatchAll()`,

@@ -91,7 +91,7 @@ RuntimeChecks also runs the Wonders' timing (1.1.14, PR #46 reworked, `BeaverBud
 
 `ReviewFixChecks` covers 1.1.14's other fixes against the compiled mod: saves, deletions, levers, random sources,
 buildings from other mods, and pacing and Steam wiring. `BackportChecks` covers 1.1.15's, taken from
-BeaverBuddies MultiColony: the four newly shared panel controls (the game's panels call them, each is shared, and
+Timber Together: the four newly shared panel controls (the game's panels call them, each is shared, and
 the game's simulation never calls them), unlocks checked when played, the detailed-logging trace cap and the Steam
 callbacks let go; `JoinClosingChecks` checks that the first tick closes joining before anything of it is sent.
 StabilityTests checks that a direct socket that never connected is closed, and that hosting resets the speed boost.

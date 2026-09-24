@@ -9,7 +9,7 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 - Never launch or drive Timberborn, and never touch installed mods or saves. The maintainer (Kyler) playtests himself.
 - Commit on a branch and open a PR. Kyler has said to merge PRs automatically: merge, then check the page live.
 - The fork is **feature-complete**: fixes and new Timberborn versions only. New features go into BeaverBuddies
-  MultiColony (https://github.com/timbermods/BeaverBuddies-MultiColony); point there, never sell against it.
+  Timber Together (https://github.com/timbermods/TimberTogether); point there, never sell against it.
 - Assume fresh games: no old-save compatibility notes. Keep thomaswp's credit and the GPL everywhere.
 - Mod tests, as `.github/workflows/tests.yml` runs them (.NET 8; 276/276 pass):
   `dotnet restore StabilityTests/StabilityTests.csproj --source https://api.nuget.org/v3/index.json`, then
@@ -113,7 +113,7 @@ When asked to "update the website for the latest release, consistent with the de
      `#not-loading`), `data-release="asset-name"` (install: zip name twice). Download links keep
      `href=".../releases/latest"` with `data-release-href="download"`; never link a fixed tag.
    - Home status plate `div.status[data-release-pinned="X"]`: bump the attribute and rewrite both paragraphs (what the
-     release is, check count, played or not, the feature-complete/MultiColony line).
+     release is, check count, played or not, the feature-complete/Timber Together line).
    - **The scorecard** (`index.html#stability`, `div.scorecard`): `div.confirmed` (Confirmed in play) and
      `div.tested` (Covered by checks), each item `<li><b>Title</b><p>One or two sentences.</p></li>`, no version
      numbers. Add new fixes to `tested`; move an item to `confirmed` only when Kyler reports it played. Keep the chips

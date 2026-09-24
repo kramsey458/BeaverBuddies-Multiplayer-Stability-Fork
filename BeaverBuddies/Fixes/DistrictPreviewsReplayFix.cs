@@ -24,7 +24,7 @@ namespace BeaverBuddies.Fixes
     /// physics check the game still asks this computer's preview blocks (TerrainPhysicsBlockObjectValidator), a
     /// separate follow-up.
     /// Priority.Last, the rule for a prefix that replaces the original: another mod's prefix on this check runs
-    /// first. Ported from BeaverBuddies-MultiColony (8af51cd), without its colony rules.
+    /// first. Ported from TimberTogether (8af51cd), without its colony rules.
     /// </summary>
     [ManualMethodOverwrite]
     [HarmonyPatch(typeof(DistrictPreviewsValidator), nameof(DistrictPreviewsValidator.IsValid))]
