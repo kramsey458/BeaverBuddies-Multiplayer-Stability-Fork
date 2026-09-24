@@ -161,7 +161,8 @@ When asked to "update the website for the latest release, consistent with the de
    - `grep -rn "releases/tag/\|releases/download/" docs/` → nothing.
    - `for c in confirmed tested; do sed -n "/<div class=\"$c\">/,/<\/div>/p" docs/index.html | grep -o '<li>' | wc -l;
      done` matches `grep -o 'Confirmed · [0-9]*\|Tested · [0-9]*' docs/index.html` (4 and 12 now).
-   - `curl -s https://timbermods.github.io/MixedStorage/assets/release.js | cmp - docs/assets/release.js` → no output.
+   - `curl -s https://timbermods.github.io/MixedStorage/assets/release.js | cmp - <(git show HEAD:docs/assets/release.js)` → no output
+     (compare the committed file: a Windows checkout has CRLF on disk, the served file has LF).
    - `"$(ls -d ~/.claude/plugins/cache/impeccable/impeccable/*/skills/impeccable | tail -1)/scripts/impeccable" embed-prompt --scan docs` → 0 missing.
 5. Preview: `python -m http.server 8782 -d docs` (in the background), open http://localhost:8782/. Check the dark site
    at desktop and a 390px phone (no horizontal scroll) and the changed sections. With the personal
