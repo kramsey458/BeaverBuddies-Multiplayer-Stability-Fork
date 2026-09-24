@@ -158,9 +158,9 @@ Success, in order:
   desyncs recorded. The 1.1.11 color change was played and works. The maintainer played 1.1.13 (which includes
   1.1.12's changes) and reports it stable and working; the situations the 1.1.12 fixes target were not set up on
   purpose.
-- **1.1.14 and 1.1.15 have not been played.** Their fixes are covered by automated checks (464 pass: 276
-  StabilityTests, 185 RuntimeChecks, 3 Python; most of each release's new checks fail against the build before it).
-  1.1.13 stays on the releases page for anyone who would rather wait.
+- **1.1.15 (which includes 1.1.14's fixes) has been played and works** (the maintainer, 2026-09-24). Its fixes are also
+  covered by automated checks (464 pass: 276 StabilityTests, 185 RuntimeChecks, 3 Python). The particular situations
+  those fixes target were not all set up on purpose (see "Tested only" below).
 - Confirmed in play: Steam invites, the water frame-rate fix (the "badtide" desync), the animation crash, the low ping
   at a true speed 7, the controls working after a disconnect, the panel and chat colors, player activity, the speed
   boost and own chat color, the large colony speed limit (played in 1.0.8).
