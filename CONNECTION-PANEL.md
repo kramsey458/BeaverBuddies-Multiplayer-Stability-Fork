@@ -19,9 +19,9 @@ o  3 players  42 ms                                 [+]
 Multiplayer                                 Host   [-]
 o  In sync
 -------------------------------------------------------
-Kyler                                              -
-Sarah                                          42 ms
-Bob                                           190 ms
+Player 1                                           -
+Player 2                                       42 ms
+Player 3                                      190 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
 Speed       1x
@@ -29,7 +29,7 @@ Connection  Direct
 ```
 
 The dot beside the status is the only dot while the panel is expanded. A player's row is a name and a ping
-and nothing else; your own row (Kyler here) is in bold, with a dash where the ping would be. The collapse
+and nothing else; your own row (Player 1 here) is in bold, with a dash where the ping would be. The collapse
 button at the right of the header, `[-]` here, is drawn in a small box so it is not mistaken for that dash, which
 sits at the same edge.
 
@@ -85,16 +85,16 @@ in a multiplayer game only.
 Multiplayer                                 Host   [-]
 o  In sync
 -------------------------------------------------------
-Kyler                                              -
-Sarah                                          42 ms
+Player 1                                           -
+Player 2                                       42 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
 Speed       1.5x
 -------------------------------------------------------
 Speed boost [-] [+0.5] [+]   = 1.5x
-Sarah: anyone want to build a second dam?
-Kyler: yes, upstream of the farm
-Sarah: on it
+Player 2: anyone want to build a second dam?
+Player 1: yes, upstream of the farm
+Player 2: on it
 [ Type a message...                                   ]
 ```
 
