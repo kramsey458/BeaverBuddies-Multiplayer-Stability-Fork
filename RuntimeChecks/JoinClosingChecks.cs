@@ -181,7 +181,7 @@ internal static class JoinClosingChecks
         test("Only the host closes joining for an action, and only at tick 0 (the first tick closes it itself)", () => Quietly(() =>
         {
             var (io, server) = Host();
-            // ReplayService.DoTick closes joining at the end of tick 1 with its own reason.
+            // ReplayService.DoTick closes joining as tick 1 starts, with its own reason.
             Play(io, 1, Event("BeaverBuddies.Events.BuildingPlacedEvent"));
             if (!Accepting(server)) throw new Exception("An action at tick 1 closed joining with the tick-0 reason");
             // A guest has no one to refuse.
@@ -198,6 +198,21 @@ internal static class JoinClosingChecks
             stop.Invoke(io, stop.GetParameters().Select(p => p.HasDefaultValue ? p.DefaultValue : null).ToArray());
             if (Refusal(server) != reason) throw new Exception("The first tick replaced the reason with: " + Refusal(server));
         }));
+
+        test("The first tick closes joining before any of it is sent", () =>
+        {
+            // A guest admitted after DoTickIO sent tick 1's events would load the tick-0 save and never be sent them.
+            var doTick = replayServiceType.GetMethod("DoTick", all) ?? throw new Exception("ReplayService has no DoTick");
+            var calls = Calls(doTick);
+            int tick = calls.FindIndex(c => c.Name == "set_ticksSinceLoad");
+            int close = calls.FindIndex(c => c.Name == "StopAcceptingClients" && c.DeclaringType == hostIoType);
+            int heartbeat = calls.FindIndex(tick + 1, c => c.Name == "EnqueueEventForSending");
+            int send = calls.FindIndex(c => c.Name == "DoTickIO");
+            if (tick < 0 || close < 0 || heartbeat < 0 || send < 0)
+                throw new Exception($"DoTick's calls were not found (tick {tick}, close {close}, heartbeat {heartbeat}, send {send})");
+            if (!(tick < close && close < heartbeat && close < send))
+                throw new Exception($"DoTick closes joining out of order (tick {tick}, close {close}, heartbeat {heartbeat}, send {send})");
+        });
 
         test("ReplayEvents closes joining after playing an action and before queueing it to be sent", () =>
         {
