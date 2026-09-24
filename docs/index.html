@@ -40,7 +40,7 @@
     <div>
       <h1><small>BeaverBuddies</small>Stability Fork</h1>
       <p class="pitch">Build one Timberborn colony together, in real time.</p>
-      <p class="lede">A fork of thomaswp's <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a>: everyone plays the same colony, each with their own camera, plus Steam friend invites, a connection panel with chat, your friends' cursors, and a long list of crash and desync fixes.</p>
+      <p class="lede">A fork of thomaswp's <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a>. Everyone plays the same colony, each with their own camera. This fork adds Steam friend invites, a connection panel with chat, your friends' cursors and a long list of crash and desync fixes.</p>
       <div class="btn-row">
         <a class="btn btn-primary" data-release-href="download" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
@@ -48,7 +48,7 @@
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
-      <p class="workshop"><b>Replaces the Workshop BeaverBuddies.</b> The two change the same parts of the game and can't be installed together: unsubscribe from the Workshop version first. Every player needs this fork, the same download.</p>
+      <p class="workshop"><b>Replaces the Workshop BeaverBuddies.</b> The two can't be installed together, so unsubscribe from the Workshop one first. Every player needs the same download of this fork.</p>
       <div class="status" data-release-pinned="1.1.15">
         <p><b><span data-release="version">1.1.15</span> has been played and works.</b> It is a bug-fix release on top of 1.1.13, the last release with new features, and 464 automated checks pass.</p>
         <p>This fork is feature-complete: it gets fixes and updates for new Timberborn versions. New features go into <a href="https://timbermods.github.io/TimberTogether/">Timber Together</a>, which can also give each player a colony of their own.</p>
@@ -120,15 +120,15 @@
     <ol class="steps horizontal">
       <li>
         <h3>Everyone installs the mod</h3>
-        <p>Every player installs the same version of the mod (the same download) and runs the same game version, then restarts the game. <a href="install.html">Install guide</a></p>
+        <p>Every player installs the same download and runs the same game version. <a href="install.html">Install guide</a></p>
       </li>
       <li>
         <h3>The host invites a friend</h3>
-        <p>Load a save, choose <b>Host co-op game</b>, then <b>Invite Friends</b> and pick your friend in Steam's overlay.</p>
+        <p>Load game → pick a save → <b>Host co-op game</b>. Choose <b>Invite Friends</b> and pick your friend in Steam's overlay.</p>
       </li>
       <li>
         <h3>Your friend joins, you start</h3>
-        <p>When your friend appears in the player list, the host chooses <b>Start Game</b>. Everyone builds in the same colony.</p>
+        <p>When your friend appears in the list, the host chooses <b>Start Game</b>. Everyone builds in the same colony.</p>
       </li>
     </ol>
   </div>
@@ -140,15 +140,15 @@
     <div class="section-head">
       <span class="round" aria-hidden="true"></span>
       <h2>What you get</h2>
-      <p>Everything the original BeaverBuddies does, plus the parts that make a long co-op session actually work.</p>
+      <p>Everything the original BeaverBuddies does, plus what a long co-op session needs.</p>
     </div>
     <ul class="tally">
-      <li><h3>Steam friend invites</h3><p>Invite a friend from Steam's own overlay. Connections go straight between you when Steam finds a route and are relayed through Steam otherwise, so there is no Hamachi and no port forwarding. Direct IP still works too.</p></li>
-      <li><h3>A connection panel</h3><p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance, and chat with everyone in the game. A speed boost at the top of the chat adds to the game's speed for everyone. Collapse it to one line or hide it completely.</p></li>
-      <li><h3>See your teammates</h3><p>Colored, translucent cursors with names, selection outlines, and Viewing / Editing labels on buildings. Restyle each player's cursor in the Player cursors dialog.</p></li>
-      <li><h3>Fewer crashes and desyncs</h3><p>Fixes for the water, animation, random-number, saving, demolition and input problems that knocked sessions out of sync or crashed them. <a href="#stability">Each one, and how sure we are</a>.</p></li>
-      <li><h3>Problems are explained</h3><p>Joining with a different build is refused before the save is sent, and a warning lists any mods that differ. Failed connections and multiplayer actions end with a plain-language reason instead of a silent hang.</p></li>
-      <li><h3>Quicker and lighter</h3><p>A guest's actions reach the host sooner (roughly 0.3 seconds at normal speed), the mod's work every tick and every frame has been trimmed, and over Steam the ping no longer climbs as the game speeds up.</p></li>
+      <li><h3>Steam friend invites</h3><p>Invite a friend from Steam's overlay: no Hamachi, no port forwarding. Direct IP works too.</p></li>
+      <li><h3>A connection panel</h3><p>Who is connected, each ping, whether you're in sync, and the tick rate. Below it, a chat box and a speed boost for everyone. Collapse it to one line or hide it.</p></li>
+      <li><h3>See your teammates</h3><p>Their cursors with names, selection outlines, and Viewing / Editing labels on buildings. Restyle each cursor in <b>Player cursors</b>.</p></li>
+      <li><h3>Fewer crashes and desyncs</h3><p>Fixes for water, animation, random-number, saving, demolition and input problems that crashed sessions or knocked them out of sync. <a href="#stability">Each one, and how sure we are</a>.</p></li>
+      <li><h3>Problems are explained</h3><p>A different build is refused before the save is sent, and a warning lists any mods that differ. A failed connection or action ends with a plain reason, not a silent hang.</p></li>
+      <li><h3>Quicker and lighter</h3><p>A guest's actions reach the host about 0.3 seconds sooner at normal speed. Over Steam the ping stays low at any game speed.</p></li>
     </ul>
   </div>
 </section>
@@ -164,11 +164,10 @@
     </div>
     <div>
       <ul>
-        <li><b>Friends only.</b> The host opens a friends-only lobby and only accepts players who joined it. A stranger who knows your Steam ID cannot connect.</li>
-        <li><b>Your address stays private.</b> Valve documents that relayed connections keep players' IP addresses hidden from each other.</li>
-        <li><b>Direct IP still works.</b> Both options are offered when you host, so Hamachi and port forwarding keep working. A problem with Steam doesn't stop you hosting over direct IP.</li>
-        <li><b>Clear errors.</b> If a connection fails, you get Steam's own reason in plain language and in the log.</li>
-        <li><b>The current API.</b> The original used Valve's older networking API, which Valve marks as deprecated. This fork uses the one Valve recommends.</li>
+        <li><b>Friends only.</b> The host accepts players from its friends-only Steam lobby only. A stranger who knows your Steam ID can't connect.</li>
+        <li><b>Your address stays private.</b> Steam connects you directly when it can and relays otherwise. Valve documents that relaying keeps players' IP addresses hidden from each other.</li>
+        <li><b>Direct IP still works.</b> Hamachi and port forwarding work alongside Steam invites. A Steam problem never stops you hosting over direct IP.</li>
+        <li><b>Clear errors.</b> If a connection fails, you get Steam's own reason in plain words, and in the log.</li>
       </ul>
       <p style="color:var(--muted);font-size:.95rem">Both players need to be online in Steam and to own Timberborn on Steam.</p>
     </div>
@@ -181,14 +180,14 @@
     <div class="section-head">
       <span class="round" aria-hidden="true"></span>
       <h2>Know how your session is doing</h2>
-      <p>A small panel in a corner of your screen during multiplayer games. It only reads: it sends no gameplay events, and if it ever fails it switches itself off.</p>
+      <p>A small panel in a corner of your screen during multiplayer games. It only reads, so it can't change the game.</p>
     </div>
     <div class="grid grid-2" style="align-items:start">
       
         <div>
         <figure style="margin:0 0 28px">
           <img class="panel-shot" src="assets/connection-panel.png" width="383" height="558" loading="lazy" alt="Screenshot of the in-game connection panel as the host sees it: status In sync, the host's own row in bold with a dash, one guest at 19 ms, tick rate 11.7 ticks per second, speed 7x, the guest 1 tick behind at 35 fps, Ease off below set to Off, connection Steam, and a chat with a line from the host and a line from the guest.">
-          <figcaption class="demo-caption">The connection panel, as the host sees it in a Steam co-op session. This screenshot predates the speed boost row at the top of the chat and today's chat colors, where only each name takes the player's color.</figcaption>
+          <figcaption class="demo-caption">The connection panel, as the host sees it in a Steam co-op session. The shot lacks the speed boost row at the top of the chat, and it colors whole chat lines where the mod colors only each name.</figcaption>
         </figure>
         <div class="table-wrap">
         <table>
@@ -206,17 +205,16 @@
       </div>
       <div>
         <ul>
-          <li>Each player is a <b>name and a ping</b>, host first. Your own row is bold, with a dash where the ping would be.</li>
-          <li><b>Ping</b> is the round trip between you and that player. It is normal text at 80 ms or less, <span style="color:var(--warn)"><b>yellow</b></span> up to 160 ms, and <span style="color:var(--bad)"><b>red</b></span> for anything higher or no response.</li>
-          <li>The <b>dot</b> beside the status is <span style="color:var(--good)"><b>green</b></span> when you are in sync, <span style="color:var(--warn)"><b>yellow</b></span> while catching up or waiting for the host, and <span style="color:var(--bad)"><b>red</b></span> when the connection is unstable, out of sync or disconnected.</li>
-          <li><b>Tick rate</b> and <b>speed</b> show how fast the simulation is really running, and guests see how many ticks they are <b>behind the host</b> (0 or 1 is normal).</li>
-          <li><b>Connection</b> shows whether players are connected directly or through Steam.</li>
-          <li>The host also sees how far behind the slowest guest is and the lowest <b>guest frame rate</b>, and can click <b>Ease off below</b> to slow the game a little while a guest stays under a frame rate (Off, 20, 30, 45 or 60 fps).</li>
-          <li>A <b>chat box</b> sits below the panel. Everyone sees messages in the same order, and a player who joins later gets the whole conversation. Each name is drawn in the sender's cursor color, and the message stays in the normal text color.</li>
-          <li><b>Click the title</b> to collapse it to a single line. Your choice is remembered.</li>
+          <li>Each player is a <b>name and a ping</b>, host first. Your own row is bold, with a dash instead of a ping.</li>
+          <li><b>Ping</b> is the round trip to that player. It is normal text up to 80 ms, <span style="color:var(--warn)"><b>yellow</b></span> up to 160 ms, and <span style="color:var(--bad)"><b>red</b></span> above that or with no response.</li>
+          <li>The <b>dot</b> is <span style="color:var(--good)"><b>green</b></span> in sync, <span style="color:var(--warn)"><b>yellow</b></span> while catching up or waiting for the host, and <span style="color:var(--bad)"><b>red</b></span> otherwise.</li>
+          <li><b>Tick rate</b> and <b>speed</b> show how fast the game really runs. Guests also see how many ticks they are <b>behind the host</b> (0 or 1 is normal).</li>
+          <li><b>Connection</b> shows Direct or Steam.</li>
+          <li>The host also sees the slowest guest's lag and <b>guest frame rate</b>. <b>Ease off below</b> slows the game a little while a guest stays under a frame rate you pick (Off, 20, 30, 45 or 60 fps).</li>
+          <li>A <b>chat box</b> sits below the panel. Everyone sees the same conversation, and a player who joins later gets the history. Each name shows in that player's cursor color.</li>
+          <li><b>Click the title</b> to collapse it to one line. Your choice is remembered.</li>
           <li>Hide it or move it to any corner in <b>Mod Settings</b>, or bind the optional <b>Toggle connection panel</b> key.</li>
         </ul>
-        <p style="color:var(--muted);font-size:.95rem">Ping is measured by the mod's network layer, so it means the same thing over Steam, Hamachi and direct IP. Over Steam it includes a short wait for each game to serve Steam, which the mod keeps to a few milliseconds even at a high game speed.</p>
       </div>
     </div>
   </div>
@@ -230,14 +228,14 @@
       <h2>See what your teammates are doing</h2>
       <p class="lede" style="max-width:none">Other players' cursors, selections and building edits show up on your screen, so you stop building on top of each other.</p>
       <ul>
-        <li><b>Cursors</b> are colored and translucent, with a name label. Each player starts with a color of their own (the host orange, then blue, green, pink, purple, teal, red and lime for the guests), and you can change any of them. They are shared in world space, so cameras can be anywhere.</li>
+        <li><b>Cursors</b> are colored and translucent, with a name. Each player starts with a color of their own (the host orange, then blue, green, pink, purple, teal, red and lime), and you can change any of them. They follow the map, wherever your camera is.</li>
         <li><b>Selection outlines</b> use the game's own outline in that player's color.</li>
-        <li><b>Viewing / Editing</b> labels appear on buildings. It is an advisory notice, not a lock: both players can still change a building.</li>
+        <li><b>Viewing / Editing</b> labels appear on buildings. They're a notice, not a lock: both players can still change a building.</li>
       </ul>
     </div>
     <div>
       <h3 style="margin-top:0">Make each cursor your own</h3>
-      <p>Open <b>Options</b> (Esc) and choose <b>Player cursors</b>. Each connected player gets a card:</p>
+      <p>In a co-op game, press Esc and choose <b>Player cursors</b>. Each connected player gets a card:</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Control</th><th>Range</th><th>Default</th></tr></thead>
@@ -248,8 +246,8 @@
           </tbody>
         </table>
       </div>
-      <p style="color:var(--muted);font-size:.95rem">These are display-only choices that stay on your machine. They are never sent to other players, are remembered by player name, and cannot affect the simulation.</p>
-      <p style="color:var(--muted);font-size:.95rem">The first card, <b>You, in the chat</b>, sets the color you see your own name in, in the chat. Only you see it: others still see your Ping Color, or the color for your player number.</p>
+      <p style="color:var(--muted);font-size:.95rem">These choices stay on your computer and can't affect the game. They're remembered by player name.</p>
+      <p style="color:var(--muted);font-size:.95rem">The first card, <b>You, in the chat</b>, sets the color of your own name in the chat, on your screen only.</p>
     </div>
   </div>
 </section>
@@ -265,11 +263,11 @@
     <div class="scorecard">
       <div class="confirmed">
         <h3 class="col">Confirmed in play <span class="chip ok">Confirmed · 4</span></h3>
-        <ul><li><b>Water no longer depends on frame rate</b><p>Players at different frame rates used to see different water, which caused desyncs. The water now follows the simulation's own clock. It resolved a reported "badtide" desync.</p></li><li><b>Animation crash fixed</b><p>A path cursor that could move backward between ticks, and non-finite visual coordinates, no longer crash the game.</p></li><li><b>The ping stays low at a high game speed</b><p>Over Steam, data used to wait for the end of every frame, and at a high game speed a frame is mostly simulation, so the ping grew with the speed. Steam is now also served between the ticks of a frame. At a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms.</p></li><li><b>Controls work after a disconnect</b><p>Input state is recovered after a desync, a failed action or a lost connection, so the menu and controls keep working.</p></li></ul>
+        <ul><li><b>Water follows the simulation, not the frame rate</b><p>Players at different frame rates see the same water. This resolved a reported "badtide" desync.</p></li><li><b>Animation crash fixed</b><p>A path cursor that moves backward between ticks, or a visual position that isn't a finite number, can't crash the game.</p></li><li><b>The ping stays low at a high game speed</b><p>Over Steam the ping doesn't grow with the game speed. At a true speed 7 it stayed under 100 ms in play.</p></li><li><b>Controls work after a disconnect</b><p>After a desync, a failed action or a lost connection, the menu and controls keep working.</p></li></ul>
       </div>
       <div class="tested">
         <h3 class="col">Covered by checks <span class="chip tested">Tested · 12</span></h3>
-        <ul><li><b>Builds are checked before the save is sent</b><p>The fork compares the game version and the exact mod build first, with a time limit and a clear message, instead of warning after the save has loaded.</p></li><li><b>A failed action stops safely</b><p>If a multiplayer action fails, replay stops, the session pauses and peers are told, instead of two games quietly drifting apart.</p></li><li><b>More deterministic random numbers, saving and ordering</b><p>Nested random-number scopes are restored even after errors, a stale saving flag is cleared, and water sources are applied in a consistent order.</p></li><li><b>Demolition fixes</b><p>A replayed demolition selection that included already-demolished buildings no longer ends the session, and equal-distance demolition jobs are chosen deterministically.</p></li><li><b>The host can ease off for a slow guest</b><p>The host picks a frame rate floor; while a guest stays below it, the host slows the game a little and speeds back up by itself. It never changes what happens in a tick.</p></li><li><b>More ways out of sync closed</b><p>Planting marks the same tiles when players have sliced the view to different layers. A building is no longer refused on one computer while its player hovers a path that would join two districts. The Tick once key and dev mode's Ctrl keys no longer change one computer only. Nobody can join after something was placed or changed while the game waited to start, and joining closes before the first tick goes out, so a late joiner can't miss it.</p></li><li><b>A fuller desync check</b><p>Guests compare all of the host's random-number state, so a desync is caught sooner. Every tick they also compare the entities that tick and where every walking character stands, and log the first difference, so a report says when the games first went apart.</p></li><li><b>A safer network reader</b><p>A received message can only create multiplayer actions and their values, other mods' actions included. A guest that gets an action it can't read, for example from a mod only the host has, leaves with a message naming it instead of drifting apart, and the others play on.</p></li><li><b>Wonders on the tick</b><p>The Earth Repopulator's plane launch and every Wonder's animation advance once per tick in co-op, the same for everyone. If a game update changes the code this relies on, the Wonders fall back to frame time and every other fix stays in place.</p></li><li><b>One lost link, not a frozen game</b><p>A direct (IP) player whose connection dies no longer freezes the host and everyone else; they're dropped after 30 seconds, as over Steam. Something deleted in a tick is gone at once for everyone, and a building from a mod only one player has no longer stops the game.</p></li><li><b>Pump, valve and dev generator controls are shared</b><p>A pump's flow rate, a throttling valve's limit on/off and the dev power generator's strength and flip used to change only the clicking player's game. Now every player gets the change on the same tick.</p></li><li><b>Unlocks, logging and long sessions</b><p>Two players unlocking the same building at once pay once, and an unlock the science no longer covers is skipped instead of stopping the game. Turning on detailed logging mid-game no longer reads as a desync, a guest joining after <b>Save and Rehost</b> starts at the new session's speed boost, and a long session no longer keeps every menu and game it loaded in memory.</p></li></ul>
+        <ul><li><b>Builds are checked before the save is sent</b><p>The game version and the exact mod build are compared first, with a time limit and a clear message.</p></li><li><b>A failed action stops safely</b><p>If a multiplayer action fails, the session pauses and every player is told, so two games can't quietly drift apart.</p></li><li><b>Random numbers, saving and water sources match</b><p>They behave the same on every computer, even after an error.</p></li><li><b>Demolition fixes</b><p>Demolishing a selection that includes already-demolished buildings doesn't end the session. Equally distant demolition jobs are picked the same way on every computer.</p></li><li><b>The host can ease off for a slow guest</b><p>The host picks a frame rate floor. While a guest stays below it, the game slows a little and speeds back up by itself. It never changes what happens in a tick.</p></li><li><b>More ways out of sync closed</b><p>Planting marks the same tiles whatever layer each player's view is sliced to. A player hovering a path that would join two districts doesn't make their computer refuse a building. <b>Tick once</b> and dev mode's Ctrl keys can't change one computer only. Joining closes at the first change or the first tick, so a late joiner can't miss anything.</p></li><li><b>A fuller desync check</b><p>Guests compare all of the host's random-number state, and every tick the entities and where each walker stands. The log names the first difference, so a report shows when the games went apart.</p></li><li><b>A safer network reader</b><p>A received message can only create multiplayer actions and their values. A guest that gets an action it can't read, for example from a mod only the host has, leaves with a message naming it, and the others play on.</p></li><li><b>Wonders on the tick</b><p>The Earth Repopulator's plane launch and every Wonder's animation advance once per tick in co-op, the same for everyone. If a game update breaks this, the Wonders fall back to frame time and every other fix stays.</p></li><li><b>One lost link, not a frozen game</b><p>A direct (IP) player whose connection dies is dropped after 30 seconds, as over Steam, and the others play on. Something deleted in a tick is gone at once for everyone, and a building from a mod only one player has doesn't stop the game.</p></li><li><b>Pump, valve and dev generator controls are shared</b><p>A pump's flow rate, a throttling valve's limit, and the dev power generator's strength and flip change on the same tick for every player.</p></li><li><b>Unlocks, logging and long sessions</b><p>Two players unlocking the same building at once pay once, and an unlock the science can't cover is skipped. Turning on detailed logging mid-game doesn't read as a desync. A guest joining after <b>Save and Rehost</b> gets that session's speed boost, and a long session doesn't keep old menus and games in memory.</p></li></ul>
       </div>
     </div>
     <p style="margin-top:1.5rem">Every change, with its status, is in the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
@@ -287,7 +285,7 @@
       <li><b>Every action is mirrored.</b> Building, changing a recipe or setting a priority is sent to the host, which decides which tick it happens on and sends it to everyone.</li>
       <li><b>The game is deterministic.</b> Given the same save and the same actions on the same ticks, every copy of the game plays out exactly the same.</li>
     </ol>
-    <p>That is why <b>every player must run the same build</b>, why other mods should match, and why nobody can join once the host has started. When something breaks that sameness, that is a desync. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> explains the design in more detail.</p>
+    <p>That is why <b>every player must run the same build</b>, why other mods should match, and why nobody can join once the game is running. When something breaks that sameness, that is a desync. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> explains the design in more detail.</p>
   </div>
 </section>
 
@@ -297,12 +295,12 @@
     <span class="round" aria-hidden="true"></span>
     <h2>Good to know before you play</h2>
     <ul>
-      <li><b>Every player installs the same version of the mod (the same download) and runs the same game version.</b> The mod refuses a different build when someone joins.</li>
-      <li><b>Other mods should match.</b> When someone joins, both players get a warning listing any mods that differ. A guest missing a mod whose actions the host sends (MixedStorage, for example) leaves the game at the first such action, with the mod named, and the others play on. Settings are not compared, so keep simulation-affecting settings identical.</li>
-      <li><b>Join before the host starts.</b> Nobody can join after <b>Start Game</b>, or once something has been placed, marked or changed while the game waited.</li>
-      <li><b>Desyncs can still happen.</b> This fork removes known causes; it cannot promise none. Keep backups of your saves.</li>
-      <li><b>Tested with two players on Windows and Steam.</b> Larger groups and other platforms have not been tried.</li>
-      <li><b>One BeaverBuddies at a time.</b> Remove the Workshop BeaverBuddies (and don't enable Timber Together alongside this fork).</li>
+      <li><b>Every player installs the same download and runs the same game version.</b> A different build is refused when someone joins.</li>
+      <li><b>Other mods should match.</b> When someone joins, both players are warned about any mods that differ. A guest missing a mod whose actions the host sends (MixedStorage, for example) leaves the game, and the others play on. Settings aren't compared, so keep the ones that affect the simulation the same.</li>
+      <li><b>Join before the host unpauses.</b> After that, or once anything is built or marked, nobody else can join.</li>
+      <li><b>Desyncs can still happen.</b> This fork removes known causes but can't promise none. Keep backups of your saves.</li>
+      <li><b>Tested with two players on Windows and Steam.</b> Larger groups and other platforms haven't been tried.</li>
+      <li><b>One BeaverBuddies at a time.</b> Remove the Workshop BeaverBuddies, and don't enable Timber Together alongside this fork.</li>
     </ul>
     <p>More answers are in the <a href="faq.html">FAQ</a>, and <a href="troubleshooting.html">Troubleshooting</a> covers what to do when something goes wrong.</p>
   </div>

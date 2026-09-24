@@ -176,7 +176,8 @@ Success, in order:
 ## Brand Commitments
 
 - **Voice:** a fellow player explaining a useful mod: clear, exact, practical, never hype. It says what is confirmed
-  and what isn't in the same calm tone, and asks for backups and reports without alarm.
+  and what isn't in the same calm tone, and asks for backups and reports without alarm. Short and plain: one idea per
+  sentence, each thing said once, no internals and no history (see CLAUDE.md, *Writing README and website text*).
 - **No official Timberborn logos or key art.** The game's own item and goods icons are allowed where a UI replica uses
   them, credited as Timberborn's.
 - **The original project's art is not this fork's brand.** `Media/` (the BEAVERBUDDIES wordmark, `logo.jpg`,

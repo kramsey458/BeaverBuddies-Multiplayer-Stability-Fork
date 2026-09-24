@@ -34,7 +34,7 @@
   <div class="container">
     <span class="round" aria-hidden="true"></span>
     <h1>Install guide</h1>
-    <p>From download to your first co-op session. Every player follows the install steps; only the host needs to load a save.</p>
+    <p>From download to your first co-op session. Every player installs the mod; only the host needs a save.</p>
   </div>
 </div>
 
@@ -59,12 +59,12 @@
     <section id="requirements">
       <h2>Before you start</h2>
       <ul>
-        <li><b>Timberborn</b> on every player's computer. This release is built and tested against version <b>1.1.2.4</b> on Windows with the Steam version of the game, and everyone must run the same game version.</li>
-        <li>The <b>Harmony</b> and <b>Mod Settings</b> mods, which this mod needs. Get Harmony from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3284904751">Steam Workshop</a> and Mod Settings from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040">Steam Workshop</a> or <a href="https://mod.io/g/timberborn/m/mod-settings">mod.io</a>.</li>
-        <li>For <b>Steam invites</b>: both players online in Steam and both owning Timberborn on Steam.</li>
+        <li><b>Timberborn 1.1.2.4</b>, the same version on every computer. This fork is tested on Windows with the Steam version.</li>
+        <li>The <b>Harmony</b> and <b>Mod Settings</b> mods. Get Harmony from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3284904751">Steam Workshop</a> and Mod Settings from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040">Steam Workshop</a> or <a href="https://mod.io/g/timberborn/m/mod-settings">mod.io</a>.</li>
+        <li>For <b>Steam invites</b>: every player online in Steam and owning Timberborn there.</li>
       </ul>
       <div class="callout warn">
-        <p><b>Every player installs the same version of the mod (the same download) and runs the same game version.</b> The mod checks the game version and its own files when someone joins, and it refuses mismatches. A mismatch is the most common cause of trouble.</p>
+        <p><b>Every player installs the same download and runs the same game version.</b> The mod refuses a mismatch when someone joins. It's the most common cause of trouble.</p>
       </div>
     </section>
 
@@ -75,35 +75,28 @@
           <h3>Download</h3>
           <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.15.zip</span></code> under <b>Assets</b> (not the "Source code" archives).</p>
           <p><a class="btn btn-primary" data-release-href="download" href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest"><span>Download <span data-release="version">1.1.15</span></span></a></p>
-          <p><b>Joining a friend?</b> Use the same release as your host: ask which version their mod list shows, or use the zip they sent you. Every player needs the exact same download.</p>
+          <p><b>Joining a friend?</b> Use the same release as your host: ask which version their mod list shows, or use the zip they sent you.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
-          <p>Make sure the game is not running while you replace files.</p>
+          <p>Close the game before you copy files.</p>
         </li>
         <li>
           <h3>Extract and copy</h3>
           <p>Extract the zip and copy the <code>BeaverBuddies-Stability-Fork</code> folder into your Timberborn <code>Mods</code> folder:</p>
           <div class="path"><code>Documents\Timberborn\Mods</code><button class="copy" type="button">Copy</button></div>
-          <p>You should end up with <code>Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json</code>. If you already have a <code>BeaverBuddies-Stability-Fork</code> folder, replace it.</p>
+          <p>You should end up with <code>Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json</code>. Replace the folder if it's already there.</p>
         </li>
         <li>
           <h3>Keep only one BeaverBuddies</h3>
-          <p>Unsubscribe from or remove the Workshop BeaverBuddies and any other copy, including a <code>BeaverBuddies-StabilityPreview</code> folder (an old name for this mod). They share the same mod ID and will conflict.</p>
+          <p>Unsubscribe from the Workshop BeaverBuddies and delete any other copy, including an old <code>BeaverBuddies-StabilityPreview</code> folder. They share a mod ID and conflict.</p>
         </li>
         <li>
           <h3>Start Timberborn and enable the mods</h3>
-          <p>Open the mod manager from the main menu and enable <b>Harmony</b>, <b>Mod Settings</b> and <b>BeaverBuddies - Stability Fork</b>. Restart the game if it asks you to.</p>
-        </li>
-        <li>
-          <h3>Make sure your friends do the same</h3>
-          <p>Every player needs the same zip and the same game version, then a full restart of the game.</p>
+          <p>Open <b>Mods</b> on the main menu and enable <b>Harmony</b>, <b>Mod Settings</b> and <b>BeaverBuddies - Stability Fork</b>. Restart the game if it asks you to.</p>
         </li>
       </ol>
-      <div class="callout warn">
-        <p><b>Have a <code>BeaverBuddies-StabilityPreview</code> folder?</b> That's an old name for this mod. Delete it from <code>Mods</code> before you copy in the new folder. The two share a mod ID, so having both would conflict.</p>
-      </div>
-      <p>Optional: to check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.1.15</span>-SHA256SUMS.txt</code>:</p>
+      <p>Optional: to check the download, run this in PowerShell in the folder you saved it to, and compare the result with <code><span data-release="version">1.1.15</span>-SHA256SUMS.txt</code>:</p>
       <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-Stability-Fork-1.1.15.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
@@ -120,83 +113,83 @@
     <section id="host">
       <h2>Host a game</h2>
       <ol>
-        <li>Load the save you want to play and choose <b>Host co-op game</b>.</li>
+        <li>Load game → pick a save → <b>Host co-op game</b>. A box lists the players who connect.</li>
         <li>Bring your friends in with one of the three ways below.</li>
-        <li>When your friends appear in the connected-player list, choose <b>Start Game</b>.</li>
+        <li>When everyone is in the list, choose <b>Start Game</b>.</li>
       </ol>
-      <p><b>Nobody can join after you choose Start Game</b>, or once anyone has placed, marked or changed something while the game waited to start. Friends who arrive late need you to save and host again.</p>
-      <p>If a warning appears saying your mods and a friend's mods differ, fix that before you start: see <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
+      <p><b>Friends join before you unpause.</b> After that, or once anyone builds or marks something, nobody else can join. For a late friend, save and host that save again.</p>
+      <p>If a warning says your mods and a friend's differ, fix that before you start: see <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
 
       <h3>Option 1: Steam invite (easiest)</h3>
-      <p>Make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default), choose <b>Invite Friends</b>, and pick your friend in Steam's overlay. No port forwarding or extra software is needed. If nothing happens the first moment after hosting starts, click the button again: the Steam lobby is still being created.</p>
+      <p>Choose <b>Invite Friends</b> and pick your friend in Steam's overlay. If nothing opens right after you host, wait a moment and click again. <b>Enable Steam Networking</b> must be on in Mod Settings; it is by default.</p>
 
       <h3>Option 2: Direct IP</h3>
-      <p>Give your friend your IP address. The default port is <b>25565</b>, and your router must forward it to your computer. Direct IP is offered at the same time as Steam invites.</p>
+      <p>Give your friend your IP address. Your router must forward port <b>25565</b> to your computer. This works alongside Steam invites.</p>
 
       <h3>Option 3: Hamachi or another virtual network</h3>
-      <p>A virtual LAN such as Hamachi avoids port forwarding. It has been tested and works. Give your friend the address the virtual network assigns you, then join by direct IP.</p>
+      <p>A virtual LAN such as Hamachi avoids port forwarding, and it has been tested. Give your friend the address it assigns you; they join by direct IP.</p>
     </section>
 
     <section id="join">
       <h2>Join a game</h2>
       <h3>With a Steam invite</h3>
-      <p>Accept the invite from the Steam notification or overlay. If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
+      <p>Accept the invite from Steam's notification or overlay. If Timberborn is closed, Steam starts it and joins for you. With the host's <b>Allow Friends to Join Directly via Steam</b> on (the default), <b>Join Game</b> on the host's entry in your Steam friends list works too.</p>
       <h3>With an IP address</h3>
-      <p>From the main menu choose <b>Join co-op game</b> and enter the host's IP address or domain name.</p>
-      <p>Guests receive a copy of the host's save. It is kept under <b>Online Games</b>.</p>
+      <p>On the main menu, choose <b>Join co-op game</b> and enter the host's IP address or domain name.</p>
+      <p>Guests get a copy of the host's save, kept under <b>Online Games</b>.</p>
     </section>
 
     <section id="playing">
       <h2>While you play</h2>
       <ul>
-        <li>The <a href="index.html#panel">connection panel</a> shows who is connected, their ping, whether you are in sync and the tick rate. Click its title to collapse it.</li>
-        <li>Teammates' cursors and selections appear on your screen. Change how each looks in <b>Options</b> (Esc), <b>Player cursors</b>.</li>
-        <li>To ping a location on the map for everyone, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
-        <li>Set your own <b>Ping Display Name</b> and <b>Ping Color</b> in Mod Settings so your friends can tell you apart.</li>
+        <li>The <a href="index.html#panel">connection panel</a> shows who is connected, each ping, whether you're in sync and the tick rate. Click its title to collapse it.</li>
+        <li>Teammates' cursors and selections show on your screen. To change how each looks, press Esc → <b>Player cursors</b>.</li>
+        <li>To ping a spot on the map for everyone, bind <b>Ping Location</b> under Options → Bindings → BeaverBuddies.</li>
+        <li>Set your <b>Ping Display Name</b> and <b>Ping Color</b> in Mod Settings so friends can tell you apart.</li>
       </ul>
     </section>
 
     <section id="desync">
       <h2>If a desync happens</h2>
-      <p>A desync means the players' games have drifted apart. The game tells you, and the host should:</p>
+      <p>A desync means the players' games have drifted apart. The game tells you. Then:</p>
       <ol>
-        <li>Choose <b>Save and Rehost</b>.</li>
-        <li>Then guests choose <b>Reconnect (wait for Rehost)</b>, which joins the way they joined: a direct IP guest redials the address it used, and a Steam guest joins the host's new Steam lobby if Steam shows it (the host has <b>Allow Friends to Join Directly via Steam</b> on); otherwise a Steam guest accepts the host's new invite.</li>
+        <li>The host chooses <b>Save and Rehost</b>.</li>
+        <li>Guests choose <b>Reconnect (wait for Rehost)</b>. It joins the way you joined: the same address, or the host's new game on Steam. If Steam doesn't show the host's new game, accept the host's new invite.</li>
       </ol>
-      <p>If the game says multiplayer has stopped because an action could not be completed, return to the main menu and reload a known-good save. Do not overwrite your good save with that session. More help is in <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
+      <p>What causes desyncs: <a href="troubleshooting.html#desync">Troubleshooting</a>. If the game instead says multiplayer has stopped because an action may have changed only part of the game, read <a href="troubleshooting.html#stopped">this answer</a> before you save.</p>
     </section>
 
     <section id="settings">
       <h2>Settings</h2>
-      <p>Open <b>Mod Settings</b> from the game's mod menu and choose BeaverBuddies.</p>
+      <p>Open <b>Mods</b> (on the main menu, or Esc in a game) and click the settings button on <b>BeaverBuddies - Stability Fork</b>.</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
             <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets players join your games through Steam.</td></tr>
-            <tr><td><b>Allow Friends to Join Directly via Steam</b></td><td>On</td><td>Friends can join from Steam's friends list without an invite.</td></tr>
-            <tr><td><b>Player activity indicators</b></td><td>On</td><td>Shares your cursor, selection and recent edits and shows other players'.</td></tr>
-            <tr><td><b>Ping Display Name</b></td><td>Player</td><td>The name others see next to your pings, cursor and edits.</td></tr>
-            <tr><td><b>Ping Color</b></td><td>Yellow</td><td>The color of your pings, and of your cursor and your name in the chat, on everyone's screen. While it is left on yellow, your cursor and chat name get a color of their own by player number (pings stay yellow). Choose any other color, even a slightly different yellow, to keep your own.</td></tr>
+            <tr><td><b>Allow Friends to Join Directly via Steam</b></td><td>On</td><td>Friends can join from their Steam friends list without an invite.</td></tr>
+            <tr><td><b>Player activity indicators</b></td><td>On</td><td>Shares your cursor, selection and edits, and shows other players'.</td></tr>
+            <tr><td><b>Ping Display Name</b></td><td>Player</td><td>The name others see on your pings, cursor and edits.</td></tr>
+            <tr><td><b>Ping Color</b></td><td>Yellow</td><td>The color of your pings, cursor and chat name on everyone's screen. Left on yellow, your cursor and chat name get a color by player number; pings stay yellow.</td></tr>
             <tr><td><b>Connection panel</b></td><td>Expanded</td><td>Expanded, Collapsed or Hidden.</td></tr>
             <tr><td><b>Connection panel position</b></td><td>Top left</td><td>Top left, top right, bottom left or bottom right.</td></tr>
-            <tr><td><b>Ease off when a guest drops below this frame rate</b></td><td>Off</td><td>Host only. While a guest stays below the chosen frame rate (20, 30, 45 or 60 fps), the host slows the game a little and speeds back up by itself. The same choice is <b>Ease off below</b> in the connection panel.</td></tr>
-            <tr><td><b>Remove the large colony speed limit</b></td><td>Off</td><td>Timberborn slows its speed settings as the population grows. Turn this on to run the speed you chose. In multiplayer the host's choice applies to everyone for the whole session.</td></tr>
-            <tr><td><b>Reduce the number of forced pauses</b></td><td>Off</td><td>Off, Menu only or Never auto-pause. Every player should use the same value. With Never auto-pause, pause the game before you save.</td></tr>
-            <tr><td><b>Port</b></td><td>25565</td><td>The port used for hosting and joining by direct IP. Without a virtual network such as Hamachi, the host forwards this port on their router.</td></tr>
-            <tr><td><b>Client Connection Address</b></td><td>127.0.0.1</td><td>The address filled in when you join by direct IP. It remembers the last address you entered.</td></tr>
-            <tr><td><b>Always Use Detailed Logging</b></td><td>Off</td><td>Records extra detail for diagnosing desyncs, but costs performance. Leave it off unless you are hunting a desync.</td></tr>
+            <tr><td><b>Ease off when a guest drops below this frame rate</b></td><td>Off</td><td>Host only. While a guest stays below it (20, 30, 45 or 60 fps), the game slows a little and speeds back up by itself. Also in the connection panel as <b>Ease off below</b>.</td></tr>
+            <tr><td><b>Remove the large colony speed limit</b></td><td>Off</td><td>Timberborn slows its speeds as the population grows. Turn this on to run the speed you chose. In multiplayer the host's choice applies to everyone for the whole session.</td></tr>
+            <tr><td><b>Reduce the number of forced pauses</b></td><td>Off</td><td>Off, Menu only or Never auto-pause. Every player should use the same value. With Never auto-pause, pause before you save, or the save can be damaged.</td></tr>
+            <tr><td><b>Port</b></td><td>25565</td><td>The port for hosting and joining by direct IP. Without Hamachi or similar, the host forwards it on their router.</td></tr>
+            <tr><td><b>Client Connection Address</b></td><td>127.0.0.1</td><td>The address filled in when you join by direct IP. It remembers the last one you entered.</td></tr>
+            <tr><td><b>Always Use Detailed Logging</b></td><td>Off</td><td>Records extra detail for diagnosing desyncs, at a cost in performance. Leave it off unless you're asked to turn it on.</td></tr>
           </tbody>
         </table>
       </div>
-      <p>Under <b>Options, Bindings, BeaverBuddies</b> there are three optional keys: <b>Ping Location</b>, <b>Toggle connection panel</b> and <b>Chat: start typing</b>. They are unbound until you choose one.</p>
+      <p>Under Options → Bindings → <b>BeaverBuddies</b> there are three optional keys: <b>Ping Location</b>, <b>Toggle connection panel</b> and <b>Chat: start typing</b>. None is bound until you choose a key.</p>
     </section>
 
     <section id="update">
       <h2>Update or remove</h2>
       <ul>
-        <li><b>Update:</b> download the new zip, close the game, delete the old <code>BeaverBuddies-Stability-Fork</code> folder and copy in the new one. Everyone updates together, because different builds will not join each other.</li>
-        <li><b>Remove:</b> disable the mod in the mod manager, or delete the <code>BeaverBuddies-Stability-Fork</code> folder from <code>Mods</code>.</li>
+        <li><b>Update:</b> download the new zip, close the game and replace the <code>BeaverBuddies-Stability-Fork</code> folder. Everyone updates together: different builds can't join each other.</li>
+        <li><b>Remove:</b> disable it under <b>Mods</b>, or delete the <code>BeaverBuddies-Stability-Fork</code> folder from <code>Mods</code>.</li>
       </ul>
     </section>
 

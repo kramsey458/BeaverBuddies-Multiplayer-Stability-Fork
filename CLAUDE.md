@@ -24,6 +24,32 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
   **Release Steam** build, folder `BeaverBuddies-Stability-Fork/version-1.1/`) and `X-SHA256SUMS.txt`. A full Latest
   release, never a pre-release.
 
+## Writing README and website text
+
+Kyler, 2026-09-24: "simplicity and elegance is effective and desirable." Every change to the README, the website
+text and the player docs follows these rules.
+
+- **Write for a Timberborn player** who wants to download, install and use the mod. Developer detail goes in
+  `DEVELOPING.md` (building, checks, how the networking works, playtests) or `STABILITY-CHANGELOG.md`; link to it
+  rather than repeating it.
+- **Short.** One idea per sentence, most under about 20 words. A paragraph or FAQ answer is one to three sentences,
+  a troubleshooting answer a few numbered steps.
+- **Lead with the action.** Menu paths as arrow chains; on-screen labels in bold, exactly as in game.
+- **Say each thing once**, where a player would look for it; link to it elsewhere.
+- **Plain words.** No internals (class names, ids, formats) unless the player needs them to act.
+- **Cut** filler, repeated caveats, edge cases a player won't meet, and history ("since …", "no longer", older
+  builds). Describe the mod as it is now.
+- **Check every fact against the code** before writing it; changelogs lag.
+- **Keep, briefly:** credits, the unofficial line, the status, and safety facts.
+- **Reread as a new player before publishing.** Every step works as written, and nothing is said twice.
+
+The player docs are `README.md`, `STEAM-INVITES.md`, `CONNECTION-PANEL.md`, `PLAYER-ACTIVITY.md` and `docs/`. Facts
+checked in the code on 2026-09-24 that older text got wrong: settings open from **Mods** → the settings button on
+**BeaverBuddies - Stability Fork** (the Mod Settings mod adds one to each mod's row); **Player cursors** is in the
+Esc menu, in a co-op game only; joining closes when the host unpauses or first changes the game, not at **Start
+Game**; **Save and Rehost** is only in the desync dialog (otherwise the host saves and hosts that save again); public
+builds show no bug-report button.
+
 ## Website
 
 - **Where:** `docs/`: `index.html` (features), `install.html`, `troubleshooting.html`, `faq.html`; assets in
@@ -87,6 +113,7 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 
 ### Content rules
 
+- Write all text by *Writing README and website text* above; the rules below add the site's specifics.
 - Describe the mod as it is now. No "New in", "added in <version>" or version history on player pages; that lives in
   `STABILITY-CHANGELOG.md` and the release notes. The one upgrade fact kept: delete an old
   `BeaverBuddies-StabilityPreview` folder.
@@ -128,6 +155,7 @@ When asked to "update the website for the latest release, consistent with the de
    - PRODUCT.md "Operating Context" and "Honest status"; the README status note if it repeats site facts.
 3. Put new content into the existing components above (a new FAQ is another `details.q` in the right section, a new
    problem another `details.q` in troubleshooting, plus a `nav.toc` link for a new section). Don't restyle anything.
+   Write it by *Writing README and website text* above.
 4. Test (no CI checks the site; these held on 2026-09-23):
    - `grep -Fc 'src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-Stability-Fork" data-asset="^BeaverBuddies-Stability-Fork-[\d.]+\.zip$"' docs/*.html` → 1 on each of the 4 pages.
    - `grep -rn "releases/tag/\|releases/download/" docs/` → nothing.
