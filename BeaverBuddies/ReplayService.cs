@@ -133,6 +133,8 @@ namespace BeaverBuddies
         // thread (see InitializeClientEvent.Create). A new session starts at 0.
         private static volatile float sessionBoost;
         public static float SessionBoost => sessionBoost;
+        /// <summary>The host starts a new session (ServerEventIO), before its game exists.</summary>
+        internal static void ResetSessionBoost() => sessionBoost = 0;
         public bool IsDesynced { get; private set; } = false;
         public static bool HasReplayFailure { get; private set; }
 
