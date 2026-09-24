@@ -97,14 +97,12 @@ a.btn.btn-secondary:hover { color: var(--ink); box-shadow: inset 0 0 0 1.5px var
 .status p { margin: 0; }
 .status p + p { margin-top: .5em; color: var(--muted); font-size: .96rem; }
 
-/* the saw across the log: two handles, one blade, pulled in rhythm */
+/* one shared colony from above: the host's cursor has a house selected, a friend's lays a path */
 .saw-figure { margin: 0; }
-.saw { display: block; width: 100%; height: auto; }
+.coop-map { display: block; width: 100%; height: auto; }
 @media (prefers-reduced-motion: no-preference) {
-  .saw .blade-group { animation: pull 3.2s cubic-bezier(.45, 0, .55, 1) infinite; }
-  .saw .dust { animation: dust 3.2s ease-out infinite; }
-  @keyframes pull { 0%, 100% { transform: translateX(-24px); } 50% { transform: translateX(24px); } }
-  @keyframes dust { 0%, 25% { opacity: 0; transform: translateY(0); } 50% { opacity: .9; } 100% { opacity: 0; transform: translateY(26px); } }
+  .coop-map .cursor-guest { animation: guest-lay 4.8s cubic-bezier(.45, 0, .55, 1) infinite; }
+  @keyframes guest-lay { 0%, 100% { transform: translateY(-40px); } 55%, 80% { transform: translateY(0); } }
 }
 .saw-figure figcaption { margin-top: 8px; font-size: .95rem; color: var(--muted); text-align: center; }
 

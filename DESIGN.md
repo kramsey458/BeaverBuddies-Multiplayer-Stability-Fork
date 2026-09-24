@@ -177,7 +177,7 @@ The world explicitly refuses the SaaS template the old site wore: eyebrow labels
 - Zilla Slab 700 for headings, the brand, buttons and step numbers; everything else in the system face.
 - Ruled sheets (hairlines and 3px rules) instead of card grids.
 - A small end-grain log round marks each section; the header mark and favicon are a log round with the saw across it.
-- One signature motion (the saw pull), switched off under reduced motion.
+- One signature motion (the friend's cursor laying a path in the hero map), switched off under reduced motion.
 
 ## Colors
 
@@ -191,7 +191,7 @@ A cold, low-chroma blued-steel ground under warm pine and a single hot red, with
 - **Competition Red** (red, hover red-hi): the Download button and nothing else. White text on it.
 
 ### Tertiary
-- **Host Orange** (host) and **Guest Blue** (guest): the two saw handles (hero, header mark, favicon). They are the game's own player colours and are defined as tokens, but the CSS never paints UI with them.
+- **Host Orange** (host) and **Guest Blue** (guest): the two players (the hero map's cursors, name tags and dots; the saw handles in the header mark and favicon). They are the game's own player colours and are defined as tokens, but the CSS never paints UI with them.
 - **Saw Steel** (saw-steel): the blade in the mark, favicon and hero drawing. Not a UI surface colour.
 - **Bark** (bark): the rim of the log round in the mark and favicon.
 
@@ -243,7 +243,7 @@ A cold, low-chroma blued-steel ground under warm pine and a single hot red, with
 
 A single 1160px container with a fluid gutter (clamp(16px, 4vw, 40px)). Sections breathe at clamp(56px, 8vw, 100px) top and bottom and alternate between ground and band; a section head holds the log-round marker, the h2 and a muted intro (max 64ch, 32px below it).
 
-- **Hero:** two columns (1.05fr / .95fr, gap clamp(28px, 5vw, 64px)), copy left, the saw figure right; stacks under 900px.
+- **Hero:** two columns (1.05fr / .95fr, gap clamp(28px, 5vw, 64px)), copy left, the shared-colony map right; stacks under 900px.
 - **Steps:** three columns along a 3px edge rail with pine number discs sitting on it; under 900px the rail turns vertical at the left. A compact variant in the install guide numbers on the left with hairlines between steps.
 - **Tally:** two ruled columns (gap 48px), each item under a 1px top hairline; one column under 900px.
 - **Scorecard:** two columns (gap 40px), Confirmed in play and Covered by checks; on wide screens the Confirmed column stays sticky (top 88px) beside the longer Tested list; static and stacked under 900px.
@@ -307,8 +307,8 @@ A code field (flex, 10px 12px padding) with a Copy button (plate, 1.5px edge rin
 ### Section marker
 A 44 by 38px end-grain log round (procedural webp) above each section's h2 and each guide page title. It is the only thing that sits above a heading.
 
-### The Saw (signature)
-The hero figure: a procedural end-grain log round (webp) with a two-person crosscut saw behind it, so only the toothed blade ends and the orange (host) and blue (guest) handles show. The blade group slides 24px each way on a 3.2s cubic-bezier(.45, 0, .55, 1) loop and six sawdust flecks fall and fade on the same beat. Both animations exist only under prefers-reduced-motion: no-preference; reduced motion also turns off every transition and smooth scrolling. The header mark and favicon are the same idea at 64 units: pine round, bark rim, pine-deep rings, steel blade, orange and blue handles.
+### The Shared Colony (signature)
+The hero figure, an inline SVG (`svg.coop-map`): one colony seen from above on a moss ground with a faint tile grid, a river, fields, trees, pine-coloured buildings with bark roofs, pine-deep paths and a district center with a red flag. The host's orange cursor, tagged with its player's name, has a house selected (dashed orange outline); a friend's blue cursor lays a new path (dashed blue). A small connection panel in the corner lists both players by their colour dots, with a green *In sync* check. The friend's cursor moves 40px down the path on a 4.8s cubic-bezier(.45, 0, .55, 1) loop, only under prefers-reduced-motion: no-preference; reduced motion also turns off every transition and smooth scrolling. The header mark and favicon stay a log round with a saw across it: pine round, bark rim, pine-deep rings, steel blade, orange and blue handles.
 
 ## Do's and Don'ts
 
