@@ -5,9 +5,71 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.1.15
+
+The current release: bug fixes on top of 1.1.14, and no new features. Each was fixed in BeaverBuddies MultiColony
+first and is taken from there, with anything about separate colonies left out. Four more game methods are shared (the
+panel controls below), so every player must install this build (the join check refuses a different one). Nothing saved
+in the game changes.
+
+**Not played yet.** Everything below is covered by automated checks, and most of the new ones fail against 1.1.14's
+build, so they test the fixes, but none of it has been played, and neither has 1.1.14. 1.1.13, which was played, stays
+on the releases page.
+
+### Desyncs
+
+- **Joining closes before the first tick is sent.** The host stopped accepting guests at the end of the first tick,
+  after that tick's actions had already gone out. A guest admitted in that moment loaded the save from before the tick
+  and was never sent it. Joining now closes as the first tick starts (`ReplayService.DoTick`), before the heartbeat is
+  queued and before anything of the tick is sent.
+- **Four panel controls are shared.** They changed the game on the clicking player's computer only: the flow-rate
+  slider every pump has in Timberborn 1.1 (`WaterMover.SetFlowRate`), the throttling valve's limit on/off
+  (`SetOutflowLimitEnabledAndSynchronize`, which the valve's slider switches off at its top end and on below it; only
+  the limit itself was shared), and the dev power generator's strength and flip, which anyone can use once it stands,
+  without dev mode. They are now in `AutomationEvent`'s list and played for everyone on the same tick.
+- **Detailed logging switched on mid-session.** Turning **Always Use Detailed Logging** on at tick N made N empty ticks
+  of traces at once; the host sent them all, and a guest with logging on read the mismatch as a desync, which stopped
+  the session. The traces now start at the current tick. They are also capped at 128 ticks: a guest whose host logs
+  nothing, and single player with logging on, used to keep a stack trace per trace for every tick of the session.
+  Nothing is traced outside a session, and "VerifyTraces called not in debug mode" is logged once instead of every tick.
+
+### A session that goes on
+
+- **Unlocks are checked when they are played.** The game's unlock pays without asking whether the building is already
+  unlocked, and throws when the science is not there. So two players unlocking the same building at once paid twice,
+  and science spent between the click and the tick threw in the replay, which stopped the session for everyone. The
+  replay now skips a building already unlocked (except the HTTP Lever and Adapter, which each player's profile
+  remembers) and one the science no longer covers, the same on every computer. A bot unlock already skipped a repeat,
+  and now skips one the science no longer covers too.
+- **A guest that cannot read the host's action leaves, and the others play on.** A guest that received an action it
+  could not read (most likely from a mod only the host runs) stopped the session for everyone. It now leaves by
+  itself, as a guest lacking a building does since 1.1.14 (`ClientEventIO.LeftOverUnreadableAction`): nothing of the
+  action was played there, it is told how to play together again, and the host and the other players play on.
+
+### Network
+
+- **The Steam callbacks let go of old scenes.** They were disposed at each scene but never removed, and each still held
+  its scene's panels and event bus, so every main menu and game loaded in a run stayed in memory.
+- **A direct connection that never connected is closed.** After a connect timeout the socket stayed open and its
+  connect went on in the background (`TCPClientWrapper.Close`).
+- **A new hosted session starts at a speed boost of 0.** The boost was reset only once the host's game had loaded, and
+  a guest whose start message was built before that (after **Save and Rehost**, or hosting again in the same run) was
+  told the last session's boost and ran faster than the host until someone changed it. Hosting now resets it before
+  it listens for guests.
+
+### Validation
+
+- `StabilityTests`: **276** passed (2 new: closing a direct socket that never connected, and hosting resetting the
+  speed boost before it listens).
+- `RuntimeChecks`: **185** passed against each of the Steam and non-Steam builds (9 new, and the unreadable-frame check
+  extended). 7 of the 9, and the extended check, fail against 1.1.14's build; the other two are guards for a game
+  update (every method `AutomationEvent` shares is found in the game, and the game's simulation never calls the four
+  newly shared ones).
+- 3 Python checks pass. Both builds compile with no warnings.
+
 ## 1.1.14
 
-The current release: bug fixes on top of 1.1.13, and no new features. They come from a review of BeaverBuddies
+Bug fixes on top of 1.1.13, and no new features. They come from a review of BeaverBuddies
 MultiColony 1.4.0-beta11, whose shared-colony code is this fork's; each fix was made there first (MultiColony
 1.4.0-beta12) and is the same here unless it says otherwise. The heartbeat and the Wonder activation carry a new field,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.

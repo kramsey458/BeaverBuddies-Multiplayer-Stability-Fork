@@ -64,8 +64,8 @@ the binder, so the event hash does not change. Actions from another mod's assemb
 (standing in for MixedStorage's `StorageAllocationEvent`) pass, with the classes they declare. A frame
 that cannot be read (a refused type, an action from a mod that is not installed, no type at all, or a
 group of actions holding an empty entry or another group) is fed to the real guest and host event
-IO: the guest stops the session with a reason naming the type and its assembly and plays nothing
-more of that tick, and the host logs it, keeps the guest's other actions and carries on.
+IO: the guest stops with a reason naming the type and its assembly, plays nothing more of that tick
+and leaves quietly (the host and the other guests play on), and the host logs it, keeps the guest's other actions and carries on.
 
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
@@ -90,7 +90,11 @@ RuntimeChecks also runs the Wonders' timing (1.1.14, PR #46 reworked, `BeaverBud
 - From the game's IL: planes are only spawned from the two frame updates the tick takes over.
 
 `ReviewFixChecks` covers 1.1.14's other fixes against the compiled mod: saves, deletions, levers, random sources,
-buildings from other mods, and pacing and Steam wiring.
+buildings from other mods, and pacing and Steam wiring. `BackportChecks` covers 1.1.15's, taken from
+BeaverBuddies MultiColony: the four newly shared panel controls (the game's panels call them, each is shared, and
+the game's simulation never calls them), unlocks checked when played, the detailed-logging trace cap and the Steam
+callbacks let go; `JoinClosingChecks` checks that the first tick closes joining before anything of it is sent.
+StabilityTests checks that a direct socket that never connected is closed, and that hosting resets the speed boost.
 
 The mod's Harmony prefixes follow one rule for their priority. A prefix that replaces the
 game's method (returns false to skip it) carries `[HarmonyPriority(Priority.Last)]`, so
