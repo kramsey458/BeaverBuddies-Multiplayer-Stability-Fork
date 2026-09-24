@@ -7,7 +7,7 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 ## Standing rules
 
 - Never launch or drive Timberborn, and never touch installed mods or saves. The maintainer (Kyler) playtests himself.
-- Commit on a branch and open a PR. Merge only when Kyler says so in the chat.
+- Commit on a branch and open a PR. Kyler has said to merge PRs automatically: merge, then check the page live.
 - The fork is **feature-complete**: fixes and new Timberborn versions only. New features go into BeaverBuddies
   MultiColony (https://github.com/timbermods/BeaverBuddies-MultiColony); point there, never sell against it.
 - Assume fresh games: no old-save compatibility notes. Keep thomaswp's credit and the GPL everywhere.
@@ -30,6 +30,11 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
   `docs/assets/`. No 404 page. Live at https://timbermods.github.io/BeaverBuddies-Stability-Fork/.
 - **Published:** GitHub Pages ("legacy" build) serves `main:/docs`, so merging to main publishes in about a minute.
   `docs/.nojekyll` must stay. No build step: plain HTML, CSS, a little vanilla JS.
+- **Latest releases update themselves:** when a release becomes GitHub's Latest, `.github/workflows/latest-release.yml`
+  (the shared timbermods workflow) appends the standard footer to its notes, sets the site's
+  `data-release="version|tag|asset-name"` fallback text and the README lines ending in `<!-- latest -->` to the new
+  version, runs the site checks and commits to main. Pre-releases change nothing. Descriptions, status lists and FAQs
+  stay manual (the checklist below). Dry run: Actions → Latest release → Run workflow.
 - **Look:** "The Crosscut Saw Team". A two-person crosscut saw laid across a fresh-cut log round at dusk: two sawyers
   on one blade, out of step the saw binds. Dark only, blued steel. The look is fixed: updates extend it, never restyle.
 - **Design records (read these before any site change):**
