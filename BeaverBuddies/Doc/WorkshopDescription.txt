@@ -1,27 +1,25 @@
-Beaver Buddies is a Timberborn mod that adds multiplayer co-op!
+Multiplayer co-op for Timberborn: build one colony together in real time, with Steam friend invites, an in-game connection panel and a long list of crash and desync fixes.
 
-If you're already sold, dive right into our [url=https://github.com/thomaswp/BeaverBuddies/wiki/Installation-and-Running]installation and troubleshooting guide[/url]. Or [url=https://discord.com/channels/558398674389172225/1203786573142032445]join us on Discord[/url] (first you must join the [url=https://discord.com/invite/timberborn]Tiberborn Discord[/url])!
+[b]Guides:[/b] [url=https://timbermods.github.io/BeaverBuddies-Stability-Fork/install.html]install[/url] · [url=https://timbermods.github.io/BeaverBuddies-Stability-Fork/troubleshooting.html]troubleshooting[/url] · [url=https://timbermods.github.io/BeaverBuddies-Stability-Fork/]website[/url]
 
-
-Features
+[b]What you get[/b]
 [list]
-[*] Players work together to build a Beaver civilization.
-[*] Players work on the same map in real-time, but each player has their own camera and user interface.
-[*] The multiplayer works similar to co-op games like Stardew Valley, Factorio, Dungeons 3, and Parkitect.
-[*] All resources and abilities are shared among players, but players who want more independence can use a multi-start map (below). 
-[*] Each player can start with their own district! Download a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3372147096]multiplayer map[/url] or create your own in the map editor.
-[*] Host and connect from in-game menus.
+[*] One shared colony, each player with their own camera. Multi-start maps give each player a start.
+[*] Steam invites from the overlay, with no port forwarding. Direct IP works too.
+[*] A connection panel with each player's ping, sync status and chat.
+[*] Teammates' cursors, and map pings.
+[*] Fixes for water, animation, random numbers, saving, demolition, Wonders, input and the network.
 [/list]
 
+[b]Before you play[/b]
+[list]
+[*] Requires Harmony and Mod Settings, and Timberborn 1.1.2.4.
+[*] Every player needs the same version of this mod.
+[*] Enable only one BeaverBuddies: this fork, the original, or Timber Together.
+[*] Play on a copy of your save. A desync can still happen.
+[/list]
 
-[b]Note[/b]: BeaverBuddies is still undergoing heavy testing and improvement. You may experience desyncs or game crashes. The mod may not work on the most complex saves yet. It also may not work on all systems equally well. You can help improve the mod by playing and reporting any bugs you find.
- 
-Want to learn more? Have an issue to report?
+[b]Found a problem?[/b] Send every player's Player.log to [url=https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues]this fork's issues[/url], not to the original project. The [url=https://timbermods.github.io/BeaverBuddies-Stability-Fork/troubleshooting.html]troubleshooting guide[/url] says where the log is.
 
-Check out the [url=https://github.com/thomaswp/BeaverBuddies/wiki]documentation[/url] with answer to common questions.  
-
-To report a desync:
-1) When the desync alert pops up, enable detailed logging and rehost/reconnect.
-2) If it happens again, use the "Post Bug Report" option to automatically upload a detailed report that will help us fix your issue!
-
-If you encounter a crash or other issue that requires more information, [url=https://github.com/thomaswp/BeaverBuddies/issues]report bugs you find here[/url].
+[b]Credits[/b]
+An independent fork of [url=https://github.com/thomaswp/BeaverBuddies]BeaverBuddies[/url], the original multiplayer mod by thomaswp and contributors. Free software under the GPL-3.0; the source is at https://github.com/timbermods/BeaverBuddies-Stability-Fork. An unofficial community mod, not affiliated with or endorsed by Mechanistry or by the authors of BeaverBuddies.
