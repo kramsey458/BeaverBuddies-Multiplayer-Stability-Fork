@@ -65,9 +65,9 @@ Success, in order:
 
 ## Operating Context
 
-- **Current release: 1.1.14** (tag `v1.1.14`, 2026-09-22), a full release marked **Latest** on GitHub, not a
-  pre-release. It has no new features: it fixes what a review of MultiColony's shared-colony code found. **1.1.13 was
-  the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
+- **Current release: 1.1.15** (tag `v1.1.15`, 2026-09-23), a full release marked **Latest** on GitHub, not a
+  pre-release. It has no new features: bug fixes taken from MultiColony, on top of 1.1.14's fixes from a review of
+  MultiColony's shared-colony code. **1.1.13 was the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
   for bugs, and new features go into MultiColony.
 - **Game:** built and tested against Timberborn **1.1.2.4**; the manifest requires at least 1.1.0.0. Tested only on
   **Windows with the Steam version**, with **two players**. Other stores, macOS, Linux and larger groups are untested.
@@ -81,7 +81,7 @@ Success, in order:
     end up as `Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json`.
   - Enable **BeaverBuddies - Stability Fork** in the mod list.
   - Unsubscribe from or remove the Workshop BeaverBuddies and any other copy. They share the mod ID `beaverbuddies`.
-  - Check it loaded: the main menu has **Join co-op game**, and `Player.log` contains `BeaverBuddies v1.1.14 is loaded!`.
+  - Check it loaded: the main menu has **Join co-op game**, and `Player.log` contains `BeaverBuddies v1.1.15 is loaded!`.
   - Updating: everyone updates together; there is no automatic update.
   - Upgrade fact to keep: delete an old `BeaverBuddies-StabilityPreview` folder from an earlier download.
 - **What players meet in game** (names exactly as in the game):
@@ -129,7 +129,7 @@ Success, in order:
 - **Every page loads `assets/release.js`** with the same attributes. `data-repo` is
   `timbermods/BeaverBuddies-Stability-Fork` and `data-asset` is `^BeaverBuddies-Stability-Fork-[\d.]+\.zip$`.
 - **The HTML always holds working values**: buttons and links to `/releases/latest`, and the version last written by
-  hand (`1.1.14`). `release.js` then replaces `data-release="version" | "tag" | "asset-name"`. The page must still
+  hand (`1.1.15`). `release.js` then replaces `data-release="version" | "tag" | "asset-name"`. The page must still
   work with no script, no network or a rate-limited GitHub API. Link to `/releases/latest` (this repo has a real
   Latest release), never to a fixed tag.
 - **`data-release-pinned="<version>"`** marks text written for one version. `release.js` adds a "written for X, the
@@ -158,15 +158,17 @@ Success, in order:
   desyncs recorded. The 1.1.11 color change was played and works. The maintainer played 1.1.13 (which includes
   1.1.12's changes) and reports it stable and working; the situations the 1.1.12 fixes target were not set up on
   purpose.
-- **1.1.14 has not been played.** Its fixes are covered by automated checks (453 pass: 274 StabilityTests, 176
-  RuntimeChecks, 3 Python; 30 of the new checks fail against 1.1.13's build). 1.1.13 stays on the releases page for
-  anyone who would rather wait.
+- **1.1.14 and 1.1.15 have not been played.** Their fixes are covered by automated checks (464 pass: 276
+  StabilityTests, 185 RuntimeChecks, 3 Python; most of each release's new checks fail against the build before it).
+  1.1.13 stays on the releases page for anyone who would rather wait.
 - Confirmed in play: Steam invites, the water frame-rate fix (the "badtide" desync), the animation crash, the low ping
   at a true speed 7, the controls working after a disconnect, the panel and chat colors, player activity, the speed
   boost and own chat color, the large colony speed limit (played in 1.0.8).
 - Tested only: the current Ease off rule, the demolition-selection fix, the Wonder timing, the fuller desync check,
   the network reader, the direct-guest send lanes, planting across layer views, Tick once off in co-op, dev mode's
-  Ctrl keys, joining closing on the first action.
+  Ctrl keys, joining closing on the first action and before the first tick is sent, the shared pump, valve and dev
+  generator controls, unlocks checked when played, the detailed-logging trace cap, a guest leaving over an unreadable
+  action while the others play on.
 - **Sources of truth:** `README.md`, `STABILITY-CHANGELOG.md`, `CONNECTION-PANEL.md`, `STEAM-INVITES.md`,
   `PLAYER-ACTIVITY.md`, the in-game strings (`BeaverBuddies/Localizations/enUS_BeaverBuddie.csv`) and the release
   notes. Where the site and these disagree, flag it; don't guess.
@@ -199,8 +201,8 @@ Success, in order:
   with Update 7 Support!" (the latter is out of date). `logo.jpg` is the wordmark over an illustration of three
   beavers on a raft. `IconBG.png` and `Icon.pdn` are the icon sources. The release zip also carries a `thumbnail.png`.
 - Written evidence the site can cite: the playtest record (1.1.10 for over an hour over Steam invites in 300+
-  colonies; the ping under 100 ms at a true speed 7, down from 200–300 ms; the badtide desync resolved), the 453
-  automated checks, and the diff since the original (180 files, about 26,200 lines, by 1.1.14).
+  colonies; the ping under 100 ms at a true speed 7, down from 200–300 ms; the badtide desync resolved), the 464
+  automated checks, and the diff since the original (196 files, about 28,100 lines, by 1.1.15).
 - **Does not exist, and must not be faked:**
   - Screenshots of player cursors or Viewing / Editing labels, the Player cursors dialog, the speed boost row, Mod
     Settings, the mod-list warning or a desync dialog.

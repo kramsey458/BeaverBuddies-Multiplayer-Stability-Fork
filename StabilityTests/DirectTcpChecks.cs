@@ -84,6 +84,16 @@ static class DirectTcpChecks
             }
             finally { guest.Close(); accepted?.Close(); listener.Stop(); }
         });
+        yield return ("Direct TCP: a socket that never connected is still closed with its wrapper", () =>
+        {
+            // A socket that never connected (a connect that timed out, say) has no stream: closing the wrapper still
+            // closes the socket, or its pending connect would go on in the background.
+            var wrapper = new TCPClientWrapper("127.0.0.1", 9);
+            var inner = (TcpClient)typeof(TCPClientWrapper)
+                .GetField("client", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(wrapper)!;
+            wrapper.Close();
+            Check(inner.Client == null, "a never-connected socket is left open when its wrapper is closed");
+        });
         yield return ("A gameplay frame of many chunks is written without sleeping on the sending thread", () =>
         {
             // One byte a second: pacing this frame would sleep 1024 s between each two of its chunks.

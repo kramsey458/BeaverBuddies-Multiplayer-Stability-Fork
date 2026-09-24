@@ -133,6 +133,8 @@ namespace BeaverBuddies
         // thread (see InitializeClientEvent.Create). A new session starts at 0.
         private static volatile float sessionBoost;
         public static float SessionBoost => sessionBoost;
+        /// <summary>The host starts a new session (ServerEventIO), before its game exists.</summary>
+        internal static void ResetSessionBoost() => sessionBoost = 0;
         public bool IsDesynced { get; private set; } = false;
         public static bool HasReplayFailure { get; private set; }
 
@@ -845,6 +847,13 @@ namespace BeaverBuddies
             }
 
             ticksSinceLoad++;
+            // Joining closes as the first tick starts, before anything of it is sent: a guest admitted after its events
+            // went out would load the tick-0 save and never be sent them. (TimberServer re-checks under the lock every
+            // broadcast takes, so a guest is either queued before this tick's events or refused.)
+            if (io is ServerEventIO starting && ticksSinceLoad == 1)
+            {
+                starting.StopAcceptingClients();
+            }
 
             if (io.ShouldSendHeartbeat)
             {
@@ -875,11 +884,6 @@ namespace BeaverBuddies
 
             // Update speed and pause if needed for the new tick.
             UpdateSpeed();
-
-            if (io is ServerEventIO && ticksSinceLoad == 1)
-            {
-                ((ServerEventIO)io).StopAcceptingClients();
-            }
         }
 
         public void FinishFullTickIfNeededAndThen(Action action)

@@ -115,6 +115,7 @@ JoinClosingChecks.Run(assembly, Test);
 DesyncCheckChecks.Run(assembly, Test);
 DesyncDialogChecks.Run(assembly, Test);
 ReviewFixChecks.Run(assembly, Test);
+BackportChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

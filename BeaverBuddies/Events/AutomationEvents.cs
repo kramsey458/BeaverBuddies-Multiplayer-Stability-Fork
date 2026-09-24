@@ -9,6 +9,7 @@ using Timberborn.AutomationBuildingsUI;
 using Timberborn.AutomationUI;
 using Timberborn.BaseComponentSystem;
 using Timberborn.FireworkSystem;
+using Timberborn.PowerGeneration;
 using Timberborn.PowerManagement;
 using Timberborn.WaterBuildings;
 using Timberborn.WaterSourceSystem;
@@ -180,6 +181,9 @@ namespace BeaverBuddies.Events
                 (typeof(FillValve), nameof(FillValve.SetAutomationTargetHeightEnabledAndSynchronize)),
                 (typeof(FillValve), nameof(FillValve.ToggleSynchronization)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetOutflowLimitAndSynchronize)),
+                // The outflow slider sets this first (off at its top end, on below it), then the limit: with only the
+                // limit shared, the valve limited the flow on the dragging player's computer alone.
+                (typeof(ThrottlingValve), nameof(ThrottlingValve.SetOutflowLimitEnabledAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetReactionSpeedAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetAutomationOutflowLimitAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetAutomationOutflowLimitEnabledAndSynchronize)),
@@ -190,6 +194,13 @@ namespace BeaverBuddies.Events
                 (typeof(WaterInputPipeCoordinates), nameof(WaterInputPipeCoordinates.SetDepthLimit)),
                 (typeof(WaterInputPipeCoordinates), nameof(WaterInputPipeCoordinates.DisableDepthLimit)),
                 (typeof(Clutch), nameof(Clutch.SetMode)),
+                // A water mover's flow rate: the slider on every pump (Timberborn 1.1, WaterMoverFragment). The pump
+                // moves that much water every tick; unshared, it did so on the dragging player's computer alone.
+                (typeof(WaterMover), nameof(WaterMover.SetFlowRate)),
+                // The dev power generator is placed with dev mode, but once it stands anyone can drag its strength or
+                // flip it, dev mode off (so without dev mode's co-op warning). Both change the power network.
+                (typeof(AdjustableStrengthPowerGenerator), "set_" + nameof(AdjustableStrengthPowerGenerator.GeneratorStrength)),
+                (typeof(AdjustableStrengthPowerGenerator), nameof(AdjustableStrengthPowerGenerator.FlipRotation)),
 
             ];
             var methodsToPatch = methodsToPatchInfo.Select(

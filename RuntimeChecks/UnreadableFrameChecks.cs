@@ -143,6 +143,36 @@ internal static class UnreadableFrameChecks
                     if (!faults[0].Contains(name)) throw new Exception($"With {bad.Kind}, the reason does not name {name}: {faults[0]}");
                 if (!log.Any(line => line.StartsWith("LogError"))) throw new Exception($"With {bad.Kind}, no error was logged");
             }
+            // It leaves as if it had quit (ReplayService.AbortReplay, leaveQuietly): the host and the others play on, since
+            // nothing went wrong for them. A guest that read everything has not left.
+            PropertyInfo left = clientIOType.GetProperty("LeftOverUnreadableAction")
+                ?? throw new Exception("A guest does not say it left over an action it could not read");
+            Logged(() =>
+            {
+                var (readIO, _, _) = Received(true, Readable());
+                Read(readIO);
+                if ((bool)left.GetValue(readIO)) throw new Exception("A guest that read every frame says it left over one");
+                var (badIO, _, _) = Received(true, unreadable[0].Make());
+                Read(badIO);
+                if (!(bool)left.GetValue(badIO)) throw new Exception("A guest that could not read a frame does not say it left over it");
+            });
+            // The guest's fault handler passes that on, and a quiet leave closes the connection: only a real failure sends
+            // the host the fault that stops everyone (AbortSession).
+            List<MethodBase> Calls(MethodBase method) =>
+                IlScan.Instructions(method).Where(i => i.Calls && i.Member is MethodBase).Select(i => (MethodBase)i.Member).ToList();
+            const BindingFlags declared = all | BindingFlags.DeclaredOnly;
+            var handlers = new[] { clientIOType }.Concat(clientIOType.GetNestedTypes(all))
+                .SelectMany(t => t.GetMethods(declared))
+                .Where(m => m.GetMethodBody() != null && Calls(m).Any(c => c.Name == "AbortReplay"))
+                .ToList();
+            if (handlers.Count != 1 || !Calls(handlers[0]).Any(c => c.Name == "get_LeftOverUnreadableAction")
+                || Calls(handlers[0]).Single(c => c.Name == "AbortReplay").GetParameters().Length != 2)
+                throw new Exception("The guest's fault handler no longer says whether it left over an unreadable action");
+            var abort = mod.GetType("BeaverBuddies.ReplayService", true).GetMethod("AbortReplay", all, new[] { typeof(string), typeof(bool) })
+                ?? throw new Exception("ReplayService.AbortReplay(string, bool) is gone");
+            var abortCalls = Calls(abort).Select(c => c.Name).ToList();
+            if (!abortCalls.Contains("Close") || abortCalls.Count(n => n == "AbortSession") != 2)
+                throw new Exception("AbortReplay no longer closes quietly for a guest that left: " + string.Join(", ", abortCalls));
         });
 
         test("A host ignores a guest's frame it cannot read, keeps the rest and logs which type", () =>

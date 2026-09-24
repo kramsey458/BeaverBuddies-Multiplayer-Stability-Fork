@@ -38,7 +38,7 @@ namespace BeaverBuddies.IO
                 CompatibilityAdvisory = ModCompatibility.CreateAdvisory(),
             };
             NetBase.DetailedLoggingEnabled = () => Settings.Debug && Settings.VerboseLogging;
-            NetBase.OnSessionFault += reason => SingletonManager.GetSingleton<ReplayService>()?.AbortReplay(reason);
+            NetBase.OnSessionFault += reason => SingletonManager.GetSingleton<ReplayService>()?.AbortReplay(reason, leaveQuietly: LeftOverUnreadableAction);
             NetBase.OnMapReceived += OnMapReceivedByNet;
             ModWarnings.Clear();
             NetBase.OnPeerAdvisory += ModCompatibility.OnPeerAdvisory;
@@ -57,12 +57,19 @@ namespace BeaverBuddies.IO
             }
         }
 
+        /// <summary>
+        /// This guest stopped because it could not read an action from the host. Nothing of it was played here, and the
+        /// host's game is whole: this guest leaves, as if it had quit, and the host and the other players play on.
+        /// </summary>
+        public bool LeftOverUnreadableAction { get; private set; }
+
         // Everything a guest plays comes from the host, which has already played it, so an action this game cannot
-        // read leaves it behind the host's for good. The session stops the way it does when an action fails, and
-        // nothing more of that tick is played.
+        // read leaves it behind the host's for good. This game stops, and nothing more of that tick is played; the
+        // others are not stopped (ReplayService.AbortReplay with leaveQuietly), since nothing went wrong for them.
         protected override bool HandleUnreadableFrame(string problem)
         {
             Plugin.LogError("Could not read an action from the host: " + problem);
+            LeftOverUnreadableAction = true;
             NetBase?.RaiseSessionFault("An action from the host could not be read, so this game would no longer " +
                 "match the host's. " + problem);
             return false;

@@ -9,13 +9,15 @@ static class SpeedBoostChecks
     static void Equal<T>(T expected, T actual) =>
         Check(EqualityComparer<T>.Default.Equals(expected, actual), $"expected {expected}, got {actual}");
 
-    static string EnglishFile()
+    static string Source(params string[] path)
     {
         string root = AppContext.BaseDirectory;
         while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root)!;
         Check(root != null, "could not find the repository root");
-        return File.ReadAllText(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv"));
+        return File.ReadAllText(Path.Combine(new[] { root! }.Concat(path).ToArray()));
     }
+
+    static string EnglishFile() => Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv");
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
@@ -129,6 +131,19 @@ static class SpeedBoostChecks
             // The caption shares the labels' 92-unit column (see PanelLayoutChecks): about 14 letters.
             string caption = Regex.Match(csv, "^BeaverBuddies\\.Chat\\.Boost,\"([^\"]+)\"", RegexOptions.Multiline).Groups[1].Value;
             Check(caption.Length <= 14, "caption too long for its column: " + caption);
+        });
+        yield return ("Speed boost: a new hosted session starts at 0 before a guest's start message can be built", () =>
+        {
+            // A guest's start message (InitializeClientEvent) reads ReplayService.SessionBoost on the network thread as it
+            // joins, which can be before the host's game has loaded and ReplayService's constructor has set it to 0.
+            Check(Source("BeaverBuddies", "ReplayService.cs").Contains("internal static void ResetSessionBoost() => sessionBoost = 0;"),
+                "ReplayService cannot reset the session's boost");
+            string server = Source("BeaverBuddies", "IO", "ServerEventIO.cs");
+            int start = server.IndexOf("public void Start(byte[] mapBytes)", StringComparison.Ordinal);
+            Check(start > 0, "ServerEventIO.Start changed shape");
+            int reset = server.IndexOf("ReplayService.ResetSessionBoost();", start, StringComparison.Ordinal);
+            int listen = server.IndexOf("new TCPListenerWrapper(", start, StringComparison.Ordinal);
+            Check(reset > 0 && listen > 0 && reset < listen, "the host listens for guests before the last session's boost is reset");
         });
     }
 }

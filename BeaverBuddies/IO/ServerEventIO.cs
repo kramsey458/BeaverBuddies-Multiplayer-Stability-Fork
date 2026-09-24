@@ -40,6 +40,9 @@ namespace BeaverBuddies.IO
         // We only support a static map; see note above
         public void Start(byte[] mapBytes)
         {
+            // A new session's boost is 0 (ReplayService's constructor says so too, but only once the host's game loads:
+            // a guest whose start message is built before that got the last session's).
+            ReplayService.ResetSessionBoost();
             try
             {
                 List<ISocketListener> listeners = [

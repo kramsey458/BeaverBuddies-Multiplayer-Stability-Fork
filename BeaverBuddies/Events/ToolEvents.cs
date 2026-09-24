@@ -436,7 +436,22 @@ namespace BeaverBuddies.Events
         {
             var building = GetBuilding(context, buildingName);
             if (building == null) return;
-            context.GetSingleton<BuildingUnlockingService>().Unlock(building);
+            var unlocking = context.GetSingleton<BuildingUnlockingService>();
+            // Two players unlocking the same building at once must not pay twice. The game's set is the same on every computer
+            // but for the buildings each player's profile remembers (UnlockableOnceSpec: the HTTP Lever and Adapter).
+            if (!building.HasSpec<UnlockableOnceSpec>() && unlocking.Unlocked(building))
+            {
+                Plugin.Log($"Already unlocked: {buildingName}");
+                return;
+            }
+            if (!unlocking.Unlockable(building))
+            {
+                // Science was spent elsewhere between the click and now. The game would throw here, which would
+                // stop the session; the same answer on every computer is to skip it.
+                Plugin.LogWarning($"Not enough science to unlock {buildingName} any more; skipped");
+                return;
+            }
+            unlocking.Unlock(building);
 
             var toolButtonService = context.GetSingleton<ToolButtonService>();
             var toolUnlockingService = toolButtonService._toolUnlockingService;

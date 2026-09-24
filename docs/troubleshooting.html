@@ -77,7 +77,7 @@
             <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
             <li>Enable <b>BeaverBuddies - Stability Fork</b> in the mod manager and restart the game.</li>
             <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions will not run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v<span data-release="version">1.1.14</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v<span data-release="version">1.1.15</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
@@ -114,7 +114,7 @@
         <summary>A warning says my mods and the other player's mods are not the same</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning and nobody is stopped from playing, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions (MixedStorage, for example) goes further: a guest without it is stopped at the first such action the host sends, with a message naming the mod.</p>
+          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning and nobody is stopped from playing, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions (MixedStorage, for example) goes further: a guest without it leaves the game at the first such action the host sends, with a message naming the mod (see <a href="#left">below</a>), and the others play on.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Read which mods are listed: "Only on your computer", "Only on &hellip;'s computer" and "Different versions".</li>
@@ -224,12 +224,25 @@
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session. If the message says an action from the host could not be read, the guest is most likely missing a mod the host has (see <a href="#mods-differ">the mod warning</a>): install the same mods on both computers.</p>
+          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
             <li><b>Do not overwrite your good save</b> with the session that stopped.</li>
             <li>If it repeats with the same action, <a href="#logs">collect the logs</a> and say what you were doing.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="q" id="left">
+        <summary>"&hellip;you have left the game, and the host and the other players play on"</summary>
+        <div class="answer">
+          <p class="sub">Why</p>
+          <p>Your game met something from the host that it doesn't have: an action it can't read, or a building it doesn't know. That almost always means a mod the host has and you don't (see <a href="#mods-differ">the mod warning</a>), and the message names it. Nothing of that action was played on your computer, so no save is harmed, but your game can no longer keep up with the host's, so it left the session. The host and the other players carry on.</p>
+          <p class="sub">Try this</p>
+          <ol>
+            <li>Install and enable the mod the message names, at the host's version, or ask the host to stop using it.</li>
+            <li>The host chooses <b>Save and Rehost</b>, and you join again.</li>
           </ol>
         </div>
       </details>

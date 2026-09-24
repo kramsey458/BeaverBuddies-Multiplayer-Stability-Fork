@@ -11,12 +11,12 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 - The fork is **feature-complete**: fixes and new Timberborn versions only. New features go into BeaverBuddies
   MultiColony (https://github.com/timbermods/BeaverBuddies-MultiColony); point there, never sell against it.
 - Assume fresh games: no old-save compatibility notes. Keep thomaswp's credit and the GPL everywhere.
-- Mod tests, as `.github/workflows/tests.yml` runs them (.NET 8; 274/274 pass):
+- Mod tests, as `.github/workflows/tests.yml` runs them (.NET 8; 276/276 pass):
   `dotnet restore StabilityTests/StabilityTests.csproj --source https://api.nuget.org/v3/index.json`, then
   `dotnet run --project StabilityTests --no-restore`. Python checks: `python -m unittest discover -s RuntimeChecks -p
   "test_water_snapshots.py"` and `python RuntimeChecks/compare_walker_traces.py --self-test`. RuntimeChecks needs a
   local game install; see `StabilityTests/README.md`.
-- Release (no script; how 1.1.13 and 1.1.14 were cut): bump `<Version>` in `BeaverBuddies/BeaverBuddies.csproj` and
+- Release (no script; how 1.1.13 to 1.1.15 were cut): bump `<Version>` in `BeaverBuddies/BeaverBuddies.csproj` and
   `BeaverBuddies/manifest.json`; add `## X` on top of `STABILITY-CHANGELOG.md`; update the README status note, install
   lines and check counts; update the site (below). PR → CI green → merge → annotated tag `vX` on the **merge commit**
   ("BeaverBuddies Stability Fork X") → `gh release create vX --repo timbermods/BeaverBuddies-Stability-Fork
@@ -85,7 +85,7 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 - Describe the mod as it is now. No "New in", "added in <version>" or version history on player pages; that lives in
   `STABILITY-CHANGELOG.md` and the release notes. The one upgrade fact kept: delete an old
   `BeaverBuddies-StabilityPreview` folder.
-- Played/not-played status matches the README's status note exactly (e.g. "1.1.14 has not been played"; 1.1.13, the
+- Played/not-played status matches the README's status note exactly (e.g. "1.1.15 has not been played"; 1.1.13, the
   last feature release, was played and stays linked). Never invent numbers, reviews, player counts or screenshots.
   PRODUCT.md "Evidence on Hand" lists what does not exist.
 - Credits on every page footer: an independent fork of BeaverBuddies by thomaswp and contributors; maintained by
@@ -102,7 +102,7 @@ When asked to "update the website for the latest release, consistent with the de
 1. Read the release and the docs: `gh release view vX -R timbermods/BeaverBuddies-Stability-Fork`, README (status
    note at the top, Highlights, Testing), `STABILITY-CHANGELOG.md`, `CONNECTION-PANEL.md`, `STEAM-INVITES.md`,
    `PLAYER-ACTIVITY.md`, `BeaverBuddies/Localizations/enUS_BeaverBuddie.csv`. List every player-facing change.
-2. Update every place the site states a changed fact (`grep -rn "1\.1\.14" docs/` finds the version ones):
+2. Update every place the site states a changed fact (`grep -rn "1\.1\.15" docs/` finds the version ones):
    - Static fallbacks that `release.js` overwrites: `data-release="version"` (index hero + closing Download buttons,
      install Download button, SHA256SUMS line, mod-list and `BeaverBuddies vX is loaded!` lines, troubleshooting
      `#not-loading`), `data-release="asset-name"` (install: zip name twice). Download links keep
@@ -127,7 +127,7 @@ When asked to "update the website for the latest release, consistent with the de
    - `grep -Fc 'src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-Stability-Fork" data-asset="^BeaverBuddies-Stability-Fork-[\d.]+\.zip$"' docs/*.html` → 1 on each of the 4 pages.
    - `grep -rn "releases/tag/\|releases/download/" docs/` → nothing.
    - `for c in confirmed tested; do sed -n "/<div class=\"$c\">/,/<\/div>/p" docs/index.html | grep -o '<li>' | wc -l;
-     done` matches `grep -o 'Confirmed · [0-9]*\|Tested · [0-9]*' docs/index.html` (4 and 10 now).
+     done` matches `grep -o 'Confirmed · [0-9]*\|Tested · [0-9]*' docs/index.html` (4 and 12 now).
    - `curl -s https://timbermods.github.io/MixedStorage/assets/release.js | cmp - docs/assets/release.js` → no output.
    - `"$(ls -d ~/.claude/plugins/cache/impeccable/impeccable/*/skills/impeccable | tail -1)/scripts/impeccable" embed-prompt --scan docs` → 0 missing.
 5. Preview: `python -m http.server 8782 -d docs` (in the background), open http://localhost:8782/. Check the dark site
