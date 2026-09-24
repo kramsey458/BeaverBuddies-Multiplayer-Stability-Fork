@@ -50,7 +50,7 @@ These are **display-only, local choices**. They are never sent over the network,
 each player can style everyone else differently, and they cannot affect the
 simulation.
 
-Styles are remembered **by display name** (for example "Sarah"), so a friend keeps the
+Styles are remembered **by display name** (for example "Player 2"), so a friend keeps the
 same look next time even though their player number changes. If two connected players
 share a name, each is keyed by name plus player number so they can be styled
 separately. Styles are saved as you edit, to
