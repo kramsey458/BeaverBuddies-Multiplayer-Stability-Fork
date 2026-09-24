@@ -9,7 +9,7 @@ web
 ## Users
 
 Pairs (and small groups) of Timberborn players who want to build **one colony together** in real time. Mostly
-non-technical. Usually one person, the future host, finds the mod (through the timbermods org site, the MultiColony
+non-technical. Usually one person, the future host, finds the mod (through the timbermods org site, the Timber Together
 site, a friend, a forum or Discord post, or a search for "Timberborn multiplayer") and decides whether it is worth
 setting up. Then they send a link or the zip to a friend, who arrives cold and needs only the install steps. Many of
 them already know the original BeaverBuddies from the Steam Workshop and want to know what this fork does differently,
@@ -57,7 +57,7 @@ Success, in order:
   activity, the speed boost and the specific, documented stability fixes. The original's `v1.1` branch has not moved
   since the fork branched (commit `a13b1f2`, 24 August 2026). The two share a mod ID: never both at once, and a
   session can't mix them. All credit for the multiplayer design stays with the original.
-- **Versus BeaverBuddies MultiColony** (https://github.com/timbermods/BeaverBuddies-MultiColony, same maintainer): built
+- **Versus Timber Together** (https://github.com/timbermods/TimberTogether, same maintainer): built
   on this fork and includes everything it does. With separate colonies off it plays one shared colony, and it can also
   give each player a colony of their own. It is still in beta and gets the new features. The Stability Fork is the
   **stable, feature-complete** choice for a shared colony. Never enable both.
@@ -66,9 +66,9 @@ Success, in order:
 ## Operating Context
 
 - **Current release: 1.1.15** (tag `v1.1.15`, 2026-09-23), a full release marked **Latest** on GitHub, not a
-  pre-release. It has no new features: bug fixes taken from MultiColony, on top of 1.1.14's fixes from a review of
-  MultiColony's shared-colony code. **1.1.13 was the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
-  for bugs, and new features go into MultiColony.
+  pre-release. It has no new features: bug fixes taken from Timber Together, on top of 1.1.14's fixes from a review of
+  Timber Together's shared-colony code. **1.1.13 was the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
+  for bugs, and new features go into Timber Together.
 - **Game:** built and tested against Timberborn **1.1.2.4**; the manifest requires at least 1.1.0.0. Tested only on
   **Windows with the Steam version**, with **two players**. Other stores, macOS, Linux and larger groups are untested.
   Steam invites need the Steam version.
@@ -121,7 +121,7 @@ Success, in order:
 - GitHub Pages ("legacy" build) serves `main:/docs` at https://timbermods.github.io/BeaverBuddies-Stability-Fork/, and
   it goes live about a minute after a merge to `main`. `docs/.nojekyll` must stay.
 - Every change goes through a **PR → merge** on `main`; nothing is pushed straight to `main`. It is one of the
-  timbermods sites (MultiColony's and MixedStorage's are siblings) and must stay fast, light and mobile-friendly.
+  timbermods sites (Timber Together's and MixedStorage's are siblings) and must stay fast, light and mobile-friendly.
 
 **Site tests and CI: none check the site.** The only workflow, `.github/workflows/tests.yml` ("Stability tests"), runs
 `StabilityTests` (C#) on every push and PR. Nothing in `StabilityTests/`, `RuntimeChecks/` or the workflow reads
@@ -145,7 +145,7 @@ Success, in order:
 
 **Terminology** (exact, as in game and README):
 - The mod is **BeaverBuddies Stability Fork**; in the mod list it is **BeaverBuddies - Stability Fork**. The original
-  is **BeaverBuddies** (by thomaswp); the sibling is **BeaverBuddies MultiColony**.
+  is **BeaverBuddies** (by thomaswp); the sibling is **Timber Together**.
 - Players are the **host** and **guests**; the colony is **one shared colony**.
 - Use the in-game names: **Host co-op game, Invite Friends, Start Game, Join co-op game, Save and Rehost, Reconnect
   (wait for Rehost), connection panel, Ease off below, speed boost, Player cursors, You, in the chat, Player activity
@@ -214,7 +214,7 @@ Success, in order:
 
 1. **Same build, one BeaverBuddies.** Every page helps all players end up on the exact same download and game
    version, with the Workshop copy removed. Those steps are never buried.
-2. **Stable and finished, and says so.** This is the feature-complete choice for a shared colony. Point to MultiColony
+2. **Stable and finished, and says so.** This is the feature-complete choice for a shared colony. Point to Timber Together
    for new features without selling against this mod.
 3. **Confirmed or Tested, never blurred.** Each claim carries how it is known. Say plainly what has not been played,
    without scaring people off, and describe the mod as it is now; version history lives in the changelog.

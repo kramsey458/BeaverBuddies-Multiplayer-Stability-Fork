@@ -3,7 +3,7 @@ using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
 
-// 1.1.15's fixes, taken from BeaverBuddies MultiColony (whose shared-colony code is this fork's), against the compiled mod
+// 1.1.15's fixes, taken from Timber Together (whose shared-colony code is this fork's), against the compiled mod
 // and the installed game's assemblies: the panel controls that changed one computer's game are shared, an unlock is
 // checked when it is played, detailed-logging traces stay bounded, and the Steam callbacks let go of the scene they were
 // made in. (Joining closing before tick 1 is sent: JoinClosingChecks. A guest leaving over an action it cannot read:

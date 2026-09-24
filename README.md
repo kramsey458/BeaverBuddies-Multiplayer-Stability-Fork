@@ -10,7 +10,7 @@ Multiplayer co-op for Timberborn: build one colony together in real time, with *
 > [!NOTE]
 > **Stable and feature-complete.** 1.1.15 has been played and works. The fork still gets fixes and updates for new
 > Timberborn versions, but no new features: those go into
-> [BeaverBuddies MultiColony](https://github.com/timbermods/BeaverBuddies-MultiColony), which is built on this fork and
+> [Timber Together](https://github.com/timbermods/TimberTogether), which is built on this fork and
 > can also give each player a colony of their own. Install one or the other, never both.
 
 An independent fork of [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by thomaswp and contributors, the

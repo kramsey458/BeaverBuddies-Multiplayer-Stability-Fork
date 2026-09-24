@@ -104,7 +104,7 @@ internal static class WonderChecks
         });
 
         // PR #46's transpilers threw here, and a throw inside the mod's one PatchAll would stop the rest of its patching
-        // (the desync fixes included); that is why #46 was closed. As shipped in 1.1.14 (first in MultiColony 1.4.0-beta12)
+        // (the desync fixes included); that is why #46 was closed. As shipped in 1.1.14 (first in Timber Together 1.4.0-beta12)
         // they leave the body as the game has it, log once, and switch the whole Wonder takeover off
         // (WonderTiming.Unavailable), so the Wonders run on frame time as before.
         test("Wonder timing transpilers leave an incompatible body as it is and switch the Wonder timing off, without throwing", () =>

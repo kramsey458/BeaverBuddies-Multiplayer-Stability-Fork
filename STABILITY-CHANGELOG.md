@@ -7,7 +7,7 @@ entry above the current one.
 
 ## 1.1.15
 
-The current release: bug fixes on top of 1.1.14, and no new features. Each was fixed in BeaverBuddies MultiColony
+The current release: bug fixes on top of 1.1.14, and no new features. Each was fixed in Timber Together
 first and is taken from there, with anything about separate colonies left out. Four more game methods are shared (the
 panel controls below), so every player must install this build (the join check refuses a different one). Nothing saved
 in the game changes.
@@ -70,7 +70,7 @@ on the releases page.
 ## 1.1.14
 
 Bug fixes on top of 1.1.13, and no new features. They come from a review of BeaverBuddies
-MultiColony 1.4.0-beta11, whose shared-colony code is this fork's; each fix was made there first (MultiColony
+Timber Together 1.4.0-beta11, whose shared-colony code is this fork's; each fix was made there first (Timber Together
 1.4.0-beta12) and is the same here unless it says otherwise. The heartbeat and the Wonder activation carry a new field,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
 
@@ -111,7 +111,7 @@ build, so they test the fixes, but none of it has been played. 1.1.13, which was
 - **A building from a mod only one player has.** A guest placing or unlocking a building the host's game does not have
   is refused by the host, and the game goes on; it used to stop for everyone. A guest that lacks a building the host
   used leaves by itself, with a message naming the building and saying how to play together again, and the host and
-  the other players play on. MultiColony refuses the first through its colony rules; here the host's replay checks
+  the other players play on. Timber Together refuses the first through its colony rules; here the host's replay checks
   it (`ReplayService.NamesMissingBuilding`), and the guest's quiet leave is new to the fork.
 
 ### Behavior
@@ -163,7 +163,7 @@ build, so they test the fixes, but none of it has been played. 1.1.13, which was
 ## 1.1.13
 
 The final feature release: from here the fork gets updates for new Timberborn versions and
-bug fixes only, and new features go into BeaverBuddies MultiColony. On top of 1.1.12: two chat features taken from the BeaverBuddies MultiColony mod, a speed boost at
+bug fixes only, and new features go into Timber Together. On top of 1.1.12: two chat features taken from the Timber Together mod, a speed boost at
 the top of the chat and a color of your choice for your own name in the chat. The speed boost adds a network message,
 so every player must install this build (the join check refuses a different one). Nothing saved in the game changes.
 
