@@ -56,9 +56,9 @@
 
     <section id="first">
       <h2>Check these first</h2>
-      <p>Most multiplayer problems come from a mismatch between the players. Before anything else, check that everyone has:</p>
+      <p>Most problems come from a mismatch between players. Check that everyone has:</p>
       <ul>
-        <li>the <b>same version of the mod, from the same download</b> (the mod list shows the version, and it must be the same zip, not just the same number),</li>
+        <li>the <b>same mod download</b> (the same zip, not just the same version number),</li>
         <li>the <b>same version of Timberborn</b>,</li>
         <li>the <b>same other mods</b> enabled, at the same versions,</li>
         <li>and has <b>fully restarted the game</b> since installing or updating.</li>
@@ -73,11 +73,11 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>Check the folder. You should have <code>Documents\Timberborn\Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json</code>. A common mistake is an extra nested folder after extracting the zip.</li>
-            <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
-            <li>Enable <b>BeaverBuddies - Stability Fork</b> in the mod manager and restart the game.</li>
-            <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions will not run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v<span data-release="version">1.1.15</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
+            <li>Check the folder. You should have <code>Documents\Timberborn\Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json</code>. A common mistake is an extra folder level after extracting.</li>
+            <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled.</li>
+            <li>Enable <b>BeaverBuddies - Stability Fork</b> under <b>Mods</b> and restart the game.</li>
+            <li>The mod needs Timberborn 1.1 (tested on 1.1.2.4). Older game versions can't run it.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v<span data-release="version">1.1.15</span> is loaded!</code>. If it's there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
@@ -86,9 +86,9 @@
         <summary>There are two BeaverBuddies in the mod list, or things behave strangely</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>This mod and the Workshop BeaverBuddies share the same mod ID, and so does any second copy in your <code>Mods</code> folder, including an old <code>BeaverBuddies-StabilityPreview</code> folder left over from an earlier download. They conflict.</p>
+          <p>This mod, the Workshop BeaverBuddies and any other copy in your <code>Mods</code> folder share a mod ID, so they conflict. That includes an old <code>BeaverBuddies-StabilityPreview</code> folder.</p>
           <p class="sub">Try this</p>
-          <p>Keep exactly one BeaverBuddies. Unsubscribe from the Workshop version, delete any extra copy (and the old <code>BeaverBuddies-StabilityPreview</code> folder) from <code>Documents\Timberborn\Mods</code>, then restart the game.</p>
+          <p>Keep exactly one. Unsubscribe from the Workshop version, delete any other copy from <code>Documents\Timberborn\Mods</code>, then restart the game.</p>
         </div>
       </details>
     </section>
@@ -100,7 +100,7 @@
         <summary>Joining is refused with a version or build message</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, the mod compares the game version, the mod version and the mod's own files, before the save is sent. It refuses any difference, because two different builds cannot stay in sync. A copy someone compiled themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
+          <p>When someone joins, the mod compares the game version and its own build before the save is sent. Two different builds can't stay in sync, so it refuses any difference. A copy someone compiled themselves can be refused even with the same version number.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Have everyone install the <b>same zip</b>: the host's, or the one from the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest">latest release</a>.</li>
@@ -114,14 +114,14 @@
         <summary>A warning says my mods and the other player's mods are not the same</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning and nobody is stopped from playing, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions (MixedStorage, for example) goes further: a guest without it leaves the game at the first such action the host sends, with a message naming the mod (see <a href="#left">below</a>), and the others play on.</p>
+          <p>When someone joins, both games compare their enabled mods and warn about any that differ. The host sees it while waiting to start; a guest once the game has loaded. It's only a warning, but a mod that changes the simulation (housing or pathfinding, for example) causes a desync. A guest missing a mod that sends its own actions (MixedStorage, for example) leaves the game: see <a href="#left">below</a>.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Read which mods are listed: "Only on your computer", "Only on &hellip;'s computer" and "Different versions".</li>
-            <li>Make both lists identical: install and enable the same mods at the same versions on every computer, or turn the listed mods off on both. Mods that only change the interface are usually harmless.</li>
+            <li>Make the lists match: the same mods at the same versions on every computer, or the listed mods off on all of them. Mods that only change the interface are usually harmless.</li>
             <li>Restart Timberborn on the computers you changed, then host again.</li>
           </ol>
-          <p>The warning is also written to <code>Player.log</code>: search for "Mod lists differ".</p>
+          <p>The warning is also in <code>Player.log</code>: search for "Mod lists differ".</p>
         </div>
       </details>
 
@@ -130,11 +130,11 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>Right after hosting starts, the Steam lobby is still being created. Wait a moment and click <b>Invite Friends</b> again. The Steam overlay should open.</li>
+            <li>Right after you host, the Steam lobby is still being set up. Wait a moment and click <b>Invite Friends</b> again; Steam's overlay should open.</li>
             <li>On the host, make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default).</li>
-            <li>Both players need to be online in Steam. The friend must be on your Steam friends list and own Timberborn on Steam.</li>
-            <li>Both of you need the <a href="#mismatch">same build</a> of the mod and the same game version.</li>
-            <li>If Steam still will not connect, host with a <a href="install.html#host">direct IP or Hamachi</a> instead. Steam problems never stop direct IP hosting.</li>
+            <li>Both players must be online in Steam. The friend must be on your Steam friends list and own Timberborn there.</li>
+            <li>You both need the <a href="#mismatch">same build</a> of the mod and the same game version.</li>
+            <li>If Steam still won't connect, host by <a href="install.html#host">direct IP or Hamachi</a> instead. Steam problems never stop direct-IP hosting.</li>
           </ol>
         </div>
       </details>
@@ -143,9 +143,9 @@
         <summary>The invite says the host has already started or changed the game</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Nobody can join once the host chooses <b>Start Game</b>, or once something has been placed, marked or changed while the game waited to start: a player joining then would load the save without it and never be sent it. An old invite explains that instead of hanging.</p>
+          <p>Nobody can join once the host unpauses, or once something is built, marked or changed. A player joining then would miss it.</p>
           <p class="sub">Try this</p>
-          <p>The host saves and hosts again, then sends a fresh invite. Have your friend join before the host starts or changes anything.</p>
+          <p>The host saves, hosts that save again and sends a new invite. Join before the host unpauses or changes anything.</p>
         </div>
       </details>
 
@@ -153,11 +153,11 @@
         <summary>Joining over Steam takes forever or fails with a Steam message</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Steam connects players directly when it can find a route and relays through its own network otherwise. Failures end with an explanation that includes Steam's own reason, for example <em>"The connection timed out. Steam could not find a working route between you."</em> The same detail is written to <code>Player.log</code>.</p>
+          <p>A failed Steam connection ends with Steam's own reason, for example <em>"The connection timed out. Steam could not find a working route between you."</em> The same detail is in <code>Player.log</code>.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Read the message. It says what Steam reported.</li>
-            <li>Make sure you are both on the <a href="#mismatch">exact same build</a>. If joining sits on a loading message and never finishes, that is the first thing to rule out.</li>
+            <li>Make sure you're both on the <a href="#mismatch">exact same build</a>. If joining sits on a loading message, rule this out first.</li>
             <li>Try again. If it repeats, use <a href="install.html#host">direct IP or Hamachi</a>.</li>
             <li>If it keeps failing, <a href="#logs">collect every player's logs</a> and ask for help.</li>
           </ol>
@@ -169,9 +169,9 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>The host must already be hosting and must not have chosen <b>Start Game</b>.</li>
-            <li>Use the right address: your public IP for the internet, or the virtual-network address (for example from Hamachi) if you use one.</li>
-            <li>The default port is <b>25565</b>. Your router must forward it to the host's computer, and your firewall must allow Timberborn.</li>
+            <li>The host must be hosting, and must not have unpaused the game yet.</li>
+            <li>Use the right address: the host's public IP over the internet, or the virtual-network address (from Hamachi, for example) if you use one.</li>
+            <li>The default port is <b>25565</b>. The host's router must forward it to the host's computer, and the firewall must allow Timberborn.</li>
             <li>Port forwarding is the hard part. A virtual LAN such as Hamachi avoids it and has been tested. So does a <a href="install.html#host">Steam invite</a>.</li>
           </ol>
         </div>
@@ -188,15 +188,15 @@
             <table>
               <thead><tr><th>Status</th><th>What it means and what to do</th></tr></thead>
               <tbody>
-                <tr><td><b>Catching up</b></td><td>Guests only. Your game is three or more ticks behind the host. Brief spells are normal. If it keeps growing, your connection or computer cannot keep up, so check your ping and try a lower game speed.</td></tr>
-                <tr><td><b>Waiting for host</b></td><td>Guests only. Your game has used everything the host sent and is waiting for more. A flash is normal. If it stays, check the connection.</td></tr>
-                <tr><td><b>Connection unstable</b></td><td>Someone has stopped responding for five seconds. Check their connection. If it does not recover, the session may end.</td></tr>
+                <tr><td><b>Catching up</b></td><td>Guests only. Your game is three or more ticks behind the host. Brief spells are normal. If it keeps growing, check your ping and try a lower game speed.</td></tr>
+                <tr><td><b>Waiting for host</b></td><td>Guests only. Your game has played everything the host sent and waits for more. A flash is normal. If it stays, check the connection.</td></tr>
+                <tr><td><b>Connection unstable</b></td><td>Someone hasn't responded for five seconds. Check their connection. If it doesn't recover, the session may end.</td></tr>
                 <tr><td><b>Out of sync</b></td><td>A desync was detected. See <a href="#desync">the next item</a>.</td></tr>
-                <tr><td><b>Disconnected</b></td><td>The session has ended. Rejoin, or have the host rehost.</td></tr>
+                <tr><td><b>Disconnected</b></td><td>The session has ended. Join again once the host hosts again.</td></tr>
               </tbody>
             </table>
           </div>
-          <p>Ping colors: normal text is 80 ms or less, yellow up to 160 ms, red anything higher or no response. The dot beside the status is green when you are in sync, yellow while catching up or waiting for the host, and red when the connection is unstable, out of sync or disconnected.</p>
+          <p>A ping is normal text up to 80 ms, yellow up to 160 ms, and red above that or with no response.</p>
         </div>
       </details>
 
@@ -204,17 +204,17 @@
         <summary>A desync: "A connected player desynced and cannot continue playing"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. This fork removes many known causes, but it cannot promise none.</p>
+          <p>The players' games have drifted apart: something made one of them decide differently. This fork removes many known causes, but it can't promise none.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>
-            <li>Then guests choose <b>Reconnect (wait for Rehost)</b>, which joins the way they joined: a direct IP guest redials the address it used, and a Steam guest joins the host's new Steam lobby if Steam shows it (the host has <b>Allow Friends to Join Directly via Steam</b> on); otherwise a Steam guest accepts the host's new invite.</li>
-            <li>You may need to restart the game if problems persist.</li>
+            <li>Guests then choose <b>Reconnect (wait for Rehost)</b>. It joins the way they joined: the same address, or the host's new game on Steam. A Steam guest sees that game when the host has <b>Allow Friends to Join Directly via Steam</b> on; otherwise, accept the host's new invite.</li>
+            <li>If problems persist, restart the game.</li>
           </ol>
           <p class="sub">Things that cause it</p>
           <ul>
-            <li><b>Different mods, or different mod versions.</b> The game warns you about this when someone joins (see <a href="#mods-differ">the mod warning</a>), so take that warning seriously. This is a classic cause.</li>
-            <li><b>Different settings that affect the simulation</b>, for example <b>Reduce the number of forced pauses</b>. Keep them identical.</li>
+            <li><b>Different mods, or different mod versions.</b> Take the <a href="#mods-differ">mod warning</a> seriously.</li>
+            <li><b>Different settings that affect the simulation</b>, such as <b>Reduce the number of forced pauses</b>. Keep them the same.</li>
           </ul>
           <p>Keep backups of your saves. If it keeps happening, <a href="#logs">collect every player's logs</a>.</p>
         </div>
@@ -224,11 +224,11 @@
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
+          <p>A multiplayer action couldn't be completed on one player's game. Carrying on could leave the games different without anyone noticing, so the mod stops the session.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
-            <li><b>Do not overwrite your good save</b> with the session that stopped.</li>
+            <li>Press <b>Esc</b>, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
+            <li><b>Don't overwrite your good save</b> with the session that stopped.</li>
             <li>If it repeats with the same action, <a href="#logs">collect the logs</a> and say what you were doing.</li>
           </ol>
         </div>
@@ -238,11 +238,11 @@
         <summary>"&hellip;you have left the game, and the host and the other players play on"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Your game met something from the host that it doesn't have: an action it can't read, or a building it doesn't know. That almost always means a mod the host has and you don't (see <a href="#mods-differ">the mod warning</a>), and the message names it. Nothing of that action was played on your computer, so no save is harmed, but your game can no longer keep up with the host's, so it left the session. The host and the other players carry on.</p>
+          <p>Your game met something from the host it doesn't have, almost always from a mod the host has and you don't. The message names it. Nothing of that action was played on your computer, so no save is harmed, but you've left the session. The others play on.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Install and enable the mod the message names, at the host's version, or ask the host to stop using it.</li>
-            <li>The host chooses <b>Save and Rehost</b>, and you join again.</li>
+            <li>The host saves and hosts that save again, and you join.</li>
           </ol>
         </div>
       </details>
@@ -251,11 +251,11 @@
         <summary>The connection dropped and the game is paused</summary>
         <div class="answer">
           <p class="sub">What happens</p>
-          <p>When a guest loses the host, the game says why and stays paused, and the menu and controls work again. Nothing more will be played in that session.</p>
+          <p>When a guest loses the host, the game says why and stays paused. The menu and controls work, but nothing more is played in that session.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Press <b>Escape</b> to open the menu. You can save from there.</li>
-            <li>Return to the main menu and join again once the host has hosted again: Steam guests accept the host's new invite, direct IP guests join the same address.</li>
+            <li>Press <b>Esc</b> to open the menu. You can save from there.</li>
+            <li>Return to the main menu. Once the host hosts again, accept the new Steam invite or join the same address.</li>
           </ol>
         </div>
       </details>
@@ -265,11 +265,11 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>both</b> computers. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It is off by default.</li>
-            <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
-            <li>Try a lower game speed if a slower computer keeps falling behind. As the host, you can also click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
-            <li>If the host turned on <b>Remove the large colony speed limit</b>, the game runs at the full chosen speed in a big colony, which a slower computer may not keep up with. Turn it off, or use a lower speed.</li>
-            <li>Make sure every player runs the same release; the latest one has the newest performance fixes.</li>
+            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>every</b> computer. It noticeably slows the game, and it's off by default.</li>
+            <li>Look at the connection panel. A red ping or a high <b>Behind host</b> means the connection is the problem, not the game.</li>
+            <li>Try a lower game speed if a slower computer keeps falling behind. The host can also click <b>Ease off below</b> and pick a frame rate: the game slows a little while a guest stays under it.</li>
+            <li>With <b>Remove the large colony speed limit</b> on, a big colony runs at the full chosen speed, which a slower computer may not keep up with. Turn it off, or use a lower speed.</li>
+            <li>Make sure every player runs the latest release.</li>
           </ol>
         </div>
       </details>
@@ -284,10 +284,10 @@
           <p class="sub">Try this</p>
           <ul>
             <li>The panel only appears <b>in multiplayer games</b>.</li>
-            <li>Check <b>Mod Settings, BeaverBuddies, Connection panel</b>. It may be set to <b>Hidden</b>.</li>
+            <li>Check Mod Settings → <b>Connection panel</b>. It may be set to <b>Hidden</b>.</li>
             <li>If you bound the <b>Toggle connection panel</b> key, you may have hidden it with that key.</li>
-            <li>It may be <b>collapsed</b> to a single line (a colored dot, the player count and one ping). Click the line to expand it.</li>
-            <li>It may be in a different corner. See <b>Connection panel position</b>.</li>
+            <li>It may be <b>collapsed</b> to one line (a colored dot, the player count and one ping). Click the line to expand it.</li>
+            <li>It may be in another corner. See <b>Connection panel position</b>.</li>
           </ul>
         </div>
       </details>
@@ -298,9 +298,9 @@
           <p class="sub">Try this</p>
           <ul>
             <li><b>Player activity indicators</b> must be on in Mod Settings. A player who turns sharing off disappears from your view until they turn it back on.</li>
-            <li>A cursor is hidden while it is over the game's interface, outside the game window, or off the map. Yours is hidden while the game window is not focused.</li>
-            <li>Open <b>Options, Player cursors</b> and check that you have not made that player's cursor tiny (size 50% is the minimum) or nearly invisible (transparency goes up to 90%). <b>Reset</b> restores the defaults.</li>
-            <li>For pings, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
+            <li>A cursor is hidden while it's over the game's interface, outside the game window or off the map. Yours is hidden while your game window isn't focused.</li>
+            <li>Press Esc → <b>Player cursors</b> and check that player's cursor isn't tiny (50% is the minimum size) or nearly invisible (up to 90% transparency). <b>Reset</b> restores the defaults.</li>
+            <li>For pings, bind <b>Ping Location</b> under Options → Bindings → BeaverBuddies.</li>
           </ul>
         </div>
       </details>
@@ -308,18 +308,18 @@
 
     <section id="logs">
       <h2>Collecting logs</h2>
-      <p>If you ask for help, logs from <b>both</b> players are what make a problem diagnosable. Steam failures and desyncs record their details there.</p>
+      <p>Logs from <b>every</b> player are what make a problem diagnosable. Steam failures and desyncs record their details there.</p>
       <ol>
         <li>Close the game so the log is complete.</li>
         <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> in Explorer (paste it into the address bar).</li>
-        <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>, the log of the session before.</li>
-        <li>If a desync happened with detailed logging on, water and walker diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. Include that folder too. The files are written only on your computer and are never uploaded.</li>
+        <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>.</li>
+        <li>After a desync with detailed logging on, also copy the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. It's written only on your computer.</li>
       </ol>
       <div class="callout">
-        <p><b>Before you share:</b> logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
+        <p><b>Before you share:</b> logs contain file paths, which include your Windows user name. Look through the file first if that matters to you.</p>
       </div>
-      <p>The <b>Post Bug Report</b> button in the desync dialog does not upload anything in this fork's builds, because they contain no upload token. Send the files by hand instead.</p>
-      <p>Leave <b>Always Use Detailed Logging</b> off unless you are asked to turn it on. It costs performance.</p>
+      <p>This fork's builds can't upload bug reports from the game, so send the files yourself.</p>
+      <p>Leave <b>Always Use Detailed Logging</b> off unless you're asked to turn it on. It costs performance.</p>
     </section>
 
     <section id="help">
@@ -331,7 +331,7 @@
         <li>every player's <code>Player.log</code>, and <code>Player-prev.log</code> if it happened in an earlier session,</li>
         <li>after a desync with detailed logging on, the <code>BeaverBuddiesDiagnostics</code> folder next to the logs.</li>
       </ul>
-      <p>Also check the <a href="faq.html">FAQ</a>, which answers the common questions.</p>
+      <p>The <a href="faq.html">FAQ</a> answers the common questions.</p>
     </section>
 
   </div>

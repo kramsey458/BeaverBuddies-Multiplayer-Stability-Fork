@@ -1,123 +1,36 @@
 # Steam invites
 
-Invite a Steam friend into your hosted game from Steam's own overlay. This is an
-**alternative to direct IP**, not a replacement: both are offered at the same time when
-you host, so Hamachi / port forwarding / direct IP keep working exactly as before.
+Invite a Steam friend into your game from Steam's overlay: no port forwarding, no Hamachi. Joining by IP works
+alongside it.
 
-## Using it
+## Host
 
-**Host**
-1. Make sure **Enable Steam Networking** is on in Mod Settings (it is by default).
-2. Load your save and choose **Host co-op game**.
-3. Choose **Invite Friends** and pick your friend in the Steam overlay.
-4. Choose **Start Game** once your friend appears in the connected-player list.
+1. Load game → pick a save → **Host co-op game**.
+2. Choose **Invite Friends** and pick your friend in Steam's overlay. If nothing opens right after you host, wait a
+   moment and click again: the Steam lobby is still being set up.
+3. When your friend appears in the list of connected players, choose **Start Game**.
 
-**Friend**
-- Accept the invite (Steam notification or overlay). If Timberborn is not running, Steam
-  launches it and joins for you. With **Allow Friends to Join Directly via Steam** on, a
-  friend can also use **Join Game** from Steam's friends list.
-- Both players install the same version of the mod (the same download) and run the same game version.
+**Enable Steam Networking** must be on in Mod Settings. It is by default.
 
-Nobody can join after **Start Game**, or once something has been placed, marked or changed while
-the game waited to start. An old invite then says the host already started or changed the game,
-instead of hanging; the host saves, rehosts and sends a new one.
+## Friend
 
-No port forwarding or Hamachi is needed. Connections go directly between players when
-Steam can find a route, and are otherwise relayed through Steam's network. Valve documents
-that relaying prevents players' IP addresses from being revealed to each other.
+- Accept the invite from Steam's notification or overlay. If Timberborn is closed, Steam starts it and joins for you.
+- With the host's **Allow Friends to Join Directly via Steam** on (the default), **Join Game** on the host's entry in
+  your Steam friends list works too.
+- An invite to a game that has started says so. Ask the host to save, host that save again and send a new invite.
 
-## How it works
+## Good to know
 
-The original BeaverBuddies used Valve's legacy `ISteamNetworking` P2P API, which Valve marks
-deprecated ("we may remove this API from the SDK in a future release"). This fork uses
-`ISteamNetworkingSockets`, the API Valve recommends, which ships in the game's own
-Steamworks assembly.
+- Everyone must be online in Steam and own Timberborn there, with the same mod download and game version.
+- **Join before the host unpauses.** After that, or once anything is built or marked, nobody else can join.
+- **Only Steam friends get in.** The host accepts players from its friends-only Steam lobby only, so a stranger who
+  knows your Steam ID can't connect.
+- Steam connects players directly when it can, and relays through its network otherwise. Valve documents that relaying
+  keeps players' IP addresses hidden from each other.
+- **After a desync**, the host chooses **Save and Rehost** and guests choose **Reconnect (wait for Rehost)**. A Steam
+  guest rejoins the host's new game when Steam shows it; otherwise, accept the host's new invite.
+- **If Steam won't connect**, the message says why, with Steam's own reason; so does `Player.log`. Host by direct IP or
+  Hamachi instead: Steam problems never stop direct-IP hosting.
+- Text this mod adds is English only.
 
-- **Lobby.** The host opens a friends-only Steam lobby; that is what the overlay invites
-  into. Lobby data records whether the host is still accepting players.
-- **Admission.** The host accepts a connection only from a player who is in its lobby, so a
-  stranger who knows a Steam ID cannot connect. A guest that appears before the host's lobby
-  view catches up gets a five-second grace period.
-- **One thread for Steam.** Every Steam call happens on the game's main thread, where Steam
-  callbacks are delivered. TimberNet's threads use plain in-memory queues. `Write` never
-  blocks (a blocked game thread would stop the pump that drains the queue) and `Read`
-  blocks on a queue the pump fills. Steam's documentation does not promise these calls are
-  safe from other threads, so nothing depends on it.
-- **Pumped between ticks too.** The pump runs once per frame, and also in the game's tick loop
-  between the buckets of a tick, at most once a millisecond and right after a tick's events
-  are queued for the guests. A frame at a high game speed is mostly simulation, so data
-  would otherwise wait for the end of it, in both directions, and the ping grew with the
-  speed. Only data transfer runs there (no state changes, closing or admission), on the same
-  thread as everything else. The log reports how long data waited once a minute.
-- **The overlay and dialogs.** While Steam's overlay is open the game pushes an empty panel that
-  blocks input, and pops it when the overlay closes, but only if it is still on top. If a dialog
-  opened over it in between (an invite that cannot be joined, a connection error), the panel used
-  to stay for good and swallow every key press. It is now removed as soon as the dialog above it is
-  closed.
-- **Connecting in the background.** The connection completes after `ConnectAsync` returns.
-  The client waits for it on a worker thread (up to 45 s) before the compatibility
-  handshake's own 15 s clock starts. `TimberClient.Start()` used to wait 3 s on the game
-  thread, which a transport that needs the game thread could never satisfy.
-- **Speed.** Steam's defaults cap a connection at 256 KB/s with a 512 KB send buffer. The
-  mod raises the send rate ceiling to 8 MB/s and the send buffer to 4 MB, so the initial
-  save transfer is not throttled. If Steam's buffer fills, data stays queued and is
-  retried next frame; nothing is dropped and message order is preserved.
-- **Never hangs silently.** A send that makes no progress for 30 s, a connect that takes
-  over 40 s, or a queue that grows past 128 MB fails the connection with an explanation.
-  Steam's own end reason is translated into plain language and shown in the error and in
-  the log, for example "The connection timed out. Steam could not find a working route
-  between you. (Steam code 5003: ...)".
-- **Steam can never break hosting.** If Steam fails to start, direct-IP hosting continues.
-- **Closing.** Local close flushes queued data for up to 3 s before closing, and data the
-  peer sent before closing is still delivered before end-of-stream.
-
-## Validation
-
-`dotnet run --project StabilityTests` runs the production transport (`SteamLinkSocket`,
-`SteamLinkManager`) against a fake Steam network. The fake **fails any test that calls
-Steam off the game thread**, rejects messages over Steam's 512 KB limit, and uses a small
-send buffer to force backpressure. It covers: background connect; byte-exact ordered
-transfer of 3 MB through a tiny buffer; write coalescing; `Write` never blocking with the
-pump stopped; the queue cap; failure explanations; connect timeout; the stall detector;
-draining before end-of-stream; close and idempotent close; one bad connection not affecting
-another; lobby-only admission with the grace period; duplicate arrival notices; replacing
-an unstopped listener; a full TimberNet session (handshake, a 2 MB save, events and
-player activity in both directions) over the Steam transport; and protocol parity: one
-scripted session (about 60 events each way, one of 220 KB, plus cursor traffic) is run over
-a direct connection and over Steam under stress, and both peers must end with identical
-events and state hashes. Corrupting a single byte in the Steam path makes these fail.
-
-**Confirmed with a real Steam friend** in playtests between the maintainer and a friend,
-including a session at a true speed 7 with the ping under 100 ms. The automated checks cannot
-run Steam itself: the thin layer that calls Steam (`SteamLinkBackend`, `SteamNet`,
-`SteamListener`, `SteamOverlayConnectionService`) compiles against the game's real Steamworks
-assembly and is exercised only in the game, which needs two Steam accounts. The overlay panel
-fix and the pumping between ticks are covered by checks on their decisions, not by a Steam session.
-
-## Two-account playtest
-
-1. Host with Steam Networking on. In `Player.log` expect:
-   `Steam networking started`, `Steam relay network: Current`, `Steam is listening for players`,
-   `Steam lobby created with ID ...`.
-2. Choose **Invite Friends**; the overlay should open. If not, the log says the lobby is not
-   ready yet.
-3. Friend accepts. Expect `Steam link to <name>: accepted` then `... Connecting -> Connected`
-   on the host, and the friend appears in the connected-player list.
-4. Start the game, play, then have the friend leave. Confirm the host keeps running.
-5. Repeat with the friend's game **closed** when they accept (tests the launch invite).
-6. Repeat with an invite sent **after** Start Game (expect the "already started" message).
-7. Host with Steam Networking **off** and confirm direct IP works as before.
-
-If something fails, send both `Player.log` files. Every state change and close is logged with
-Steam's numeric end reason and debug text, which is what makes a failure diagnosable.
-
-## Known limits
-
-- Both players must be online in Steam, and the friend must own Timberborn.
-- Joining after **Start Game** is not possible (as before). After a desync, the host uses
-  **Save and Rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the host's new
-  lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the guest
-  is told to accept a fresh invite.
-- The **Invite Friends** button does nothing for the first moment after hosting starts,
-  until the lobby exists; click it again.
-- New strings are English only; other languages fall back to English.
+How the Steam connection is built, and how it was tested: [DEVELOPING.md](DEVELOPING.md#steam-networking).
