@@ -21,6 +21,8 @@ internal static class BackportChecks
         List<IlScan.Instruction> Code(MethodBase method) => IlScan.Instructions(method);
         bool Calls(MethodBase method, string declaringType, string name) =>
             Code(method).Any(i => i.Calls && i.Is(declaringType, name));
+        int CallAt(List<IlScan.Instruction> code, string declaringType, string name) =>
+            code.FindIndex(i => i.Calls && i.Is(declaringType, name));
 
 
         // AutomationEvent's list of shared game methods: the (typeof(T), "Name") pairs in ApplyAutomationPatches.
@@ -129,6 +131,41 @@ internal static class BackportChecks
             if (scanned < 500) throw new Exception($"only {scanned} game methods were read; the search is broken");
             if (!targets.SetEquals(found)) throw new Exception("no caller found for " + string.Join(", ", targets.Except(found)));
             if (problems.Count > 0) throw new Exception("the game's simulation calls a shared panel method: " + string.Join("; ", problems));
+        });
+
+        // ---- Unlocks, checked when they are played ----
+
+        test("Unlocks: the game pays again for a building already unlocked; the replay skips it, and one it can no longer afford", () =>
+        {
+            Type unlocking = Game("Timberborn.ScienceSystem", "Timberborn.ScienceSystem.BuildingUnlockingService");
+            var unlock = IlScan.Members(Only(unlocking, "Unlock"));
+            if (unlock.Any(m => m.Name == "Unlocked") || !unlock.Any(m => m.Name == "SubtractPoints"))
+                throw new Exception("the game's BuildingUnlockingService.Unlock changed: it now asks whether the building is unlocked, or no longer pays");
+            var replay = Code(Only(Mod("BeaverBuddies.Events.BuildingUnlockedEvent"), "Replay"));
+            // The profile-remembered buildings (UnlockableOnceSpec: the HTTP Lever and Adapter) may differ between players.
+            bool once = replay.Any(i => i.Calls && i.Member is MethodInfo m && m.Name == "HasSpec" && m.IsGenericMethod
+                && m.GetGenericArguments()[0].Name == "UnlockableOnceSpec");
+            int unlocked = CallAt(replay, unlocking.FullName!, "Unlocked");
+            int affordable = CallAt(replay, unlocking.FullName!, "Unlockable");
+            int pay = CallAt(replay, unlocking.FullName!, "Unlock");
+            if (!once || unlocked < 0) throw new Exception("the replay does not skip a building already unlocked (all but UnlockableOnceSpec)");
+            if (pay < 0) throw new Exception("the replay no longer unlocks");
+            if (affordable < 0 || !(unlocked < affordable && affordable < pay))
+                throw new Exception($"the replay does not ask whether the science is still there before paying (unlocked {unlocked}, affordable {affordable}, pay {pay})");
+        });
+
+        test("Unlocks: a bot unlock the science no longer covers is skipped when played, not thrown", () =>
+        {
+            var replay = Code(Only(Mod("BeaverBuddies.Events.WorkerTypeUnlockedEvent"), "Replay"));
+            int pay = replay.FindIndex(i => i.Calls && i.Member?.Name == "Unlock");
+            if (pay < 0) throw new Exception("the replay no longer unlocks");
+            Type service = replay[pay].Member!.DeclaringType!;
+            if (!IlScan.Members(Only(service, "Unlock")).Any(m => m.Name == "SubtractPoints"))
+                throw new Exception($"the game's {service.FullName}.Unlock no longer pays");
+            int unlocked = CallAt(replay, service.FullName!, "Unlocked");
+            int affordable = CallAt(replay, service.FullName!, "Unlockable");
+            if (unlocked < 0 || affordable < 0 || !(unlocked < affordable && affordable < pay))
+                throw new Exception($"the replay does not ask whether it is unlocked, then affordable, before paying (unlocked {unlocked}, affordable {affordable}, pay {pay})");
         });
     }
 }

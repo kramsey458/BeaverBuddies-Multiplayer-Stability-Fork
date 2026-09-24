@@ -839,6 +839,12 @@ namespace BeaverBuddies.Events
                 Plugin.LogWarning($"Tried to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} but it was already unlocked");
                 return;
             }
+            if (!service.Unlockable(workerType))
+            {
+                // The game would throw here and stop the session; skip it on every computer instead.
+                Plugin.LogWarning($"Not enough science to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} any more; skipped");
+                return;
+            }
             service.Unlock(workerType);
         }
 
