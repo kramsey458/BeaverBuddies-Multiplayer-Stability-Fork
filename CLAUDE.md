@@ -42,8 +42,9 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
 ### Design rules (from DESIGN.md; keep them)
 
 - **Download Red**: red #b8322a (hover #cf3d33, white text) is spent on Download buttons only. A second red is a defect.
-- **Two Handles**: host orange #f0a04b and guest blue #6fb3ee exist only on the saw's handles (hero SVG, header mark,
-  favicon). Never on text, borders, buttons or backgrounds.
+- **Two Players**: host orange #f0a04b and guest blue #6fb3ee exist only for the two players: their cursors, name tags
+  and dots in the hero's shared-colony map, and the saw handles in the header mark and favicon. Never on text,
+  borders, buttons or backgrounds.
 - **Pine Is Solid**: pine #e3c285 means played, current or focused (Confirmed chips, step discs, current-nav underline,
   3px emphasis rules, focus ring, selection, FAQ chevron). Tested-only things are muted steel #aeb7bd, never pine.
 - **Slab Is Stencil**: Zilla Slab only for headings, the brand, buttons and step numbers; everything else system-ui.
@@ -57,7 +58,10 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
   the warning callout's 3px top rule.
 - Fonts: Zilla Slab 600 and 700, self-hosted in `docs/assets/fonts/` (OFL.txt alongside); body is system-ui, code
   ui-monospace. No other webfonts, and nothing from a CDN at runtime: the site loads nothing from elsewhere.
-- Textures: `log-round.webp` (hero) and `log-round-mark.webp` (section marker), made by `docs/assets/make_log.py`
+- Hero: an inline SVG in `index.html` (`svg.coop-map`): one shared colony from above, the host's orange cursor on a
+  selected house, a friend's blue cursor laying a path, and a small connection panel with both players *In sync*.
+  Edit the SVG directly; it uses only the tokens above.
+- Textures: `log-round-mark.webp` (section marker) and `log-round.webp` (no longer shown), made by `docs/assets/make_log.py`
   (numpy + Pillow, seed 1114; `cd docs/assets && python make_log.py`, byte-reproducible). Change the script and re-run
   it rather than editing images, then `embed-prompt` each changed raster (see below). `connection-panel.png` is a
   real in-game screenshot, embedded by the README: never rename or move it.
@@ -68,7 +72,8 @@ game's assemblies), the website in `docs/`. Every change lands on `main` through
   warn top rule, for must-not-miss install warnings), `.path` + Copy button.
 - The log round (`<span class="round" aria-hidden="true">`) is the only thing above a heading: no eyebrows or kickers.
 - Phones: no horizontal scroll at 390px, tap targets ≥ 44px, the header turns static under 640px.
-- Motion: the saw's blade slides ±24px on a 3.2s loop with six sawdust flecks; the only moving thing, and only under
+- Motion: in the hero map, the friend's blue cursor moves down the path it is laying (40px, 4.8s loop); the only moving
+  thing, and only under
   `prefers-reduced-motion: no-preference` (reduce also kills transitions and smooth scroll).
 - Don't: add a light theme, stat strips, icon tiles, grids of identical cards, side-stripe accents, gradient text, new
   accent colours, stock/generated imagery, Timberborn's official logos or key art, or thomaswp's `Media/` art as this
