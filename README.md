@@ -33,10 +33,10 @@ This is an independent fork of [BeaverBuddies](https://github.com/thomaswp/Beave
 
 **You need:** Timberborn (this release is built and tested against **1.1.2.4**), with the **Harmony** and **Mod Settings** mods enabled. Every player must run the same game version too.
 
-1. Download `BeaverBuddies-Stability-Fork-1.1.15.zip` under **Assets** on the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) (not the "Source code" archives).
+1. Download `BeaverBuddies-Stability-Fork-1.1.15.zip` under **Assets** on the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) (not the "Source code" archives). <!-- latest -->
 2. **Close Timberborn.**
 3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`. If you installed an earlier download, delete its old `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
-4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (version 1.1.15) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
+4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (version 1.1.15) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict. <!-- latest -->
 5. **Every player installs the same version of the mod (the same download) and runs the same game version**, then restarts the game. A mismatch is the most common cause of trouble; see [Things to know](#things-to-know-before-you-play).
 
 This fork is distributed through GitHub Releases only. The Steam Workshop and mod.io pages linked further down belong to the original project.

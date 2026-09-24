@@ -1,0 +1,29 @@
+# When a release becomes GitHub's Latest release: the release-notes footer, the site's version text and the README
+# lines marked <!-- latest --> are updated, checked and committed. Pre-releases change nothing.
+# The shared workflow and its script live in timbermods/.github. Run it by hand for a dry run (changes nothing).
+name: Latest release
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Show what would change, change nothing
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+  pages: write
+
+jobs:
+  update:
+    uses: timbermods/.github/.github/workflows/latest-release.yml@main
+    with:
+      site-url: https://timbermods.github.io/BeaverBuddies-Stability-Fork/
+      install-page: 'install.html'
+      asset-pattern: '^BeaverBuddies-Stability-Fork-[\d.]+\.zip$'
+      test-command: ''
+      dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
