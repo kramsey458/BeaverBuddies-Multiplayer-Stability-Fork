@@ -95,11 +95,12 @@ Success, in order:
     the chat and the speed boost (**-** / **+** in steps of 0.5, from -6.5 to +23; the game runs between 0.5x and
     30x).
   - **Options → Player cursors:** a card per player (Color, Size 50–300%, Transparency 0–90%) and **You, in the chat**.
-  - **Mod Settings → BeaverBuddies:** Enable Steam Networking (On), Allow Friends to Join Directly via Steam (On),
-    Player activity indicators (On), Ping Display Name, Ping Color (Yellow), Connection panel (Expanded / Collapsed /
-    Hidden), Connection panel position, Ease off when a guest drops below this frame rate (Off), Remove the large
-    colony speed limit (Off), Reduce the number of forced pauses (Off / Menu only / Never auto-pause), Port (25565),
-    Client Connection Address, Always Use Detailed Logging (Off).
+  - **The mod's settings** (**Mods** → the settings button beside **BeaverBuddies - Stability Fork**): Enable Steam
+    Networking (On), Allow Friends to Join Directly via Steam (On), Player activity indicators (On), Ping Display Name,
+    Ping Color (Yellow), Connection panel (Expanded / Collapsed / Hidden), Connection panel position, Ease off when a
+    guest drops below this frame rate (Off), Remove the large colony speed limit (Off), Reduce the number of forced
+    pauses (Off / Menu only / Never auto-pause), Port (25565), Client Connection Address, Always Use Detailed Logging
+    (Off).
   - **Options → Bindings → BeaverBuddies:** Ping Location, Toggle connection panel, Chat: start typing, all unbound by
     default.
 - **Reporting:** issues at https://github.com/timbermods/BeaverBuddies-Stability-Fork/issues (templates: bug report,

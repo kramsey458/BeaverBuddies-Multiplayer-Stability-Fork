@@ -32,7 +32,7 @@ display name, so a friend keeps their look next time.
 
 ## Settings
 
-In Mod Settings:
+In the mod's settings (**Mods**, then the settings button beside **BeaverBuddies - Stability Fork**):
 
 - **Player activity indicators** (on): share your cursor, selection and edits, and show others'.
 - **Ping Display Name** ("Player") and **Ping Color** (yellow): what others see for you. Left on yellow, you get a

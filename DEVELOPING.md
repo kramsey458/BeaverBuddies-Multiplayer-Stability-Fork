@@ -139,7 +139,7 @@ sliders. Those need the real game.
 
 ### Two-player cursor playtest
 
-1. Install the same build on every computer. Check that **Player activity indicators** is in Mod Settings, and pick
+1. Install the same build on every computer. Check that **Player activity indicators** is in the mod's settings, and pick
    different names and colors.
 2. Host and join. Move around the same building from different camera angles; check cursors on terrain and buildings.
 3. Select different buildings, then the same one. Check the outlines and labels, that your own selection color wins,
