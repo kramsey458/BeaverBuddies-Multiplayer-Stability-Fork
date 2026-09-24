@@ -236,5 +236,22 @@ internal static class BackportChecks
             }
             finally { debug.SetValue(null, false); Reset(); }
         }));
+
+        // ---- Steam ----
+
+        test("Steam: the disposed callbacks are let go, not kept with the scene they were made in", () =>
+        {
+            // Only the Steam build has the callbacks (IS_STEAM; the other build keeps an empty service).
+            Type? steam = mod.GetType("BeaverBuddies.Steam.SteamOverlayConnectionService", false);
+            if (steam?.GetField("callbacks", All) == null) return;
+            var update = Code(Only(steam, "UpdateSingleton"));
+            bool OnList(IlScan.Instruction i, string name) => i.Calls && i.Member?.Name == name && i.Member.DeclaringType?.Name.StartsWith("List") == true;
+            int dispose = update.FindIndex(i => i.Calls && i.Is("System.IDisposable", "Dispose"));
+            int clear = update.FindIndex(i => OnList(i, "Clear"));
+            int add = update.FindIndex(i => OnList(i, "Add"));
+            if (clear < 0) throw new Exception("the disposed Steam callbacks stay in the static list, each holding its scene");
+            if (!(dispose >= 0 && dispose < clear && clear < add))
+                throw new Exception($"the callbacks are not disposed, let go, then made again, in that order (dispose {dispose}, clear {clear}, add {add})");
+        });
     }
 }
