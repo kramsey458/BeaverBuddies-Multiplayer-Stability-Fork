@@ -65,9 +65,10 @@ Success, in order:
 
 ## Operating Context
 
-- **Current release: 1.1.15** (tag `v1.1.15`, 2026-09-23), a full release marked **Latest** on GitHub, not a
-  pre-release. It has no new features: bug fixes taken from Timber Together, on top of 1.1.14's fixes from a review of
-  Timber Together's shared-colony code. **1.1.13 was the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
+- **Current release: 1.1.16** (tag `v1.1.16`, 2026-09-24), a full release marked **Latest** on GitHub, not a
+  pre-release. It only points the in-game links (guide, troubleshooting, bug reports) at this fork. 1.1.15 before it
+  brought bug fixes taken from Timber Together, on top of 1.1.14's fixes from a review of Timber Together's
+  shared-colony code. **1.1.13 was the final feature release.** The fork is feature-complete: it will still be updated for new Timberborn versions and
   for bugs, and new features go into Timber Together.
 - **Game:** built and tested against Timberborn **1.1.2.4**; the manifest requires at least 1.1.0.0. Tested only on
   **Windows with the Steam version**, with **two players**. Other stores, macOS, Linux and larger groups are untested.
@@ -81,7 +82,7 @@ Success, in order:
     end up as `Mods\BeaverBuddies-Stability-Fork\version-1.1\manifest.json`.
   - Enable **BeaverBuddies - Stability Fork** in the mod list.
   - Unsubscribe from or remove the Workshop BeaverBuddies and any other copy. They share the mod ID `beaverbuddies`.
-  - Check it loaded: the main menu has **Join co-op game**, and `Player.log` contains `BeaverBuddies v1.1.15 is loaded!`.
+  - Check it loaded: the main menu has **Join co-op game**, and `Player.log` contains `BeaverBuddies v1.1.16 is loaded!`.
   - Updating: everyone updates together; there is no automatic update.
   - Upgrade fact to keep: delete an old `BeaverBuddies-StabilityPreview` folder from an earlier download.
 - **What players meet in game** (names exactly as in the game):
@@ -130,7 +131,7 @@ Success, in order:
 - **Every page loads `assets/release.js`** with the same attributes. `data-repo` is
   `timbermods/BeaverBuddies-Stability-Fork` and `data-asset` is `^BeaverBuddies-Stability-Fork-[\d.]+\.zip$`.
 - **The HTML always holds working values**: buttons and links to `/releases/latest`, and the version last written by
-  hand (`1.1.15`). `release.js` then replaces `data-release="version" | "tag" | "asset-name"`. The page must still
+  hand (`1.1.16`). `release.js` then replaces `data-release="version" | "tag" | "asset-name"`. The page must still
   work with no script, no network or a rate-limited GitHub API. Link to `/releases/latest` (this repo has a real
   Latest release), never to a fixed tag.
 - **`data-release-pinned="<version>"`** marks text written for one version. `release.js` adds a "written for X, the
@@ -159,8 +160,10 @@ Success, in order:
   desyncs recorded. The 1.1.11 color change was played and works. The maintainer played 1.1.13 (which includes
   1.1.12's changes) and reports it stable and working; the situations the 1.1.12 fixes target were not set up on
   purpose.
+- **1.1.16 has not been played.** It changes only the in-game links; its checks pass (466: 278 StabilityTests, 185
+  RuntimeChecks, 3 Python).
 - **1.1.15 (which includes 1.1.14's fixes) has been played and works** (the maintainer, 2026-09-24). Its fixes are also
-  covered by automated checks (464 pass: 276 StabilityTests, 185 RuntimeChecks, 3 Python). The particular situations
+  covered by automated checks. The particular situations
   those fixes target were not all set up on purpose (see "Tested only" below).
 - Confirmed in play: Steam invites, the water frame-rate fix (the "badtide" desync), the animation crash, the low ping
   at a true speed 7, the controls working after a disconnect, the panel and chat colors, player activity, the speed
@@ -203,7 +206,7 @@ Success, in order:
   with Update 7 Support!" (the latter is out of date). `logo.jpg` is the wordmark over an illustration of three
   beavers on a raft. `IconBG.png` and `Icon.pdn` are the icon sources. The release zip also carries a `thumbnail.png`.
 - Written evidence the site can cite: the playtest record (1.1.10 for over an hour over Steam invites in 300+
-  colonies; the ping under 100 ms at a true speed 7, down from 200–300 ms; the badtide desync resolved), the 464
+  colonies; the ping under 100 ms at a true speed 7, down from 200–300 ms; the badtide desync resolved), the 466
   automated checks, and the diff since the original (196 files, about 28,100 lines, by 1.1.15).
 - **Does not exist, and must not be faked:**
   - Screenshots of player cursors or Viewing / Editing labels, the Player cursors dialog, the speed boost row, Mod

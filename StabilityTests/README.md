@@ -95,6 +95,8 @@ Timber Together: the four newly shared panel controls (the game's panels call th
 the game's simulation never calls them), unlocks checked when played, the detailed-logging trace cap and the Steam
 callbacks let go; `JoinClosingChecks` checks that the first tick closes joining before anything of it is sent.
 StabilityTests checks that a direct socket that never connected is closed, and that hosting resets the speed boost.
+`LinkChecks` (1.1.16) checks that every link the mod opens leads to this fork, and that each site page it names is in
+`docs/`.
 
 The mod's Harmony prefixes follow one rule for their priority. A prefix that replaces the
 game's method (returns false to skip it) carries `[HarmonyPriority(Priority.Last)]`, so
