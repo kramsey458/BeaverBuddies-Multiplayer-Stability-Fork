@@ -10,7 +10,7 @@ alongside it.
    moment and click again: the Steam lobby is still being set up.
 3. When your friend appears in the list of connected players, choose **Start Game**.
 
-**Enable Steam Networking** must be on in Mod Settings. It is by default.
+**Enable Steam Networking** must be on in the mod's settings. It is by default.
 
 ## Friend
 

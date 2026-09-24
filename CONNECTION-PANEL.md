@@ -45,8 +45,8 @@ Your own row is in bold, with a dash instead of a ping.
 
 - **Click the title** to collapse or expand it. Your choice is remembered. Collapsed, it shows **N new** for unread
   chat messages.
-- **Mod Settings → Connection panel**: Expanded, Collapsed or Hidden.
-- **Mod Settings → Connection panel position**: top left (default), top right, bottom left or bottom right.
+- **Connection panel**, in the mod's settings: Expanded, Collapsed or Hidden.
+- **Connection panel position**, in the mod's settings: top left (default), top right, bottom left or bottom right.
 - **Options → Bindings → BeaverBuddies → Toggle connection panel**: a key to hide and show it (none by default).
 
 It appears only in multiplayer games, and scales with your UI scale.
