@@ -24,6 +24,14 @@ internal static class BackportChecks
         int CallAt(List<IlScan.Instruction> code, string declaringType, string name) =>
             code.FindIndex(i => i.Calls && i.Is(declaringType, name));
 
+        // Plugin.Log* would otherwise reach Unity's native logger.
+        FieldInfo pluginLogger = Mod("BeaverBuddies.Plugin").GetField("logger", All)!;
+        void Quietly(Action run)
+        {
+            object? previous = pluginLogger.GetValue(null);
+            pluginLogger.SetValue(null, DispatchProxy.Create(Mod("BeaverBuddies.Util.Logging.ILogger"), typeof(QuietLoggerProxy)));
+            try { run(); } finally { pluginLogger.SetValue(null, previous); }
+        }
 
         // AutomationEvent's list of shared game methods: the (typeof(T), "Name") pairs in ApplyAutomationPatches.
         List<(Type Type, string Name)> AutomationList()
@@ -167,5 +175,66 @@ internal static class BackportChecks
             if (unlocked < 0 || affordable < 0 || !(unlocked < affordable && affordable < pay))
                 throw new Exception($"the replay does not ask whether it is unlocked, then affordable, before paying (unlocked {unlocked}, affordable {affordable}, pay {pay})");
         });
+
+        // ---- Detailed-logging traces ----
+
+        test("Traces: detailed-logging traces stay bounded: a guest whose host logs nothing, logging switched on mid-session, and none outside a session", () => Quietly(() =>
+        {
+            Type service = Mod("BeaverBuddies.DesyncDetecter.DesyncDetecterService");
+            PropertyInfo debug = Mod("BeaverBuddies.Settings").GetProperty("TemporarilyDebug", All)!;
+            var traces = (IList)service.GetField("traces", All)!.GetValue(null)!;
+            MethodInfo startTick = Only(service, "StartTick"), trace = Only(service, "Trace");
+            object instance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(service);
+            void Reset() => Only(service, "Reset").Invoke(instance, null);
+            void Log(string text) => trace.Invoke(null, new object[] { text, true, true });
+            debug.SetValue(null, true);
+            try
+            {
+                using (ScopeChecks.Multiplayer(mod))
+                {
+                    // A guest's ticks, with nothing from the host to check them against.
+                    Reset();
+                    for (int tick = 0; tick < 1000; tick++) { startTick.Invoke(null, new object[] { tick }); Log("a draw"); }
+                    if (traces.Count > 200) throw new Exception($"a guest kept {traces.Count} ticks of traces with nothing to check them against");
+                    // Logging switched on at tick 20,000 of a session that had it off (the ticks were never counted).
+                    Reset();
+                    startTick.Invoke(null, new object[] { 20000 });
+                    if (traces.Count > 200) throw new Exception($"switching logging on at tick 20,000 made {traces.Count} ticks of traces at once");
+                }
+                // Single player, or a session ended by a desync: nobody will check them.
+                Reset();
+                int before = traces.Count > 0 ? ((IList)traces[traces.Count - 1]!).Count : 0;
+                for (int i = 0; i < 100; i++) Log("a draw");
+                int after = traces.Count > 0 ? ((IList)traces[traces.Count - 1]!).Count : 0;
+                if (after != before) throw new Exception($"{after - before} traces kept outside a session");
+            }
+            finally { debug.SetValue(null, false); Reset(); }
+        }));
+
+        test("Traces: switching detailed logging on mid-session never reads the other player's earlier traces as a desync", () => Quietly(() =>
+        {
+            Type service = Mod("BeaverBuddies.DesyncDetecter.DesyncDetecterService");
+            PropertyInfo debug = Mod("BeaverBuddies.Settings").GetProperty("TemporarilyDebug", All)!;
+            object instance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(service);
+            void Reset() => Only(service, "Reset").Invoke(instance, null);
+            debug.SetValue(null, true);
+            try
+            {
+                using var session = ScopeChecks.Multiplayer(mod);
+                // This computer turns logging on at tick 2,000 (its ticks were not counted while it was off)...
+                Reset();
+                Only(service, "StartTick").Invoke(null, new object[] { 2000 });
+                // ...and the other player, logging all along, sends its traces of tick 1,999. Making a tick of traces
+                // reading "Tick 2000 started" for every tick played, and comparing that with them, stopped the session.
+                Type traceType = Mod("BeaverBuddies.DesyncDetecter.Trace");
+                var theirs = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(traceType))!;
+                object line = Activator.CreateInstance(traceType)!;
+                traceType.GetField("message")!.SetValue(line, "Tick 1999 started");
+                theirs.Add(line);
+                if (!(bool)Only(service, "VerifyTraces").Invoke(null, new object[] { 1999, theirs })!)
+                    throw new Exception("the other player's traces of a tick before logging was on here were called a desync");
+            }
+            finally { debug.SetValue(null, false); Reset(); }
+        }));
     }
 }

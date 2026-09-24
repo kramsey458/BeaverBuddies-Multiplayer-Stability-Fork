@@ -103,4 +103,20 @@ static class ScopeChecks
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     static void InvokeBody(Action body) => body();
+
+    /// <summary>A multiplayer game (an installed EventIO that does nothing) until disposed.</summary>
+    internal static IDisposable Multiplayer(Assembly assembly)
+    {
+        var field = assembly.GetType("BeaverBuddies.IO.EventIO", true)!.GetField("instance", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!;
+        object prior = field.GetValue(null);
+        field.SetValue(null, DispatchProxy.Create(assembly.GetType("BeaverBuddies.IO.EventIO", true)!, typeof(EmptyEventProxy)));
+        return new Restore(() => field.SetValue(null, prior));
+    }
+
+    sealed class Restore : IDisposable
+    {
+        readonly Action undo;
+        public Restore(Action undo) { this.undo = undo; }
+        public void Dispose() => undo();
+    }
 }
